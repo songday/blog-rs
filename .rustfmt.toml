@@ -1,0 +1,5 @@
+max_width = 120
+fn_single_line = true
+merge_imports = true
+match_block_trailing_comma = true
+newline_style = "Native"
