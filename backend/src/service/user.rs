@@ -1,10 +1,10 @@
 use blog_common::{dto::user::UserInfo, result::Error};
 
 use crate::{
-    db::{user, DataSource, SqlParam},
-    result::{ErrorWrapper, Result},
+    db::{DataSource, SqlParam, user},
     service::status,
 };
+use crate::util::result::{ErrorWrapper, Result};
 
 pub async fn register(token: &str, email: &str, password: &str) -> Result<UserInfo> {
     if email.len() < 6 || password.len() < 5 {
@@ -22,9 +22,4 @@ pub async fn login(token: &str, email: &str, password: &str) -> Result<UserInfo>
     let u = user::login(email, password).await?;
     status::user_online(&token, u.clone());
     Ok(u)
-}
-
-pub fn logout(token: String) -> Result<()> {
-    status::user_offline(&token);
-    Ok(())
 }

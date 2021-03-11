@@ -15,10 +15,10 @@ use blog_common::{
 use crate::{
     db::blog,
     image::image,
-    model::Tag,
-    result::Result,
     util::io::{self, SupportFileType},
 };
+use crate::db::model::Tag;
+use crate::util::result::Result;
 
 pub async fn list(mut page_num: u8) -> Result<PaginationData<Vec<BlogDetail>>> {
     if page_num < 1 {
@@ -56,29 +56,3 @@ pub async fn show(id: u64) -> Result<BlogDetail> {
     blog::show(id).await
 }
 
-pub async fn upload_image(data: FormData) -> Result<UploadImage> {
-    let file_info = io::save_upload_file(
-        data,
-        &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
-    )
-    .await?;
-    let thumbnail = image::resize_from_file(&file_info).await?;
-    let d = UploadImage::new(thumbnail, file_info.origin_filename);
-    Ok(d)
-}
-
-pub async fn save_image(filename: String, body: impl Buf) -> Result<UploadImage> {
-    let filename = urlencoding::decode(&filename)?;
-
-    let file_info = io::save_upload_stream(
-        filename,
-        body,
-        &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
-    )
-    .await?;
-    let thumbnail = image::resize_from_file(&file_info).await?;
-    let d = UploadImage::new(thumbnail, file_info.origin_filename);
-    Ok(d)
-}
-
-// pub async fn resize_blog_image<B: AsRef<&[u8]>, T: AsRef<&str>>(b: B, type: T) {}

@@ -3,7 +3,8 @@ use tokio::{
     sync::oneshot,
 };
 
-use blog_backend::{db, result, server, service};
+use blog_backend::{db, serve::server, service};
+use blog_backend::util::result;
 
 fn main() -> result::Result<()> {
     let runtime = Builder::new_multi_thread()

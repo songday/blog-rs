@@ -3,19 +3,19 @@ use core::fmt::Display;
 use chrono::{prelude::*, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-use blog_common::dto::{blog::BlogDetail, user::UserInfo};
+use blog_common::dto::{post::PostDetail, user::UserInfo};
 use sqlx::{
     database::{HasArguments, HasValueRef},
     encode::IsNull,
     error::BoxDynError,
 };
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, sqlx::FromRow)]
 pub struct User {
     pub id: i64,
     pub email: String,
     pub password: String,
-    pub created_at: u64,
+    pub created_at: i64,
 }
 
 impl Into<UserInfo> for User {
@@ -28,7 +28,7 @@ impl Into<UserInfo> for User {
 }
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
-pub struct Blog {
+pub struct Post {
     /*
     https://docs.rs/sqlx/0.4.0-beta.1/sqlx/prelude/trait.Type.html
 
@@ -47,24 +47,18 @@ pub struct Blog {
     pub id: i64,
     pub title: String,
     pub markdown_content: String,
-    pub parsed_content: String,
-    pub tags: String,
+    pub rendered_content: String,
     pub created_at: i64,
     pub updated_at: Option<i64>,
 }
 
-impl Into<BlogDetail> for Blog {
-    fn into(self) -> BlogDetail {
-        let tags = if self.tags.is_empty() {
-            None
-        } else {
-            Some(self.tags.split(|c| c == '\n').map(|s| String::from(s)).collect())
-        };
-        BlogDetail {
+impl Into<PostDetail> for &Post {
+    fn into(self) -> PostDetail {
+        PostDetail {
             id: self.id,
-            title: self.title,
-            content: self.parsed_content,
-            tags,
+            title: self.title.clone(),
+            content: self.rendered_content.clone(),
+            tags: None,
             created_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.created_at, 0), Utc),
             updated_at: None,
         }
@@ -73,5 +67,6 @@ impl Into<BlogDetail> for Blog {
 
 #[derive(Deserialize, Serialize, sqlx::FromRow)]
 pub struct Tag {
+    pub id: i64,
     pub name: String,
 }

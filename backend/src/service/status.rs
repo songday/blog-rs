@@ -6,7 +6,7 @@ use tokio::time::{sleep, Duration};
 
 use blog_common::{dto::user::UserInfo, result::Error, util::time};
 
-use crate::result::Result;
+use crate::util::result::Result;
 
 const MAX_USER_IDLE_MILLIS: u64 = 1800000;
 const MAX_VERIFY_CODE_IDLE_MILLIS: u64 = 300000;

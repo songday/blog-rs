@@ -3,6 +3,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use blog_common::result::Error;
 
 pub type Result<D> = core::result::Result<D, ErrorWrapper>;
+// pub type Result<D> = core::result::Result<D, Error>;
 
 #[derive(Debug)]
 pub struct ErrorWrapper(pub(crate) Error);
@@ -40,21 +41,21 @@ impl warp::reject::Reject for ErrorWrapper {}
 impl From<std::io::Error> for ErrorWrapper {
     fn from(e: std::io::Error) -> Self {
         eprintln!("here 2 {}", e);
-        ErrorWrapper(Error::ReadBlogIdDataByTagFailed)
+        Error::ReadBlogIdDataByTagFailed.into()
     }
 }
 
 // impl From<std::env::VarError> for ErrorWrapper {
 //     fn from(e: std::env::VarError) -> Self {
 //         eprintln!("{}", e);
-//         ErrorWrapper(Error::EnvVarError)
+//         Error::EnvVarError.into()
 //     }
 // }
 
 impl From<std::net::AddrParseError> for ErrorWrapper {
     fn from(e: std::net::AddrParseError) -> Self {
         eprintln!("{}", e);
-        ErrorWrapper(Error::ParseListeningAddressFailed)
+        Error::ParseListeningAddressFailed.into()
     }
 }
 

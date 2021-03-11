@@ -7,7 +7,7 @@ use yew::{
 };
 use yew_router::prelude::*;
 
-use blog_common::dto::blog::BlogDetail;
+use blog_common::dto::post::PostDetail;
 
 use crate::{
     app::AppRoute,
@@ -18,15 +18,15 @@ use crate::{
 
 pub(crate) struct Model {
     blog_id: i64,
-    blog_detail: Option<BlogDetail>,
+    blog_detail: Option<PostDetail>,
     error: Option<Error>,
     fetch_task: Option<FetchTask>,
-    response: Callback<Result<BlogDetail, Error>>,
+    response: Callback<Result<PostDetail, Error>>,
     // node_ref: NodeRef,
 }
 
 pub(crate) enum Msg {
-    Response(Result<BlogDetail, Error>),
+    Response(Result<PostDetail, Error>),
 }
 
 #[derive(Properties, Clone)]
@@ -55,7 +55,7 @@ impl Component for Model {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::Response(Ok::<BlogDetail, _>(blog)) => {
+            Msg::Response(Ok::<PostDetail, _>(blog)) => {
                 // let html = markdown_to_html(&blog.content, &ComrakOptions::default());
                 // let el = self.node_ref.cast::<web_sys::Element>().unwrap();
                 // el.set_inner_html(&html);
@@ -118,7 +118,7 @@ impl Component for Model {
             let mut url = String::with_capacity(64);
             url.push_str(val::BLOG_SHOW_URL);
             url.push_str(self.blog_id.to_string().as_str());
-            let fetch_task = request::get::<BlogDetail>(url.as_str(), self.response.clone());
+            let fetch_task = request::get::<PostDetail>(url.as_str(), self.response.clone());
             self.fetch_task = Some(fetch_task);
         }
     }

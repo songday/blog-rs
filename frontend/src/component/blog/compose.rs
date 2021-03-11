@@ -6,7 +6,7 @@ use yew::{
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
 
-use blog_common::dto::blog::{BlogDetail, NewBlog, Tag};
+use blog_common::dto::post::{PostDetail, NewPost, Tag};
 
 use crate::{
     app::AppRoute,
@@ -16,11 +16,11 @@ use crate::{
 };
 
 pub(crate) struct Model {
-    blog_params: NewBlog,
+    blog_params: NewPost,
     new_tags: String,
     error: Option<Error>,
     fetch_task: Option<FetchTask>,
-    response: Callback<Result<BlogDetail, Error>>,
+    response: Callback<Result<PostDetail, Error>>,
     router_agent: Box<dyn Bridge<RouteAgent>>,
     all_tags: Vec<Tag>,
     link: ComponentLink<Self>,
@@ -34,7 +34,7 @@ pub(crate) enum Msg {
     UpdateNewTag(String),
     RemoveTag(String),
     Request,
-    Response(Result<BlogDetail, Error>),
+    Response(Result<PostDetail, Error>),
     TagsResponse(Result<Vec<Tag>, Error>),
 }
 
@@ -43,7 +43,7 @@ impl Component for Model {
     type Properties = ();
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
-            blog_params: NewBlog {
+            blog_params: NewPost {
                 title: String::default(),
                 content: String::default(),
                 tags: None,
@@ -85,14 +85,14 @@ impl Component for Model {
                             .collect(),
                     );
                 }
-                let fetch_task = request::post::<NewBlog, BlogDetail>(
+                let fetch_task = request::post::<NewPost, PostDetail>(
                     val::BLOG_SAVE_URL,
                     self.blog_params.clone(),
                     self.response.clone(),
                 );
                 self.fetch_task = Some(fetch_task);
             },
-            Msg::Response(Ok::<BlogDetail, _>(blog)) => {
+            Msg::Response(Ok::<PostDetail, _>(blog)) => {
                 self.fetch_task = None;
                 self.router_agent.send(ChangeRoute(AppRoute::BlogShow(blog.id).into()));
             },

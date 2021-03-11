@@ -11,14 +11,14 @@ use serde_json::ser::Formatter;
 // use crate::result::Error;
 
 #[derive(Clone, Deserialize, Serialize)]
-pub struct NewBlog {
+pub struct NewPost {
     pub title: String,
     pub content: String,
     pub tags: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct BlogDetail {
+pub struct PostDetail {
     pub id: i64,
     pub title: String,
     pub content: String,

@@ -2,18 +2,18 @@ use std::{convert::Infallible, net::SocketAddr, sync::Arc};
 
 use futures::future::Future;
 use tokio::sync::oneshot::Receiver;
-
-use warp::{self, reject, Filter, Rejection, Server};
+use warp::{self, Filter, reject, Rejection, Server};
 
 use blog_common::{
     dto::{
-        blog::NewBlog,
+        post::NewPost,
         user::{LoginParams, RegisterParams, UserInfo},
     },
     var,
 };
 
-use crate::{controller, db::DataSource, result::Result, service::status};
+use crate::{db::DataSource, util::result::Result, service::status};
+use crate::facade::{self, asset, image, post, tag, user};
 
 #[derive(Debug)]
 struct FilterError;
@@ -65,85 +65,82 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
 // }
 
 pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result<impl Future<Output = ()> + 'static> {
-    let index = warp::get().and(warp::path::end()).and_then(controller::index);
+    let index = warp::get().and(warp::path::end()).and_then(asset::index);
     let about = warp::get()
         .and(warp::path("about"))
         .and(warp::path::end())
         .and(warp::get())
-        .and_then(controller::about);
+        .and_then(asset::about);
     let user_login = warp::post()
         .and(warp::path("user"))
         .and(warp::path("login"))
         .and(warp::path::end())
         .and(warp::cookie::optional(var::AUTH_HEADER_NAME))
         .and(warp::body::json::<LoginParams>())
-        .and_then(controller::user_login);
+        .and_then(user::login);
     let user_register = warp::post()
         .and(warp::path("user"))
         .and(warp::path("register"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(var::AUTH_HEADER_NAME))
         .and(warp::body::json::<RegisterParams>())
-        .and_then(controller::user_register);
+        .and_then(user::register);
     let user_logout = warp::get()
         .and(warp::path("user"))
         .and(warp::path("logout"))
         .and(warp::path::end())
         .and(warp::cookie::optional(var::AUTH_HEADER_NAME))
-        .and_then(controller::user_logout);
+        .and_then(user::logout);
     let user_info = warp::get()
         .and(warp::path("user"))
         .and(warp::path("info"))
         .and(warp::path::end())
         .and(warp::cookie::optional(var::AUTH_HEADER_NAME))
-        .and_then(controller::user_info);
+        .and_then(user::info);
     let verify_image = warp::get()
         .and(warp::path("tool"))
         .and(warp::path("verify-image"))
         .and(warp::path::end())
         .and(warp::cookie::optional(var::AUTH_HEADER_NAME))
-        .and_then(controller::verify_image);
-    let blog_list = warp::get()
-        .and(warp::path("blog"))
+        .and_then(image::verify_image);
+    let post_list = warp::get()
+        .and(warp::path("post"))
         .and(warp::path("list"))
         .and(warp::path::param::<u8>())
         .and(warp::path::end())
-        .and_then(controller::blog_list);
-    let blog_tags = warp::get()
+        .and_then(post::list);
+    let tag_list = warp::get()
         .and(warp::path("blog"))
         .and(warp::path("tags"))
         .and(warp::path::end())
-        .and_then(controller::blog_tags);
-    let blog_list_by_tag = warp::get()
-        .and(warp::path("blog"))
+        .and_then(tag::list);
+    let post_list_by_tag = warp::get()
+        .and(warp::path("post"))
         .and(warp::path("tag"))
         .and(warp::path::param::<String>())
         .and(warp::path::param::<u8>())
         .and(warp::path::end())
-        .and_then(controller::blog_list_by_tag);
-    let blog_save = warp::post()
-        .and(warp::path("blog"))
+        .and_then(post::list_by_tag);
+    let post_save = warp::post()
+        .and(warp::path("post"))
         .and(warp::path("save"))
         .and(warp::path::end())
         .and(auth())
-        .and(warp::body::json::<NewBlog>())
-        .and_then(controller::blog_save);
-    let blog_show = warp::get()
-        .and(warp::path("blog"))
+        .and(warp::body::json::<NewPost>())
+        .and_then(post::save);
+    let post_show = warp::get()
+        .and(warp::path("post"))
         .and(warp::path("show"))
         .and(warp::path::param::<u64>())
         .and(warp::path::end())
-        .and_then(controller::blog_show);
-    let blog_upload_image = warp::post()
-        .and(warp::path("blog"))
+        .and_then(post::show);
+    let upload_image = warp::post()
         .and(warp::path("image"))
         .and(warp::path("upload"))
         .and(warp::path::end())
         .and(auth())
         .and(warp::multipart::form().max_length(var::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))
-        .and_then(controller::blog_upload_image);
-    let blog_save_image = warp::post()
-        .and(warp::path("blog"))
+        .and_then(image::upload);
+    let save_image = warp::post()
         .and(warp::path("image"))
         .and(warp::path("save"))
         .and(warp::path::param::<String>())
@@ -151,7 +148,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::body::content_length_limit(var::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))
         .and(auth())
         .and(warp::body::aggregate())
-        .and_then(controller::blog_save_image);
+        .and_then(image::save);
 
     let cors = warp::cors()
         // .allow_any_origin()
@@ -181,16 +178,16 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(user_logout)
         .or(user_info)
         .or(verify_image)
-        .or(blog_list)
-        .or(blog_tags)
-        .or(blog_list_by_tag)
-        .or(blog_save)
-        .or(blog_show)
-        .or(blog_upload_image)
-        .or(blog_save_image)
+        .or(post_list)
+        .or(tag_list)
+        .or(post_list_by_tag)
+        .or(post_save)
+        .or(post_show)
+        .or(upload_image)
+        .or(save_image)
         .with(cors)
         // .with(warp::service(session_id_wrapper))
-        .recover(controller::handle_rejection);
+        .recover(facade::handle_rejection);
 
     let addr = address.parse::<SocketAddr>()?;
 
