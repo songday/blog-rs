@@ -9,7 +9,7 @@ use blog_common::{
         post::NewPost,
         user::{LoginParams, RegisterParams, UserInfo},
     },
-    var,
+    val,
 };
 
 use crate::{db::DataSource, util::result::Result, service::status};
@@ -40,7 +40,7 @@ where
 // https://stackoverflow.com/questions/54988438/how-to-check-the-authorization-header-using-warp
 
 fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Clone {
-    warp::cookie::optional(var::AUTH_HEADER_NAME).map(|a: Option<String>| match a {
+    warp::cookie::optional(val::AUTH_HEADER_NAME).map(|a: Option<String>| match a {
         Some(s) => match status::check_auth(&s) {
             Ok(u) => Some(u),
             Err(_) => None,
@@ -75,7 +75,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("user"))
         .and(warp::path("login"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(var::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
         .and(warp::body::json::<LoginParams>())
         .and_then(user::login);
     let user_register = warp::post()
@@ -88,19 +88,19 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("user"))
         .and(warp::path("logout"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(var::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
         .and_then(user::logout);
     let user_info = warp::get()
         .and(warp::path("user"))
         .and(warp::path("info"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(var::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
         .and_then(user::info);
     let verify_image = warp::get()
         .and(warp::path("tool"))
         .and(warp::path("verify-image"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(var::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
         .and_then(image::verify_image);
     let post_list = warp::get()
         .and(warp::path("post"))
@@ -138,14 +138,14 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("upload"))
         .and(warp::path::end())
         .and(auth())
-        .and(warp::multipart::form().max_length(var::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))
+        .and(warp::multipart::form().max_length(val::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))
         .and_then(image::upload);
     let save_image = warp::post()
         .and(warp::path("image"))
         .and(warp::path("save"))
         .and(warp::path::param::<String>())
         .and(warp::path::end())
-        .and(warp::body::content_length_limit(var::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))
+        .and(warp::body::content_length_limit(val::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))
         .and(auth())
         .and(warp::body::aggregate())
         .and_then(image::save);

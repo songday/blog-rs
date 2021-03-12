@@ -16,7 +16,7 @@ use blog_common::{
         user::UserInfo,
     },
     result::{Error, ErrorResponse},
-    var,
+    val,
 };
 
 use crate::{

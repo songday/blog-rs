@@ -12,7 +12,7 @@ use yew_router::{
 
 use blog_common::{
     dto::user::{UserInfo, UserInfoWrapper},
-    var as CommonVar,
+    val as CommonVal,
 };
 
 use crate::{

@@ -11,7 +11,7 @@ use yew::{
     },
 };
 
-use blog_common::{dto::Response as ApiResponse, var};
+use blog_common::{dto::Response as ApiResponse, val};
 
 use crate::util::{store, Error};
 
@@ -168,7 +168,7 @@ where
         RequestMethod::POST => Request::post(url),
     };
     request = request.header("Content-Type", "application/json");
-    if let Some(token) = store::get(var::AUTH_HEADER_NAME) {
+    if let Some(token) = store::get(val::AUTH_HEADER_NAME) {
         request = request.header("Authorization", token);
     }
 

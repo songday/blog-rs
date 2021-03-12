@@ -23,7 +23,7 @@ use blog_common::{
         Response as ApiResponse,
     },
     result::{Error, ErrorResponse},
-    var,
+    val,
 };
 
 // lazy_static_include_str!(INDEX_PAGE_BYTES, "./src/asset/index.html");
@@ -94,7 +94,7 @@ fn auth_cookie(token: &str) -> String {
     format!(
         // "{}={}; Domain=songday.com; Secure; HttpOnly; Path=/",
         "{}={}; HttpOnly; Path=/",
-        var::AUTH_HEADER_NAME,
+        val::AUTH_HEADER_NAME,
         token,
     )
 }

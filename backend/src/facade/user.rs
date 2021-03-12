@@ -16,7 +16,7 @@ use blog_common::{
         Response as ApiResponse,
     },
     result::{Error, ErrorResponse},
-    var,
+    val,
 };
 
 use crate::{

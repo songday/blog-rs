@@ -16,8 +16,9 @@ use crate::{
     db::{self, DATA_SOURCE, SqlParam, tag},
     util::snowflake,
 };
-use crate::db::model::{Post, Tag};
+use crate::db::model::{Post, Tag, TagUsage};
 use crate::util::result::Result;
+use crate::db::tag::get_names;
 
 pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
     let offset: i32 = ((page_num - 1) * page_size) as i32;
@@ -82,32 +83,25 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
 }
 
 pub async fn save(new_post: NewPost) -> Result<PostDetail> {
-    let now_sec = match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(d) => d.as_secs() as i64,
-        Err(e) => {
-            eprintln!("{:?}", dbg!(e));
-            return Err(Error::SaveBlogFailed.into());
-        },
-    };
-
     // todo needs to be in a transaction
+    let transaction = DATA_SOURCE.get().unwrap().sqlite.begin().await?;
 
     let id = snowflake::gen_id();
     // println!("id {}", id);
     if new_post.tags.is_some() {
-        super::tag::record_usage(id, new_post.tags.unwrap()).await?;
+        super::tag::record_usage(id, new_post.tags.as_ref().unwrap()).await?;
     }
 
     // let parser = pulldown_cmark::Parser::new(body);
     // let mut html_text = String::new();
     // pulldown_cmark::html::push_html(&mut html_text, parser);
 
-    let post = Post {
+    let post_detail = PostDetail {
         id: id as i64,
         title: new_post.title,
-        rendered_content: markdown_to_html(&new_post.content, &ComrakOptions::default()),
-        markdown_content: new_post.content,
-        created_at: now_sec,
+        content: markdown_to_html(&new_post.content, &ComrakOptions::default()),
+        tags: new_post.tags,
+        created_at: chrono::offset::Utc::now(),
         updated_at: None,
     };
 
@@ -115,11 +109,11 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
     let last_insert_rowid = sqlx::query(
         "INSERT INTO post(id, title, markdown_content, rendered_content, created_at)VALUES(?,?,?,?,?,?)",
     )
-    .bind(&post.id)
-    .bind(&post.title)
-    .bind(&post.markdown_content)
-    .bind(&post.rendered_content)
-    .bind(&post.created_at)
+    .bind(&post_detail.id)
+    .bind(&post_detail.title)
+    .bind(&new_post.content)
+    .bind(&post_detail.content)
+    .bind(&post_detail.created_at.timestamp_millis())
     .execute(&DATA_SOURCE.get().unwrap().sqlite)
     .await?
     .last_insert_rowid();
@@ -129,7 +123,11 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
         return Err(Error::SaveBlogFailed.into());
     }
 
-    Ok((&post).into())
+    // 这里只关心 commit，因为 https://docs.rs/sqlx/0.5.1/sqlx/struct.Transaction.html 说到
+    // If neither are called before the transaction goes out-of-scope, rollback is called. In other words, rollback is called on drop if the transaction is still in-progress.
+    transaction.commit().await?;
+
+    Ok(post_detail)
 }
 
 pub async fn show(id: u64) -> Result<PostDetail> {
@@ -141,6 +139,7 @@ pub async fn show(id: u64) -> Result<PostDetail> {
     if r.is_none() {
         Err(Error::CannotFoundBlog.into())
     } else {
+        sqlx::query_as::<Sqlite, TagUsage>("SELECT tag_id FROM tag_usage WHERE post_id = ?");
         Ok((&r.unwrap()).into())
     }
 }

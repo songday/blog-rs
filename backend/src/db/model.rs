@@ -70,3 +70,10 @@ pub struct Tag {
     pub id: i64,
     pub name: String,
 }
+
+#[derive(Deserialize, Serialize, sqlx::FromRow)]
+pub struct TagUsage {
+    pub id: i64,
+    pub post_id: i64,
+    pub tag_id: i64,
+}
