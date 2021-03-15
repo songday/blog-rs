@@ -20,7 +20,7 @@ pub enum Error {
     SerdeError,
     #[error("Page not found")]
     NotFound,
-    #[error("Bad request")]
+    #[error("请求参数不合法，请检查输入是否正确")]
     BadRequest,
     #[error("Method not allowed")]
     MethodNotAllowed,
@@ -28,11 +28,11 @@ pub enum Error {
     InternalServerError,
 
     // business
-    #[error("Invalid session id")]
+    #[error("无效的 Session ID")]
     InvalidSessionId,
-    #[error("Invalid verify code")]
+    #[error("无效的验证码")]
     InvalidVerifyCode,
-    #[error("Current user have not authorized, please login again")]
+    #[error("登录信息失效，请重新登录")]
     NotAuthed,
     #[error("Login failed")]
     LoginFailed,
@@ -58,6 +58,9 @@ pub enum Error {
     ReadBlogIdDataByTagFailed,
     #[error("Saving blog id data by tag failed")]
     SaveBlogIdDataByTagFailed,
+
+    #[error("{0}")]
+    BusinessException(String),
 }
 
 #[derive(Debug, Deserialize, Serialize)]

@@ -14,11 +14,11 @@ use model::Tag;
 
 use crate::util::result::Result;
 
+pub mod model;
 pub(crate) mod post;
+mod setting;
 pub(crate) mod tag;
 pub(crate) mod user;
-mod setting;
-pub mod model;
 
 type SqliteConnPool = sqlx::Pool<Sqlite>;
 

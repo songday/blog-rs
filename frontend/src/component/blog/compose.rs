@@ -6,7 +6,7 @@ use yew::{
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
 
-use blog_common::dto::post::{PostDetail, NewPost, Tag};
+use blog_common::dto::post::{NewPost, PostDetail, Tag};
 
 use crate::{
     app::AppRoute,

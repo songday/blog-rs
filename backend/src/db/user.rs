@@ -1,9 +1,6 @@
 use chrono::prelude::*;
 
-use sqlx::{
-    Sqlite,
-};
-
+use sqlx::Sqlite;
 
 use blog_common::{
     dto::user::{RegisterParams, UserInfo},
@@ -11,12 +8,30 @@ use blog_common::{
 };
 
 use crate::{
-    db::{self, DATA_SOURCE},
-    util::{crypt, snowflake},
+    db::{self, model::User, DATA_SOURCE},
+    util::{crypt, result::Result, snowflake},
 };
-use crate::db::model::User;
-use crate::util::result::Result;
 use sqlx::Row;
+
+pub async fn have_user() -> bool {
+    let row = match sqlx::query("SELECT COUNT(*) FROM user")
+        .fetch_one(&DATA_SOURCE.get().unwrap().sqlite)
+        .await {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("{}", e);
+            return false;
+        },
+    };
+    let r = match row.try_get::<i64, usize>(1) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("{}", e);
+            return false;
+        },
+    };
+    r > 0
+}
 
 pub async fn register(username: &str, password: &str) -> Result<UserInfo> {
     let r = sqlx::query("SELECT id FROM user WHERE username = ?")

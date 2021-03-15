@@ -12,25 +12,23 @@ use ahash::AHasher;
 use bytes::{Buf, Bytes, BytesMut};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
+use sqlx::Sqlite;
 use tokio::{
-    fs::{File, OpenOptions, remove_file, rename},
-    // io::{self, AsyncReadExt, AsyncWriteExt, BufReader, BufWriter},
+    fs::{remove_file, rename, File, OpenOptions},
     io::{self, AsyncReadExt, AsyncSeekExt, AsyncWriteExt, BufReader, BufWriter},
 };
-use sqlx::Sqlite;
 
 use blog_common::result::Error;
 
-use crate::db::model::Tag;
 use crate::{
-    db::{self, DATA_SOURCE},
-    util::{crypt, snowflake},
+    db::{self, model::Tag, DATA_SOURCE},
+    util::{crypt, result::Result, snowflake},
 };
-use crate::util::result::Result;
 
 pub async fn list() -> Result<Vec<String>> {
     let tag_list = sqlx::query_as::<Sqlite, Tag>("SELECT name FROM tag ORDER BY created_at DESC")
-        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite).await?;
+        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+        .await?;
     let name_list = tag_list.iter().map(|i| i.name.clone()).collect::<Vec<String>>();
     Ok(name_list)
 }
@@ -48,7 +46,8 @@ pub async fn get_names(id_array: Vec<i64>) -> Result<Vec<String>> {
     sql.push('-');
     sql.replace(",-", ") ORDER BY created_at DESC");
     let tag_list = sqlx::query_as::<Sqlite, Tag>(sql.as_str())
-        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite).await?;
+        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+        .await?;
     let name_list = tag_list.iter().map(|i| i.name.clone()).collect::<Vec<String>>();
     Ok(name_list)
 }
@@ -65,12 +64,15 @@ pub(super) async fn record_usage(post_id: u64, tags: &Vec<String>) -> Result<()>
     for tag in tags.iter() {
         query = query.bind(tag);
     }
-    let tags = query.fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
-        .await?;
+    let tags = query.fetch_all(&DATA_SOURCE.get().unwrap().sqlite).await?;
 
     let post_id = post_id as i64;
     for tag in tags {
-        sqlx::query("INSERT INTO tag_usage(post_id, tag_id)VALUES(?,?)").bind(post_id).bind(tag.id).execute(&DATA_SOURCE.get().unwrap().sqlite).await?;
+        sqlx::query("INSERT INTO tag_usage(post_id, tag_id)VALUES(?,?)")
+            .bind(post_id)
+            .bind(tag.id)
+            .execute(&DATA_SOURCE.get().unwrap().sqlite)
+            .await?;
     }
     Ok(())
 }

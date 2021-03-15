@@ -2,7 +2,7 @@ use std::{convert::Infallible, net::SocketAddr, sync::Arc};
 
 use futures::future::Future;
 use tokio::sync::oneshot::Receiver;
-use warp::{self, Filter, reject, Rejection, Server};
+use warp::{self, reject, Filter, Rejection, Server};
 
 use blog_common::{
     dto::{
@@ -12,8 +12,12 @@ use blog_common::{
     val,
 };
 
-use crate::{db::DataSource, util::result::Result, service::status};
-use crate::facade::{self, asset, image, post, tag, user};
+use crate::{
+    db::DataSource,
+    facade::{self, asset, image, post, tag, user, management},
+    service::status,
+    util::result::Result,
+};
 
 #[derive(Debug)]
 struct FilterError;
@@ -66,11 +70,17 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
 
 pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result<impl Future<Output = ()> + 'static> {
     let index = warp::get().and(warp::path::end()).and_then(asset::index);
-    let about = warp::get()
-        .and(warp::path("about"))
+    let management = warp::get()
+        .and(warp::path("management"))
         .and(warp::path::end())
-        .and(warp::get())
-        .and_then(asset::about);
+        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and_then(management::index);
+    let config = warp::get()
+        .and(warp::path("management"))
+        .and(warp::path("config"))
+        .and(warp::path::end())
+        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and_then(management::config);
     let user_login = warp::post()
         .and(warp::path("user"))
         .and(warp::path("login"))
@@ -172,7 +182,8 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .build();
 
     let routes = index
-        .or(about)
+        .or(management)
+        .or(config)
         .or(user_login)
         .or(user_register)
         .or(user_logout)

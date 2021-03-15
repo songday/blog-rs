@@ -1,11 +1,7 @@
 use core::{convert::Infallible, result::Result};
 
-use bytes::Buf;
 use hyper::header::{self, HeaderMap, HeaderValue};
-use serde::Serialize;
 use warp::{
-    filters::multipart::FormData,
-    http::{response::Response, StatusCode},
     reply::{Json, Response as WarpResponse},
     Rejection, Reply,
 };
@@ -13,7 +9,6 @@ use warp::{
 use blog_common::{
     dto::{
         user::{LoginParams, RegisterParams, UserInfo, UserInfoWrapper},
-        Response as ApiResponse,
     },
     result::{Error, ErrorResponse},
     val,
@@ -22,17 +17,25 @@ use blog_common::{
 use crate::{
     db::user,
     facade::{auth_cookie, response_data, response_err},
-    util::common,
     service::status,
+    util::common,
 };
 
 pub async fn register(params: RegisterParams) -> Result<impl Reply, Rejection> {
-    if params.password1 != params.password2 {
-        return Ok(response_err(500, Error::BadRequest).into_response());
+    if user::have_user().await {
+        return Ok(response_err(500, Error::BusinessException("已有管理用户，若忘记密码，请使用“找回密码”功能".to_string())).into_response());
     }
 
-    if params.email.len() < 6 || params.password1.len() < 5 {
-        return Ok(response_err(500, Error::BadRequest).into_response());
+    if params.password1.len() < 3 {
+        return Ok(response_err(500, Error::BusinessException("输入的密码不能少于3位".to_string())).into_response());
+    }
+
+    if params.email.len() < 5 || !common::EMAIL_REGEX.is_match(&params.email) {
+        return Ok(response_err(500, Error::BusinessException("输入的邮箱地址不合法".to_string())).into_response());
+    }
+
+    if params.password1 != params.password2 {
+        return Ok(response_err(500, Error::BusinessException("登录密码与确认密码不一致".to_string())).into_response());
     }
 
     match user::register(&params.email, &params.password1).await {
@@ -60,8 +63,12 @@ pub async fn login(token: Option<String>, params: LoginParams) -> Result<WarpRes
         return Ok(response_err(500, Error::InvalidSessionId).into_response());
     }
 
-    if params.email.len() < 6 || params.password.len() < 5 {
-        return Ok(response_err(500, Error::LoginFailed).into_response());
+    if params.password.len() < 3 {
+        return Ok(response_err(500, Error::BusinessException("输入的密码不能少于3位".to_string())).into_response());
+    }
+
+    if params.email.len() < 5 || !common::EMAIL_REGEX.is_match(&params.email) {
+        return Ok(response_err(500, Error::BusinessException("输入的邮箱地址不合法".to_string())).into_response());
     }
 
     let token = token.unwrap();

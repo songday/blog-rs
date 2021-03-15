@@ -1,5 +1,7 @@
 use rand::{rngs::OsRng, RngCore};
+use regex::Regex;
 use uuid::Uuid;
+use lazy_static::lazy_static;
 
 pub fn simple_uuid_with_name(name: &[u8]) -> String {
     let uuid = Uuid::new_v5(&Uuid::NAMESPACE_URL, name);
@@ -11,4 +13,8 @@ pub fn simple_uuid() -> String {
     OsRng.fill_bytes(&mut salt);
 
     simple_uuid_with_name(&salt)
+}
+
+lazy_static! {
+    pub static ref EMAIL_REGEX: Regex = Regex::new(r"[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+").unwrap();
 }

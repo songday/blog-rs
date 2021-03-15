@@ -11,10 +11,7 @@ use warp::{
 };
 
 use blog_common::{
-    dto::{
-        post::UploadImage,
-        user::UserInfo,
-    },
+    dto::{post::UploadImage, user::UserInfo},
     result::{Error, ErrorResponse},
     val,
 };
@@ -22,10 +19,12 @@ use blog_common::{
 use crate::{
     db::user,
     facade::{auth_cookie, response_data, response_err},
-    util::common,
-    util::io::{self, SupportFileType},
-    service::status,
     image::image,
+    service::status,
+    util::{
+        common,
+        io::{self, SupportFileType},
+    },
 };
 
 pub async fn verify_image(token: Option<String>) -> Result<WarpResponse, Rejection> {
@@ -55,7 +54,8 @@ pub async fn upload(user: Option<UserInfo>, data: FormData) -> Result<impl Reply
     let file_info = io::save_upload_file(
         data,
         &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
-    ).await;
+    )
+    .await;
     if let Err(e) = file_info {
         return Ok(response_err(500, e));
     }
@@ -65,26 +65,23 @@ pub async fn upload(user: Option<UserInfo>, data: FormData) -> Result<impl Reply
     Ok(response_data(&d))
 }
 
-pub async fn save(
-    filename: String,
-    user: Option<UserInfo>,
-    body: impl Buf,
-) -> Result<impl Reply, Rejection> {
+pub async fn save(filename: String, user: Option<UserInfo>, body: impl Buf) -> Result<impl Reply, Rejection> {
     if user.is_none() {
         return Ok(response_err(500, Error::NotAuthed));
     }
-    let filename = match urlencoding::decode(&filename){
+    let filename = match urlencoding::decode(&filename) {
         Ok(f) => f,
         Err(e) => {
             eprintln!("{:#?}", e);
             return Ok(response_err(500, Error::BadRequest));
-        }
+        },
     };
     let file_info = io::save_upload_stream(
         filename,
         body,
         &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
-    ).await;
+    )
+    .await;
     if let Err(e) = file_info {
         return Ok(response_err(500, e));
     }

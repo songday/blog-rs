@@ -3,15 +3,14 @@ use tokio::{
     sync::oneshot,
 };
 
-use blog_backend::{db, serve::server, service};
-use blog_backend::util::result;
+use blog_backend::{db, serve::server, service, util::result};
 
 fn main() -> result::Result<()> {
     let runtime = Builder::new_multi_thread()
         .worker_threads(4)
         .enable_all()
-        .thread_name("songday-web-service")
-        .thread_stack_size(64 * 1024)
+        .thread_name("Songday-blog-service")
+        .thread_stack_size(1024 * 1024)
         .build()?;
 
     let (tx, rx) = oneshot::channel::<()>();

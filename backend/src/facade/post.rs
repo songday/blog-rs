@@ -23,8 +23,8 @@ use blog_common::{
 use crate::{
     db::post,
     facade::{auth_cookie, response_data, response_err},
-    util::common,
     service::status,
+    util::common,
 };
 
 pub async fn list(mut page_num: u8) -> Result<impl Reply, Rejection> {

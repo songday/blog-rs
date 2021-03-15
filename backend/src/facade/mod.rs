@@ -1,8 +1,9 @@
-pub(crate) mod user;
-pub(crate) mod post;
-pub(crate) mod image;
-pub(crate) mod tag;
 pub(crate) mod asset;
+pub(crate) mod image;
+pub(crate) mod post;
+pub(crate) mod tag;
+pub(crate) mod user;
+pub(crate) mod management;
 
 use core::{convert::Infallible, result::Result};
 

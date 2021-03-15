@@ -1,8 +1,6 @@
 use core::{convert::Infallible, result::Result};
 
-use warp::{
-    Rejection, Reply,
-};
+use warp::{Rejection, Reply};
 
 use crate::{
     db::tag,

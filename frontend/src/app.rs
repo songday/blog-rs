@@ -85,7 +85,7 @@ impl Component for Model {
         match msg {
             Msg::Authenticated(user) => {
                 ConsoleService::log("signed in");
-                store::save(CommonVar::AUTH_HEADER_NAME, Some(user.access_token));
+                store::save(CommonVal::AUTH_HEADER_NAME, Some(user.access_token));
                 ConsoleService::log("saved auth to store");
                 self.user = Some(user.user_info);
                 return true;
@@ -96,7 +96,7 @@ impl Component for Model {
                 self.fetch_task = Some(r);
             },
             Msg::LogoutResponse(Ok::<String, _>(s)) => {
-                store::save(CommonVar::AUTH_HEADER_NAME, None);
+                store::save(CommonVal::AUTH_HEADER_NAME, None);
                 ConsoleService::log("signed out");
                 self.user = None;
                 self.fetch_task = None;
@@ -181,7 +181,7 @@ impl Component for Model {
     fn rendered(&mut self, first_render: bool) {
         // Get current user info if a token is available when mounted
         if first_render {
-            let token = store::get(CommonVar::AUTH_HEADER_NAME);
+            let token = store::get(CommonVal::AUTH_HEADER_NAME);
             if token.is_some() {
                 // let token = token.as_ref().unwrap();
                 let r = request::get(val::USER_INFO_URL, self.link.callback(Msg::UserInfoResponse));

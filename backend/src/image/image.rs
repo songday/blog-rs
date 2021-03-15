@@ -3,21 +3,18 @@ use std::{io::Write, path::Path, vec::Vec};
 use bytes::{buf::BufMut, Bytes, BytesMut};
 use image::{
     self,
-    codecs::jpeg::JpegEncoder,
-    // png::PngEncoder,
-    codecs::png::{CompressionType, FilterType, PngEncoder},
+    codecs::{
+        jpeg::JpegEncoder,
+        png::{CompressionType, FilterType, PngEncoder},
+    },
     ColorType, DynamicImage, GenericImage, GenericImageView, ImageBuffer, ImageFormat, Luma, Rgb, Rgba, RgbaImage,
 };
 use rand::{thread_rng, Rng};
 use tokio::fs::copy;
 
-use blog_common::{
-    dto::UploadFileInfo,
-    result::{Error},
-};
+use blog_common::{dto::UploadFileInfo, result::Error};
 
-use crate::util::val;
-use crate::util::result::Result;
+use crate::util::{result::Result, val};
 
 pub type ImageWidth = u32;
 pub type ImageHeight = u32;
@@ -82,7 +79,12 @@ pub fn gen_verify_image(numbers: &[u8]) -> Bytes {
                 img.put_pixel(
                     x,
                     y,
-                    Rgba([rng.gen_range(0..=255), rng.gen_range(0..=255), rng.gen_range(0..=255), 100]),
+                    Rgba([
+                        rng.gen_range(0..=255),
+                        rng.gen_range(0..=255),
+                        rng.gen_range(0..=255),
+                        100,
+                    ]),
                 );
             } else {
                 img.put_pixel(x + x_offset, y, *pixel);

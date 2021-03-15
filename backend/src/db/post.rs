@@ -1,24 +1,27 @@
 use core::time::Duration;
 use std::time::SystemTime;
 
-use comrak::{ComrakOptions, markdown_to_html};
-use sqlx::{Sqlite, Row};
+use comrak::{markdown_to_html, ComrakOptions};
+use sqlx::{Row, Sqlite};
 
 use blog_common::{
     dto::{
-        post::{PostDetail, NewPost},
+        post::{NewPost, PostDetail},
         PaginationData,
     },
     result::Error,
 };
 
 use crate::{
-    db::{self, DATA_SOURCE, SqlParam, tag},
-    util::snowflake,
+    db::{
+        self,
+        model::{Post, Tag, TagUsage},
+        tag,
+        tag::get_names,
+        SqlParam, DATA_SOURCE,
+    },
+    util::{result::Result, snowflake},
 };
-use crate::db::model::{Post, Tag, TagUsage};
-use crate::util::result::Result;
-use crate::db::tag::get_names;
 
 pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
     let offset: i32 = ((page_num - 1) * page_size) as i32;
@@ -62,24 +65,20 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
         .await?;
     let r = r.try_get::<i64, usize>(1);
     if let Err(e) = r {
-        return Err(Error::SqliteDbError.into())
+        return Err(Error::SqliteDbError.into());
     }
     let total = r.unwrap() as u64;
     if total < 1 {
-        return Ok(PaginationData {
-            total,
-            data: vec![],
-        });
+        return Ok(PaginationData { total, data: vec![] });
     }
-    let d = sqlx::query_as::<Sqlite, Post>("SELECT p.* FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? LIMIT ?, ?)")
-        .bind(tag.id)
-        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
-        .await?;
+    let d = sqlx::query_as::<Sqlite, Post>(
+        "SELECT p.* FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? LIMIT ?, ?)",
+    )
+    .bind(tag.id)
+    .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+    .await?;
     let d = d.iter().map(|i| i.into()).collect::<Vec<_>>();
-    Ok(PaginationData {
-        total,
-        data: d,
-    })
+    Ok(PaginationData { total, data: d })
 }
 
 pub async fn save(new_post: NewPost) -> Result<PostDetail> {
@@ -106,17 +105,16 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
     };
 
     // save to sqlite
-    let last_insert_rowid = sqlx::query(
-        "INSERT INTO post(id, title, markdown_content, rendered_content, created_at)VALUES(?,?,?,?,?,?)",
-    )
-    .bind(&post_detail.id)
-    .bind(&post_detail.title)
-    .bind(&new_post.content)
-    .bind(&post_detail.content)
-    .bind(&post_detail.created_at.timestamp_millis())
-    .execute(&DATA_SOURCE.get().unwrap().sqlite)
-    .await?
-    .last_insert_rowid();
+    let last_insert_rowid =
+        sqlx::query("INSERT INTO post(id, title, markdown_content, rendered_content, created_at)VALUES(?,?,?,?,?,?)")
+            .bind(&post_detail.id)
+            .bind(&post_detail.title)
+            .bind(&new_post.content)
+            .bind(&post_detail.content)
+            .bind(&post_detail.created_at.timestamp_millis())
+            .execute(&DATA_SOURCE.get().unwrap().sqlite)
+            .await?
+            .last_insert_rowid();
 
     if last_insert_rowid < 1 {
         // println!("last_insert_rowid {}", last_insert_rowid);
