@@ -3,7 +3,7 @@ use tokio::{
     sync::oneshot,
 };
 
-use blog_backend::{db, serve::server, service, util::result};
+use blog_backend::{db, service, util::result};
 
 fn main() -> result::Result<()> {
     let runtime = Builder::new_multi_thread()
@@ -34,7 +34,7 @@ fn main() -> result::Result<()> {
     runtime.block_on(db::init_datasource());
 
     println!("Creating server instance...");
-    let server = runtime.block_on(server::create_warp_server("127.0.0.1:9270", rx))?;
+    let server = runtime.block_on(service::server::create_warp_server("127.0.0.1:9270", rx))?;
 
     runtime.spawn(service::status::scanner());
 

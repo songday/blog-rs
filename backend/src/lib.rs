@@ -9,9 +9,6 @@
 
 pub mod db;
 mod facade;
-pub mod image;
-// pub mod server;
+mod image;
 pub mod service;
 pub mod util;
-// pub mod var;
-pub mod serve;

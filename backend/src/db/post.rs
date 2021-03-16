@@ -33,7 +33,7 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
         db::sqlite_get_list::<crate::db::Id>("SELECT id FROM blog ORDER BY id DESC LIMIT ?,?", Some(p)).await?;
     let id_array: Vec<i64> = id_array.iter().map(|d| d.id).collect();
 
-    let d = db::sled_get_list::<PostDetail>(&DATA_SOURCE.get().unwrap().blog, &id_array).await?;
+    let d = db::sled_get_list::<PostDetail>(&DATA_SOURCE.get().unwrap().setting, &id_array).await?;
 
     // let r = sqlx::query!("SELECT COUNT(id) AS total FROM blog").fetch_all(&DATASOURCE).await?;
     let row = sqlx::query("SELECT COUNT(id) FROM blog")

@@ -1,17 +1,14 @@
-use warp::{
-    Rejection, Reply,
-};
+use warp::{Rejection, Reply};
 
-use crate::db::user;
-use crate::service::status;
+use crate::{db::user, service::status};
 
-const CONFIG_HTML:&'static str = include_str!("../asset/page/config.html");
-const LOGIN_HTML:&'static str = include_str!("../asset/page/login.html");
-const REG_HTML:&'static str = include_str!("../asset/page/reg.html");
+const CONFIG_HTML: &'static str = include_str!("../resource/page/config.html");
+const LOGIN_HTML: &'static str = include_str!("../resource/page/login.html");
+const REG_HTML: &'static str = include_str!("../resource/page/reg.html");
 
 pub async fn index(token: Option<String>) -> Result<impl Reply, Rejection> {
     let html;
-    if user::have_user().await {
+    if user::have_admin_user().await {
         if matches!(token, Some(t) if status::check_auth(&t).is_ok()) {
             html = CONFIG_HTML;
         } else {
@@ -23,6 +20,4 @@ pub async fn index(token: Option<String>) -> Result<impl Reply, Rejection> {
     Ok(warp::reply::html(html))
 }
 
-pub async fn config(token: Option<String>) -> Result<impl Reply, Rejection> {
-    Ok(warp::reply::html(CONFIG_HTML))
-}
+pub async fn config(token: Option<String>) -> Result<impl Reply, Rejection> { Ok(warp::reply::html(CONFIG_HTML)) }

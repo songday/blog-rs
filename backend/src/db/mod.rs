@@ -36,7 +36,7 @@ pub enum SqlParam {
 
 #[derive(Clone)]
 pub struct DataSource {
-    blog: sled::Db,
+    setting: sled::Db,
     sqlite: SqliteConnPool,
 }
 
@@ -52,12 +52,12 @@ pub async fn init_datasource() {
         .connect_timeout(Duration::from_secs(2))
         .test_before_acquire(false);
     let pool = pool_ops
-        .connect("sqlite://./data/all.db")
+        .connect("sqlite://./data/blog.db")
         .await
         .expect("Init datasource failed.");
 
     let datasource = DataSource {
-        blog: sled::open("data/blog").expect("open"),
+        setting: sled::open("data/setting").expect("open"),
         sqlite: pool,
     };
 
@@ -84,7 +84,7 @@ pub async fn init_datasource() {
 pub async fn shutdown() {
     let ds = DATA_SOURCE.get().unwrap();
     ds.sqlite.close().await;
-    ds.blog.flush();
+    ds.setting.flush();
 }
 
 #[inline]

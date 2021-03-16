@@ -1,9 +1,9 @@
 pub(crate) mod asset;
 pub(crate) mod image;
+pub(crate) mod management;
 pub(crate) mod post;
 pub(crate) mod tag;
 pub(crate) mod user;
-pub(crate) mod management;
 
 use core::{convert::Infallible, result::Result};
 
@@ -27,7 +27,7 @@ use blog_common::{
     val,
 };
 
-// lazy_static_include_str!(INDEX_PAGE_BYTES, "./src/asset/index.html");
+// lazy_static_include_str!(INDEX_PAGE_BYTES, "./src/resource/index.html");
 
 pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply, Infallible> {
     dbg!(&err);

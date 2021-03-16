@@ -20,7 +20,7 @@ fn main() {
         for i in 0..10 {
             number_images.push_str("    NumberImage {\n");
             number_images.push_str(&format!(
-                "       data: include_bytes!(\"../asset/icon/{}-{}.png\"),\n",
+                "       data: include_bytes!(\"../resource/icon/{}-{}.png\"),\n",
                 group, i
             ));
             number_images.push_str("    },\n");

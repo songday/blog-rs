@@ -8,29 +8,24 @@ use blog_common::{
 };
 
 use crate::{
-    db::{self, model::User, DATA_SOURCE},
+    db::{
+        self,
+        model::{AdminUser, User},
+        DATA_SOURCE,
+    },
     util::{crypt, result::Result, snowflake},
 };
 use sqlx::Row;
 
-pub async fn have_user() -> bool {
-    let row = match sqlx::query("SELECT COUNT(*) FROM user")
-        .fetch_one(&DATA_SOURCE.get().unwrap().sqlite)
-        .await {
+pub async fn have_admin_user() -> bool {
+    let r: Option<AdminUser> = match db::sled_get(&DATA_SOURCE.get().unwrap().setting, "admin_user").await {
         Ok(r) => r,
         Err(e) => {
-            eprintln!("{}", e);
+            eprintln!("{}", e.0);
             return false;
         },
     };
-    let r = match row.try_get::<i64, usize>(1) {
-        Ok(r) => r,
-        Err(e) => {
-            eprintln!("{}", e);
-            return false;
-        },
-    };
-    r > 0
+    r.is_some()
 }
 
 pub async fn register(username: &str, password: &str) -> Result<UserInfo> {

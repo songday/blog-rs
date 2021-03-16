@@ -7,9 +7,7 @@ use warp::{
 };
 
 use blog_common::{
-    dto::{
-        user::{LoginParams, RegisterParams, UserInfo, UserInfoWrapper},
-    },
+    dto::user::{LoginParams, RegisterParams, UserInfo, UserInfoWrapper},
     result::{Error, ErrorResponse},
     val,
 };
@@ -22,8 +20,12 @@ use crate::{
 };
 
 pub async fn register(params: RegisterParams) -> Result<impl Reply, Rejection> {
-    if user::have_user().await {
-        return Ok(response_err(500, Error::BusinessException("已有管理用户，若忘记密码，请使用“找回密码”功能".to_string())).into_response());
+    if user::have_admin_user().await {
+        return Ok(response_err(
+            500,
+            Error::BusinessException("已有管理用户，若忘记密码，请使用“找回密码”功能".to_string()),
+        )
+        .into_response());
     }
 
     if params.password1.len() < 3 {
