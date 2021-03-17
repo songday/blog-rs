@@ -6,6 +6,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use flate2::{write::GzEncoder, Compression};
+
 fn walk_assets(path: impl AsRef<Path>) -> Result<Vec<PathBuf>, std::io::Error> {
     let mut files: Vec<PathBuf> = Vec::new();
     if let Ok(entries) = fs::read_dir(path) {
@@ -25,20 +27,42 @@ fn walk_assets(path: impl AsRef<Path>) -> Result<Vec<PathBuf>, std::io::Error> {
     Ok(files)
 }
 
+fn gz_files(raw_asset_files: Vec<PathBuf>) -> Result<Vec<PathBuf>, std::io::Error> {
+    let mut gz_files: Vec<PathBuf> = Vec::new();
+
+    for asset_file in raw_asset_files.iter() {
+        let cache: Vec<u8> = Vec::with_capacity(65535);
+        let mut e = GzEncoder::new(cache, Compression::default());
+        let b = fs::read(asset_file)?;
+        e.write_all(b.as_slice());
+        let compressed_bytes = e.finish()?;
+        let mut extension = asset_file.extension().unwrap().to_os_string().into_string().unwrap();
+        extension.push_str(".gz");
+        let gz_file = asset_file.with_extension(extension.as_str());
+        fs::write(gz_file.as_path(), compressed_bytes.as_slice())?;
+        gz_files.push(gz_file);
+    }
+    Ok(gz_files)
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo:rerun-if-changed=build.rs");
 
     // embed all static resource asset files
     let asset_root = format!("{}", Path::new("src").join("resource").join("asset").display());
     let asset_root = asset_root.as_str();
-    let all_static_asset_files = walk_assets(asset_root).unwrap();
+    let all_static_asset_files = walk_assets(asset_root)?;
+    let gz_files = gz_files(all_static_asset_files)?;
     let mut service_asset_file = File::create(Path::new("src").join("service").join("asset_list.rs"))?;
     writeln!(&mut service_asset_file, r##"["##,)?;
-    for f in all_static_asset_files.iter() {
+    for f in gz_files.iter() {
         writeln!(
             &mut service_asset_file,
             r##"("{name}", include_bytes!(r#"{file_path}"#)),"##,
-            name = format!("{}", f.display()).replace(asset_root, "").replace("\\", "/"),
+            name = format!("{}", f.display())
+                .replace(asset_root, "")
+                .replace(".gz", "")
+                .replace("\\", "/"),
             file_path = format!("{}", f.display()).replace("src", ".."),
         )?;
     }

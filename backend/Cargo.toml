@@ -19,7 +19,6 @@ chrono = { version = "0.4", features = ["serde"] }
 comrak = "0.9"
 # ctrlc = { version = "3.0", features = ["termination"] }
 # crc = "^1.0.0"
-flate2 = "1.0"
 futures = "0.3"
 hyper = "0.14"
 image = { version = "0.23", features = ["jpeg", "png", "gif"] }
@@ -50,3 +49,5 @@ warp = "0.3"
 [target.'cfg(target_env = "musl")'.dependencies]
 openssl = { version = "0.10", features = ["vendored"] }
 
+[build-dependencies]
+flate2 = "1.0"
