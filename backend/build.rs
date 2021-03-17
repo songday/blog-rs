@@ -1,7 +1,25 @@
+use core::result::Result;
 use std::{fs, path::Path};
 
+fn walk_assets(path: impl AsRef<Path>) -> Result<(), std::io::Error> {
+    let dir = fs::read_dir(path)?;
+    for entry in dir {
+        let entry = entry?;
+        let file_type = entry.file_type()?;
+        if file_type.is_dir() {
+            walk_assets(entry.path());
+        } else if file_type.is_file() {
+            println!("meet file {:?}", entry.file_name());
+        }
+    }
+    Ok(())
+}
+
 fn main() {
-    let dest_path = Path::new("src/image").join("number_image.rs");
+    let path = Path::new("src").join("resource").join("asset");
+    walk_assets(path);
+
+    let dest_path = Path::new("src").join("image").join("number_image.rs");
     const GROUP_AMOUNT: u8 = 4;
 
     let mut groups = String::with_capacity(512);

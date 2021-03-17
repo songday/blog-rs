@@ -3,34 +3,59 @@ use chrono::prelude::*;
 use sqlx::Sqlite;
 
 use blog_common::{
-    dto::user::{RegisterParams, UserInfo},
+    dto::user::UserInfo,
     result::Error,
 };
 
 use crate::{
     db::{
         self,
-        model::{AdminUser, User},
+        model::User,
         DATA_SOURCE,
     },
     util::{crypt, result::Result, snowflake},
 };
-use sqlx::Row;
 
-pub async fn have_admin_user() -> bool {
-    let r: Option<AdminUser> = match db::sled_get(&DATA_SOURCE.get().unwrap().setting, "admin_user").await {
+async fn get_admin_user() -> Option<User> {
+    match db::sled_get(&DATA_SOURCE.get().unwrap().setting, "admin_user").await {
         Ok(r) => r,
         Err(e) => {
             eprintln!("{}", e.0);
-            return false;
+            None
         },
-    };
-    r.is_some()
+    }
 }
 
-pub async fn register(username: &str, password: &str) -> Result<UserInfo> {
-    let r = sqlx::query("SELECT id FROM user WHERE username = ?")
-        .bind(username)
+pub async fn have_admin_user() -> bool {
+    get_admin_user().await.is_some()
+}
+
+pub async fn update_admin_user(email: &str, password: &str) -> Result<()> {
+    let admin = User {
+        id: 1,
+        email: email.to_owned(),
+        password: crypt::encrypt_password(password),
+        created_at: Utc::now().second() as i64,
+    };
+    let _r = db::sled_save(&DATA_SOURCE.get().unwrap().setting, "admin_user", &admin).await?;
+    Ok(())
+}
+
+pub async fn admin_user_login(email: &str, password: &str) -> Result<()> {
+    let u = get_admin_user().await;
+    if u.is_none() {
+        return Err(Error::LoginFailed.into());
+    }
+    let u = u.unwrap();
+    if u.email.eq(email) && crypt::verify_password(password, &u.password) {
+        return Ok(());
+    }
+    Err(Error::LoginFailed.into())
+}
+
+pub async fn register(email: &str, password: &str) -> Result<UserInfo> {
+    let r = sqlx::query("SELECT id FROM user WHERE email = ?")
+        .bind(email)
         .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
     if r.is_some() {
@@ -39,14 +64,14 @@ pub async fn register(username: &str, password: &str) -> Result<UserInfo> {
 
     let user = User {
         id: snowflake::gen_id() as i64,
-        email: username.to_owned(),
+        email: email.to_owned(),
         password: crypt::encrypt_password(password),
         created_at: Utc::now().second() as i64,
     };
 
-    let r = sqlx::query("INSERT INTO user(id,username,password,created_at) VALUES(?,?,?,?)")
+    let r = sqlx::query("INSERT INTO user(id,email,password,created_at) VALUES(?,?,?,?)")
         .bind(&user.id)
-        .bind(username)
+        .bind(email)
         .bind(&user.password)
         .bind(user.created_at as i64)
         .execute(&DATA_SOURCE.get().unwrap().sqlite)
@@ -58,9 +83,9 @@ pub async fn register(username: &str, password: &str) -> Result<UserInfo> {
     Ok(user.into())
 }
 
-pub async fn login(username: &str, password: &str) -> Result<UserInfo> {
-    let r = sqlx::query_as::<Sqlite, User>("SELECT * FROM user WHERE username = ?")
-        .bind(username)
+pub async fn login(email: &str, password: &str) -> Result<UserInfo> {
+    let r = sqlx::query_as::<Sqlite, User>("SELECT * FROM user WHERE email = ?")
+        .bind(email)
         .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
     if r.is_none() {

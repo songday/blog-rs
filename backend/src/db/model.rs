@@ -10,13 +10,6 @@ use sqlx::{
     error::BoxDynError,
 };
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct AdminUser {
-    pub email: String,
-    pub password: String,
-    pub created_at: i64,
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, sqlx::FromRow)]
 pub struct User {
     pub id: i64,
