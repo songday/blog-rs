@@ -2,17 +2,10 @@ use chrono::prelude::*;
 
 use sqlx::Sqlite;
 
-use blog_common::{
-    dto::user::UserInfo,
-    result::Error,
-};
+use blog_common::{dto::user::UserInfo, result::Error};
 
 use crate::{
-    db::{
-        self,
-        model::User,
-        DATA_SOURCE,
-    },
+    db::{self, model::User, DATA_SOURCE},
     util::{crypt, result::Result, snowflake},
 };
 
@@ -26,9 +19,7 @@ async fn get_admin_user() -> Option<User> {
     }
 }
 
-pub async fn have_admin_user() -> bool {
-    get_admin_user().await.is_some()
-}
+pub async fn have_admin_user() -> bool { get_admin_user().await.is_some() }
 
 pub async fn update_admin_user(email: &str, password: &str) -> Result<()> {
     let admin = User {

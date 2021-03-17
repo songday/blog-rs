@@ -1,24 +1,50 @@
 use core::result::Result;
-use std::{fs, path::Path};
+use std::{
+    error::Error,
+    fs::{self, File},
+    io::Write,
+    path::{Path, PathBuf},
+};
 
-fn walk_assets(path: impl AsRef<Path>) -> Result<(), std::io::Error> {
-    let dir = fs::read_dir(path)?;
-    for entry in dir {
-        let entry = entry?;
-        let file_type = entry.file_type()?;
-        if file_type.is_dir() {
-            walk_assets(entry.path());
-        } else if file_type.is_file() {
-            println!("meet file {:?}", entry.file_name());
+fn walk_assets(path: impl AsRef<Path>) -> Result<Vec<PathBuf>, std::io::Error> {
+    let mut files: Vec<PathBuf> = Vec::new();
+    if let Ok(entries) = fs::read_dir(path) {
+        for entry in entries {
+            if let Ok(entry) = entry {
+                let file_type = entry.file_type()?;
+                if file_type.is_dir() {
+                    let mut other_files = walk_assets(entry.path())?;
+                    files.append(&mut other_files);
+                } else if file_type.is_file() {
+                    files.push(entry.path());
+                    // files.push(entry.file_name().to_os_string().into_string().unwrap());
+                }
+            }
         }
     }
-    Ok(())
+    Ok(files)
 }
 
-fn main() {
-    let path = Path::new("src").join("resource").join("asset");
-    walk_assets(path);
+fn main() -> Result<(), Box<dyn Error>> {
+    println!("cargo:rerun-if-changed=build.rs");
 
+    // embed all static resource asset files
+    let asset_root = format!("{}", Path::new("src").join("resource").join("asset").display());
+    let asset_root = asset_root.as_str();
+    let all_static_asset_files = walk_assets(asset_root).unwrap();
+    let mut service_asset_file = File::create(Path::new("src").join("service").join("asset_list.rs"))?;
+    writeln!(&mut service_asset_file, r##"["##,)?;
+    for f in all_static_asset_files.iter() {
+        writeln!(
+            &mut service_asset_file,
+            r##"("{name}", include_bytes!(r#"{file_path}"#)),"##,
+            name = format!("{}", f.display()).replace(asset_root, "").replace("\\", "/"),
+            file_path = format!("{}", f.display()).replace("src", ".."),
+        )?;
+    }
+    writeln!(&mut service_asset_file, r##"]"##,)?;
+
+    // embed images for validate image
     let dest_path = Path::new("src").join("image").join("number_image.rs");
     const GROUP_AMOUNT: u8 = 4;
 
@@ -51,5 +77,6 @@ fn main() {
     all.push_str(&groups);
     all.push_str(&number_images);
     fs::write(&dest_path, &all).unwrap();
-    println!("cargo:rerun-if-changed=build.rs");
+
+    Ok(())
 }
