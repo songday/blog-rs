@@ -5,6 +5,7 @@ use std::{
     path::Path,
 };
 
+use futures::StreamExt;
 use once_cell::sync::OnceCell;
 use serde::Serialize;
 use sqlx::{
@@ -18,7 +19,6 @@ use blog_common::result::Error;
 use model::Tag;
 
 use crate::util::result::Result;
-use std::fs::Metadata;
 
 pub mod model;
 pub(crate) mod post;
@@ -52,13 +52,14 @@ pub struct Id {
 }
 
 pub async fn init_datasource() {
-    let db_file = Path::new(".").join("data").join("blog.db");
-    if !db_file.exists() {
+    let db_file = Path::new(".").join("data").join("blog.dat");
+    let db_file_not_exists = !db_file.exists();
+    if db_file_not_exists {
         let file = match OpenOptions::new()
             .read(false)
             .write(true)
             .create_new(true)
-            .open(db_file)
+            .open(db_file.as_path())
             .await
         {
             Ok(f) => f,
@@ -71,10 +72,23 @@ pub async fn init_datasource() {
         .max_connections(64)
         .connect_timeout(Duration::from_secs(2))
         .test_before_acquire(false);
+    let conn_str = format!("sqlite://{}", db_file.display());
     let pool = pool_ops
-        .connect(format!("sqlite://{}", db_file.display()).as_str())
+        .connect(conn_str.as_str())
         .await
         .expect("Init datasource failed.");
+
+    if db_file_not_exists {
+        println!("Init database");
+        let ddl = include_str!("../resource/sql/ddl.sql");
+        let mut stream = sqlx::query(ddl).execute_many(&pool).await;
+        while let Some(res) = stream.next().await {
+            match res {
+                Ok(r) => println!("Init table"),
+                Err(e) => eprintln!("err {:?}", e),
+            }
+        }
+    }
 
     let datasource = DataSource {
         setting: sled::open("data/setting").expect("open"),
