@@ -1,5 +1,9 @@
 use core::time::Duration;
-use std::marker::{Send, Unpin};
+use std::{
+    io::ErrorKind,
+    marker::{Send, Unpin},
+    path::Path,
+};
 
 use once_cell::sync::OnceCell;
 use serde::Serialize;
@@ -8,11 +12,13 @@ use sqlx::{
     sqlite::{SqliteArguments, SqliteRow},
     Sqlite, SqlitePool,
 };
+use tokio::fs::{remove_file, rename, File, OpenOptions};
 
 use blog_common::result::Error;
 use model::Tag;
 
 use crate::util::result::Result;
+use std::fs::Metadata;
 
 pub mod model;
 pub(crate) mod post;
@@ -46,13 +52,27 @@ pub struct Id {
 }
 
 pub async fn init_datasource() {
+    let db_file = Path::new(".").join("data").join("blog.db");
+    if !db_file.exists() {
+        let file = match OpenOptions::new()
+            .read(false)
+            .write(true)
+            .create_new(true)
+            .open(db_file)
+            .await
+        {
+            Ok(f) => f,
+            // Err(e: ErrorKind::NotFound) => None,
+            Err(e) => panic!(e),
+        };
+    }
     let pool_ops = PoolOptions::<Sqlite>::new()
         .min_connections(8)
         .max_connections(64)
         .connect_timeout(Duration::from_secs(2))
         .test_before_acquire(false);
     let pool = pool_ops
-        .connect("sqlite://./data/blog.db")
+        .connect(format!("sqlite://{}", db_file.display()).as_str())
         .await
         .expect("Init datasource failed.");
 

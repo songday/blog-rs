@@ -18,6 +18,15 @@ fn walk_assets(path: impl AsRef<Path>) -> Result<Vec<PathBuf>, std::io::Error> {
                     let mut other_files = walk_assets(entry.path())?;
                     files.append(&mut other_files);
                 } else if file_type.is_file() {
+                    let path = entry.path();
+                    let ext = path.extension();
+                    if ext.is_none() {
+                        continue;
+                    }
+                    let ext = ext.unwrap().to_os_string().into_string().unwrap();
+                    if ext.find("gz").is_some() {
+                        continue;
+                    }
                     files.push(entry.path());
                     // files.push(entry.file_name().to_os_string().into_string().unwrap());
                 }
@@ -49,7 +58,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo:rerun-if-changed=build.rs");
 
     // embed all static resource asset files
-    let asset_root = format!("{}", Path::new("src").join("resource").join("asset").display());
+    let asset_root = Path::new("src").join("resource").join("asset");
+    let asset_root = format!("{}/", asset_root.display());
     let asset_root = asset_root.as_str();
     let all_static_asset_files = walk_assets(asset_root)?;
     let gz_files = gz_files(all_static_asset_files)?;

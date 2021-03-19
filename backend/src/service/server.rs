@@ -70,6 +70,11 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
 
 pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result<impl Future<Output = ()> + 'static> {
     let index = warp::get().and(warp::path::end()).and_then(asset::index);
+    let asset = warp::get()
+        .and(warp::path("asset"))
+        .and(warp::path::tail())
+        .and(warp::path::end())
+        .and_then(asset::get_asset);
     let management = warp::get()
         .and(warp::path("management"))
         .and(warp::path::end())
@@ -182,6 +187,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .build();
 
     let routes = index
+        .or(asset)
         .or(management)
         .or(config)
         .or(user_login)

@@ -1,4 +1,3 @@
 [
-("/purecss.min.css", include_bytes!(r#"..\resource\asset\purecss.min.css.gz"#)),
-("/purecss.min.css", include_bytes!(r#"..\resource\asset\purecss.min.css.gz.gz"#)),
+("css/purecss.min.css", include_bytes!(r#"..\resource\asset/css\purecss.min.css.gz"#)),
 ]
