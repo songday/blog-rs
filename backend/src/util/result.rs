@@ -94,3 +94,24 @@ impl From<urlencoding::FromUrlEncodingError> for ErrorWrapper {
         ErrorWrapper(Error::BadRequest)
     }
 }
+
+impl From<argon2::Error> for ErrorWrapper {
+    fn from(e: argon2::Error) -> Self {
+        eprintln!("{:?}", e);
+        ErrorWrapper(Error::BadRequest)
+    }
+}
+
+impl From<base64::DecodeError> for ErrorWrapper {
+    fn from(e: base64::DecodeError) -> Self {
+        eprintln!("{:?}", e);
+        ErrorWrapper(Error::BadRequest)
+    }
+}
+
+// impl From<scrypt::errors::InvalidOutputLen> for ErrorWrapper {
+//     fn from(e: scrypt::errors::InvalidOutputLen) -> Self {
+//         eprintln!("{:?}", e);
+//         ErrorWrapper(Error::BadRequest)
+//     }
+// }

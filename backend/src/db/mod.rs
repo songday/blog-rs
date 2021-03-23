@@ -20,9 +20,9 @@ use model::Tag;
 
 use crate::util::result::Result;
 
+pub(crate) mod management;
 pub mod model;
 pub(crate) mod post;
-mod setting;
 pub(crate) mod tag;
 pub(crate) mod user;
 
@@ -91,7 +91,7 @@ pub async fn init_datasource() {
     }
 
     let datasource = DataSource {
-        setting: sled::open("data/setting").expect("open"),
+        setting: sled::open("data/management").expect("open"),
         sqlite: pool,
     };
 

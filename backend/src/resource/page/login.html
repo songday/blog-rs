@@ -3,9 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>配置管理用户</title>
+    <link rel="stylesheet" href="/asset/css/purecss.min.css">
+    <script type="text/javascript">
+        function login() {
+            const user = {
+                email: document.getElementById('aligned-email').value,
+                password: document.getElementById('aligned-password').value
+            };
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(user),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            fetch('/management/login', options)
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(err => {
+                    // code to handle request errors
+                });
+        }
+    </script>
 </head>
 <body>
-<form class="pure-form pure-form-aligned" action="/user/login">
+<form class="pure-form pure-form-aligned" onsubmit="login();return false;">
     <fieldset>
         <div class="pure-control-group">
             <label for="aligned-email">邮箱地址</label>
@@ -13,15 +35,11 @@
             <span class="pure-form-message-inline">用于管理博客或忘记密码之用.</span>
         </div>
         <div class="pure-control-group">
-            <label for="aligned-password1">登录密码</label>
-            <input type="password" id="aligned-password1" placeholder="密码" />
-        </div>
-        <div class="pure-control-group">
-            <label for="aligned-password2">确认密码</label>
-            <input type="password" id="aligned-password2" placeholder="密码" />
+            <label for="aligned-password">登录密码</label>
+            <input type="password" id="aligned-password" placeholder="密码" />
         </div>
         <div class="pure-controls">
-            <button type="submit" class="pure-button pure-button-primary">提交</button>
+            <button type="submit" class="pure-button pure-button-primary">登录</button>
         </div>
     </fieldset>
 </form>

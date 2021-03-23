@@ -6,8 +6,9 @@ use warp::{self, reject, Filter, Rejection, Server};
 
 use blog_common::{
     dto::{
+        management::{AdminUser, Setting},
         post::NewPost,
-        user::{LoginParams, RegisterParams, UserInfo},
+        user::{UserInfo, UserParams},
     },
     val,
 };
@@ -80,24 +81,37 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::end())
         .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
         .and_then(management::index);
-    let config = warp::get()
+    let management_register = warp::post()
+        .and(warp::path("management"))
+        .and(warp::path("register"))
+        .and(warp::path::end())
+        .and(warp::body::json::<AdminUser>())
+        .and_then(management::admin_register);
+    let management_login = warp::post()
+        .and(warp::path("management"))
+        .and(warp::path("login"))
+        .and(warp::path::end())
+        .and(warp::body::json::<AdminUser>())
+        .and_then(management::admin_login);
+    let management_config = warp::get()
         .and(warp::path("management"))
         .and(warp::path("config"))
         .and(warp::path::end())
         .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::body::json::<Setting>())
         .and_then(management::config);
     let user_login = warp::post()
         .and(warp::path("user"))
         .and(warp::path("login"))
         .and(warp::path::end())
         .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
-        .and(warp::body::json::<LoginParams>())
+        .and(warp::body::json::<UserParams>())
         .and_then(user::login);
     let user_register = warp::post()
         .and(warp::path("user"))
         .and(warp::path("register"))
         .and(warp::path::end())
-        .and(warp::body::json::<RegisterParams>())
+        .and(warp::body::json::<UserParams>())
         .and_then(user::register);
     let user_logout = warp::get()
         .and(warp::path("user"))
@@ -189,7 +203,9 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
     let routes = index
         .or(asset)
         .or(management)
-        .or(config)
+        .or(management_register)
+        .or(management_login)
+        .or(management_config)
         .or(user_login)
         .or(user_register)
         .or(user_logout)

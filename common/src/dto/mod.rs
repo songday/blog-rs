@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::result::ErrorResponse;
 
+pub mod management;
 pub mod post;
-mod setting;
 pub mod user;
 
 //https://stackoverflow.com/questions/49953960/cannot-resolve-t-serdedeserializea-when-deriving-deserialize-on-a-generic

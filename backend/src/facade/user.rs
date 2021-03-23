@@ -7,7 +7,7 @@ use warp::{
 };
 
 use blog_common::{
-    dto::user::{LoginParams, RegisterParams, UserInfo, UserInfoWrapper},
+    dto::user::{UserInfo, UserInfoWrapper, UserParams},
     result::{Error, ErrorResponse},
     val,
 };
@@ -19,25 +19,13 @@ use crate::{
     util::common,
 };
 
-pub async fn register(params: RegisterParams) -> Result<impl Reply, Rejection> {
-    if user::have_admin_user().await {
-        return Ok(response_err(
-            500,
-            Error::BusinessException("已有管理用户，若忘记密码，请使用“找回密码”功能".to_string()),
-        )
-        .into_response());
-    }
-
+pub async fn register(params: UserParams) -> Result<impl Reply, Rejection> {
     if params.password1.len() < 3 {
         return Ok(response_err(500, Error::BusinessException("输入的密码不能少于3位".to_string())).into_response());
     }
 
     if params.email.len() < 5 || !common::EMAIL_REGEX.is_match(&params.email) {
         return Ok(response_err(500, Error::BusinessException("输入的邮箱地址不合法".to_string())).into_response());
-    }
-
-    if params.password1 != params.password2 {
-        return Ok(response_err(500, Error::BusinessException("登录密码与确认密码不一致".to_string())).into_response());
     }
 
     match user::register(&params.email, &params.password1).await {
@@ -60,12 +48,12 @@ pub async fn register(params: RegisterParams) -> Result<impl Reply, Rejection> {
     }
 }
 
-pub async fn login(token: Option<String>, params: LoginParams) -> Result<WarpResponse, Rejection> {
+pub async fn login(token: Option<String>, params: UserParams) -> Result<WarpResponse, Rejection> {
     if token.is_none() {
         return Ok(response_err(500, Error::InvalidSessionId).into_response());
     }
 
-    if params.password.len() < 3 {
+    if params.password1.len() < 3 {
         return Ok(response_err(500, Error::BusinessException("输入的密码不能少于3位".to_string())).into_response());
     }
 
@@ -78,7 +66,7 @@ pub async fn login(token: Option<String>, params: LoginParams) -> Result<WarpRes
         return Ok(response_err(500, Error::InvalidVerifyCode).into_response());
     }
 
-    match user::login(&params.email, &params.password).await {
+    match user::login(&params.email, &params.password1).await {
         Ok(u) => {
             status::user_online(&token, u.clone());
             let w = UserInfoWrapper {

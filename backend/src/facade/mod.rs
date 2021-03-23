@@ -7,6 +7,11 @@ pub(crate) mod user;
 
 use core::{convert::Infallible, result::Result};
 
+use blog_common::{
+    dto::Response as ApiResponse,
+    result::{Error, ErrorResponse},
+    val,
+};
 use bytes::Buf;
 use hyper::header::{self, HeaderMap, HeaderValue};
 use serde::Serialize;
@@ -17,15 +22,7 @@ use warp::{
     Rejection, Reply,
 };
 
-use blog_common::{
-    dto::{
-        post::NewPost,
-        user::{LoginParams, RegisterParams, UserInfo, UserInfoWrapper},
-        Response as ApiResponse,
-    },
-    result::{Error, ErrorResponse},
-    val,
-};
+use crate::util::result::Result as CommonResult;
 
 // lazy_static_include_str!(INDEX_PAGE_BYTES, "./src/resource/index.html");
 
@@ -76,16 +73,33 @@ fn wrap_err(status: u16, error: Error) -> ApiResponse<String> {
     }
 }
 
+#[inline]
 fn response_data<D: Serialize>(data: D) -> Json {
     let r = wrap_data(data);
 
     warp::reply::json(&r)
 }
 
+#[inline]
 fn response_err(status: u16, error: Error) -> Json {
     let r = wrap_err(status, error);
 
     warp::reply::json(&r)
+}
+
+#[inline]
+fn response<D: Serialize>(result: CommonResult<D>) -> Result<impl Reply, Rejection> {
+    let r = match result {
+        Ok(d) => response_data(d),
+        Err(ew) => {
+            let e = ew.0;
+            match e {
+                Error::BusinessException(m) => response_err(400, Error::BusinessException(m)),
+                _ => response_err(500, e),
+            }
+        },
+    };
+    Ok(r)
 }
 
 // https://stackoverflow.com/questions/62964013/how-can-two-headers-of-the-same-name-be-attached-to-a-warp-reply

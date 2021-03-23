@@ -1,5 +1,4 @@
 use chrono::prelude::*;
-
 use sqlx::Sqlite;
 
 use blog_common::{dto::user::UserInfo, result::Error};
@@ -8,41 +7,6 @@ use crate::{
     db::{self, model::User, DATA_SOURCE},
     util::{crypt, result::Result, snowflake},
 };
-
-async fn get_admin_user() -> Option<User> {
-    match db::sled_get(&DATA_SOURCE.get().unwrap().setting, "admin_user").await {
-        Ok(r) => r,
-        Err(e) => {
-            eprintln!("{}", e.0);
-            None
-        },
-    }
-}
-
-pub async fn have_admin_user() -> bool { get_admin_user().await.is_some() }
-
-pub async fn update_admin_user(email: &str, password: &str) -> Result<()> {
-    let admin = User {
-        id: 1,
-        email: email.to_owned(),
-        password: crypt::encrypt_password(password),
-        created_at: Utc::now().second() as i64,
-    };
-    let _r = db::sled_save(&DATA_SOURCE.get().unwrap().setting, "admin_user", &admin).await?;
-    Ok(())
-}
-
-pub async fn admin_user_login(email: &str, password: &str) -> Result<()> {
-    let u = get_admin_user().await;
-    if u.is_none() {
-        return Err(Error::LoginFailed.into());
-    }
-    let u = u.unwrap();
-    if u.email.eq(email) && crypt::verify_password(password, &u.password) {
-        return Ok(());
-    }
-    Err(Error::LoginFailed.into())
-}
 
 pub async fn register(email: &str, password: &str) -> Result<UserInfo> {
     let r = sqlx::query("SELECT id FROM user WHERE email = ?")
@@ -56,7 +20,7 @@ pub async fn register(email: &str, password: &str) -> Result<UserInfo> {
     let user = User {
         id: snowflake::gen_id() as i64,
         email: email.to_owned(),
-        password: crypt::encrypt_password(password),
+        password: crypt::encrypt_password(password)?,
         created_at: Utc::now().second() as i64,
     };
 
@@ -84,7 +48,7 @@ pub async fn login(email: &str, password: &str) -> Result<UserInfo> {
     }
 
     let u = r.unwrap();
-    if crate::util::crypt::verify_password(password, &u.password) {
+    if crate::util::crypt::verify_password(password, &u.password)? {
         Ok(u.into())
     } else {
         Err(Error::LoginFailed.into())

@@ -3,9 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <title>配置管理用户</title>
+    <link rel="stylesheet" href="/asset/css/purecss.min.css">
+    <script type="text/javascript">
+        function register() {
+            const user = {
+                email: document.getElementById('aligned-email').value,
+                password: document.getElementById('aligned-password1').value
+            };
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(user),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            fetch('/management/register', options)
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(err => {
+                    // code to handle request errors
+                });
+        }
+    </script>
 </head>
 <body>
-<form class="pure-form pure-form-aligned" action="/user/reg">
+<form class="pure-form pure-form-aligned" onsubmit="register();return false;">
     <fieldset>
         <div class="pure-control-group">
             <label for="aligned-email">邮箱地址</label>
@@ -21,7 +43,7 @@
             <input type="password" id="aligned-password2" placeholder="密码" />
         </div>
         <div class="pure-controls">
-            <button type="submit" class="pure-button pure-button-primary">提交</button>
+            <button type="submit" class="pure-button pure-button-primary">创建管理员</button>
         </div>
     </fieldset>
 </form>

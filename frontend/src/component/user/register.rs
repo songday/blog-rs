@@ -12,10 +12,10 @@ use crate::{
     util::{request, Error},
     val,
 };
-use blog_common::dto::user::{RegisterParams, UserInfoWrapper};
+use blog_common::dto::user::{UserInfoWrapper, UserParams};
 
 pub(crate) struct Model {
-    register_params: RegisterParams,
+    register_params: UserParams,
     error: Option<Error>,
     fetch_task: Option<FetchTask>,
     response: Callback<Result<UserInfoWrapper, Error>>,
@@ -38,7 +38,7 @@ impl Component for Model {
     type Properties = ();
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Model {
-            register_params: RegisterParams::default(),
+            register_params: UserParams::default(),
             error: None,
             fetch_task: None,
             response: link.callback(Msg::Response),
@@ -55,7 +55,7 @@ impl Component for Model {
             Msg::UpdatePassword2(s) => self.register_params.password2 = s,
             Msg::UpdateCaptcha(s) => self.register_params.captcha = s,
             Msg::Request => {
-                let fetch_task = request::post::<RegisterParams, UserInfoWrapper>(
+                let fetch_task = request::post::<UserParams, UserInfoWrapper>(
                     val::USER_REGISTER_URL,
                     self.register_params.clone(),
                     self.response.clone(),

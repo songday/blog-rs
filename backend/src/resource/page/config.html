@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>配置</title>
+    <link rel="stylesheet" href="/asset/css/purecss.min.css">
 </head>
 <body>
 <h1>
@@ -11,17 +12,20 @@
 <form class="pure-form pure-form-aligned">
     <fieldset>
         <div class="pure-control-group">
+            <label for="aligned-domain">博客根域名</label>
+            <input type="text" id="aligned-domain" placeholder="博客根域名" />
+        </div>
+        <div class="pure-control-group">
             <label for="aligned-name">博客名称</label>
             <input type="text" id="aligned-name" placeholder="博客名称" />
-            <span class="pure-form-message-inline">This is a required field.</span>
         </div>
         <div class="pure-control-group">
-            <label for="aligned-password">版权信息</label>
-            <input type="password" id="aligned-password" placeholder="Password" />
+            <label for="aligned-copyright">版权信息</label>
+            <input type="password" id="aligned-copyright" placeholder="版权信息" />
         </div>
         <div class="pure-control-group">
-            <label for="aligned-email">备案信息</label>
-            <input type="email" id="aligned-email" placeholder="Email Address" />
+            <label for="aligned-license">备案信息</label>
+            <input type="email" id="aligned-license" placeholder="备案信息" />
         </div>
         <div class="pure-controls">
             <button type="submit" class="pure-button pure-button-primary">Submit</button>
