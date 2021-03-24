@@ -35,7 +35,7 @@ pub async fn register(email: &str, password: &str) -> Result<UserInfo> {
         return Err(Error::RegisterFailed.into());
     }
 
-    Ok(user.into())
+    Ok((&user).into())
 }
 
 pub async fn login(email: &str, password: &str) -> Result<UserInfo> {
@@ -49,7 +49,7 @@ pub async fn login(email: &str, password: &str) -> Result<UserInfo> {
 
     let u = r.unwrap();
     if crate::util::crypt::verify_password(password, &u.password)? {
-        Ok(u.into())
+        Ok((&u).into())
     } else {
         Err(Error::LoginFailed.into())
     }

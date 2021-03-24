@@ -18,7 +18,7 @@ use blog_common::{
 
 use crate::{
     db::user,
-    facade::{auth_cookie, response_data, response_err},
+    facade::{auth_cookie, wrap_json_data, wrap_json_err},
     image::image,
     service::status,
     util::{
@@ -49,7 +49,7 @@ pub async fn verify_image(token: Option<String>) -> Result<WarpResponse, Rejecti
 
 pub async fn upload(user: Option<UserInfo>, data: FormData) -> Result<impl Reply, Rejection> {
     if user.is_none() {
-        return Ok(response_err(500, Error::NotAuthed));
+        return Ok(wrap_json_err(500, Error::NotAuthed));
     }
     let file_info = io::save_upload_file(
         data,
@@ -57,23 +57,23 @@ pub async fn upload(user: Option<UserInfo>, data: FormData) -> Result<impl Reply
     )
     .await;
     if let Err(e) = file_info {
-        return Ok(response_err(500, e));
+        return Ok(wrap_json_err(500, e));
     }
     let file_info = file_info.unwrap();
     let thumbnail = image::resize_from_file(&file_info).await?;
     let d = UploadImage::new(thumbnail, file_info.origin_filename);
-    Ok(response_data(&d))
+    Ok(wrap_json_data(&d))
 }
 
 pub async fn save(filename: String, user: Option<UserInfo>, body: impl Buf) -> Result<impl Reply, Rejection> {
     if user.is_none() {
-        return Ok(response_err(500, Error::NotAuthed));
+        return Ok(wrap_json_err(500, Error::NotAuthed));
     }
     let filename = match urlencoding::decode(&filename) {
         Ok(f) => f,
         Err(e) => {
             eprintln!("{:#?}", e);
-            return Ok(response_err(500, Error::BadRequest));
+            return Ok(wrap_json_err(500, Error::BadRequest));
         },
     };
     let file_info = io::save_upload_stream(
@@ -83,12 +83,12 @@ pub async fn save(filename: String, user: Option<UserInfo>, body: impl Buf) -> R
     )
     .await;
     if let Err(e) = file_info {
-        return Ok(response_err(500, e));
+        return Ok(wrap_json_err(500, e));
     }
     let file_info = file_info.unwrap();
     let thumbnail = image::resize_from_file(&file_info).await?;
     let d = UploadImage::new(thumbnail, file_info.origin_filename);
-    Ok(response_data(&d))
+    Ok(wrap_json_data(&d))
 }
 
 // pub async fn resize_blog_image<B: AsRef<&[u8]>, T: AsRef<&str>>(b: B, type: T) {}

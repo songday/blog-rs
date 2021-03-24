@@ -18,11 +18,11 @@ pub struct User {
     pub created_at: i64,
 }
 
-impl Into<UserInfo> for User {
+impl Into<UserInfo> for &User {
     fn into(self) -> UserInfo {
         UserInfo {
             id: self.id,
-            email: self.email,
+            email: self.email.clone(),
         }
     }
 }

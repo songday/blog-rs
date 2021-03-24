@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct AdminUser {
     pub email: String,
     pub password: String,
+    pub captcha: String,
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]

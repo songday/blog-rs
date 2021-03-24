@@ -11,7 +11,6 @@ pub async fn index() -> Result<impl Reply, Rejection> {
 }
 
 pub async fn get_asset(tail: Tail) -> Result<Response<Body>, Rejection> {
-    println!("full path {}", tail.as_str());
     let file = asset::get_asset(tail.as_str());
     if file.is_none() {
         let r = Response::builder().status(404).body("".into()).unwrap();

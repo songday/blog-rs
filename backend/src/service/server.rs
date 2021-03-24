@@ -91,6 +91,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("management"))
         .and(warp::path("login"))
         .and(warp::path::end())
+        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
         .and(warp::body::json::<AdminUser>())
         .and_then(management::admin_login);
     let management_config = warp::get()

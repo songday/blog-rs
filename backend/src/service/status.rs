@@ -112,13 +112,18 @@ pub fn get_verify_code(token: &str) -> Result<Vec<u8>> {
     Ok(numbers)
 }
 
-pub fn check_verify_code(token: &str, code: &str) -> bool {
+// pub fn check_verify_code(token: &str, code: &str) -> bool {
+pub fn check_verify_code(token: Option<String>, code: &str) -> Result<String> {
+    if token.is_none() {
+        return Err(Error::InvalidSessionId.into());
+    }
+    let token = token.unwrap();
     if token.len() != 32 {
-        return false;
+        return Err(Error::InvalidSessionId.into());
     }
     let valid_code = {
         let r = VERIFY_CODES.read();
-        if let Some(v) = r.get(token) {
+        if let Some(v) = r.get(&token) {
             let mut s = String::with_capacity(8);
             for c in v.code.iter() {
                 s.push_str(c.to_string().as_str());
@@ -129,7 +134,7 @@ pub fn check_verify_code(token: &str, code: &str) -> bool {
         }
     };
     if valid_code {
-        VERIFY_CODES.write().remove(token);
+        VERIFY_CODES.write().remove(&token);
     }
-    valid_code
+    Ok(token)
 }

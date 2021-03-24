@@ -8,7 +8,8 @@
         function login() {
             const user = {
                 email: document.getElementById('aligned-email').value,
-                password: document.getElementById('aligned-password').value
+                password: document.getElementById('aligned-password').value,
+                captcha: document.getElementById('aligned-captcha').value,
             };
             const options = {
                 method: 'POST',
@@ -19,7 +20,13 @@
             };
             fetch('/management/login', options)
                 .then(response => response.json())
-                .then(data => console.log(data))
+                .then(data => {
+                    console.log(data);
+                    if (data.status > 0) {
+                        document.getElementById('errorMessage').value = data.error.detail;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    }
+                })
                 .catch(err => {
                     // code to handle request errors
                 });
@@ -27,18 +34,25 @@
     </script>
 </head>
 <body>
+<div id="errorMessage" style="color:red;display:none"></div>
 <form class="pure-form pure-form-aligned" onsubmit="login();return false;">
     <fieldset>
         <div class="pure-control-group">
             <label for="aligned-email">邮箱地址</label>
-            <input type="email" id="aligned-email" placeholder="邮箱地址" />
+            <input type="email" id="aligned-email" placeholder="邮箱地址"/>
             <span class="pure-form-message-inline">用于管理博客或忘记密码之用.</span>
         </div>
         <div class="pure-control-group">
             <label for="aligned-password">登录密码</label>
-            <input type="password" id="aligned-password" placeholder="密码" />
+            <input type="password" id="aligned-password" placeholder="密码"/>
+        </div>
+        <div class="pure-control-group">
+            <label for="aligned-captcha">验证码</label>
+            <img src="/tool/verify-image" /><br/>
+            <input type="password" id="aligned-captcha" placeholder="验证码"/>
         </div>
         <div class="pure-controls">
+            如果忘记管理员账号，可以删除<br/>
             <button type="submit" class="pure-button pure-button-primary">登录</button>
         </div>
     </fieldset>

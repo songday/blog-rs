@@ -34,7 +34,7 @@ pub enum Error {
     InvalidVerifyCode,
     #[error("登录信息失效，请重新登录")]
     NotAuthed,
-    #[error("Login failed")]
+    #[error("登录失败，请重试。")]
     LoginFailed,
     #[error("Registration failed")]
     RegisterFailed,

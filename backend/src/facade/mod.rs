@@ -47,42 +47,32 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
         error = Error::InternalServerError;
     }
 
-    let json = response_err(code.as_u16(), error);
+    let json = wrap_json_err(code.as_u16(), error);
 
     Ok(warp::reply::with_status(json, code))
 }
 
 #[inline]
-fn wrap_data<D: Serialize>(data: D) -> ApiResponse<D> {
-    ApiResponse::<D> {
+fn wrap_json_data<D: Serialize>(data: D) -> Json {
+    let r = ApiResponse::<D> {
         status: 0,
         error: None,
         data: Some(data),
-    }
+    };
+
+    warp::reply::json(&r)
 }
 
 #[inline]
-fn wrap_err(status: u16, error: Error) -> ApiResponse<String> {
-    ApiResponse::<String> {
+fn wrap_json_err(status: u16, error: Error) -> Json {
+    let r = ApiResponse::<String> {
         status,
         error: Some(ErrorResponse {
             detail: format!("{}", error),
             code: error,
         }),
         data: None,
-    }
-}
-
-#[inline]
-fn response_data<D: Serialize>(data: D) -> Json {
-    let r = wrap_data(data);
-
-    warp::reply::json(&r)
-}
-
-#[inline]
-fn response_err(status: u16, error: Error) -> Json {
-    let r = wrap_err(status, error);
+    };
 
     warp::reply::json(&r)
 }
@@ -90,12 +80,12 @@ fn response_err(status: u16, error: Error) -> Json {
 #[inline]
 fn response<D: Serialize>(result: CommonResult<D>) -> Result<impl Reply, Rejection> {
     let r = match result {
-        Ok(d) => response_data(d),
+        Ok(d) => wrap_json_data(d),
         Err(ew) => {
             let e = ew.0;
             match e {
-                Error::BusinessException(m) => response_err(400, Error::BusinessException(m)),
-                _ => response_err(500, e),
+                Error::BusinessException(m) => wrap_json_err(400, Error::BusinessException(m)),
+                _ => wrap_json_err(500, e),
             }
         },
     };
