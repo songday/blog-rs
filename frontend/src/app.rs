@@ -1,5 +1,10 @@
 use alloc::{rc::Rc, string::String};
 
+use blog_common::{
+    dto::user::{UserInfo, UserInfoWrapper},
+    val as CommonVal,
+};
+use wasm_bindgen::JsCast;
 use yew::{
     prelude::*,
     services::{fetch::FetchTask, ConsoleService},
@@ -8,11 +13,6 @@ use yew_router::{
     prelude::*,
     switch::{AllowMissing, Permissive},
     Switch,
-};
-
-use blog_common::{
-    dto::user::{UserInfo, UserInfoWrapper},
-    val as CommonVal,
 };
 
 use crate::{
@@ -85,7 +85,7 @@ impl Component for Model {
         match msg {
             Msg::Authenticated(user) => {
                 ConsoleService::log("signed in");
-                store::save(CommonVal::AUTH_HEADER_NAME, Some(user.access_token));
+                store::save(CommonVal::SESSION_ID_HEADER_NAME, Some(user.access_token));
                 ConsoleService::log("saved auth to store");
                 self.user = Some(user.user_info);
                 return true;
@@ -96,7 +96,7 @@ impl Component for Model {
                 self.fetch_task = Some(r);
             },
             Msg::LogoutResponse(Ok::<String, _>(s)) => {
-                store::save(CommonVal::AUTH_HEADER_NAME, None);
+                store::save(CommonVal::SESSION_ID_HEADER_NAME, None);
                 ConsoleService::log("signed out");
                 self.user = None;
                 self.fetch_task = None;
@@ -171,7 +171,7 @@ impl Component for Model {
                 </div>
                 <div class="pure-g">
                     <div class="pure-u-1-1 tac">
-                        { crate::component::raw_html("span", "&copy; 2020.") }
+                        { crate::component::raw_html("span", "&copy; 2021.") }
                     </div>
                 </div>
             </>
@@ -181,22 +181,43 @@ impl Component for Model {
     fn rendered(&mut self, first_render: bool) {
         // Get current user info if a token is available when mounted
         if first_render {
-            let token = store::get(CommonVal::AUTH_HEADER_NAME);
-            if token.is_some() {
-                // let token = token.as_ref().unwrap();
-                let r = request::get(val::USER_INFO_URL, self.link.callback(Msg::UserInfoResponse));
-                self.fetch_task = Some(r);
+            // 由于使用了 HttpOnly，所以JS读不了cookie，就需要读取 local storage
+            // local storage
+            // let token = store::get(CommonVal::USER_AUTH_MARK_HEADER);
+            // if token.is_some() {
+            //     // let token = token.as_ref().unwrap();
+            //     let r = request::get(val::USER_INFO_URL, self.link.callback(Msg::UserInfoResponse));
+            //     self.fetch_task = Some(r);
+            // }
+            // cookie
+            let window = web_sys::window().unwrap();
+            let document = window.document().unwrap();
+            let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
+            let cookie: Option<String> = match html_document.cookie() {
+                Ok(c) => {
+                    ConsoleService::log(&c);
+                    Some(c)
+                },
+                Err(e) => {
+                    ConsoleService::log(&format!("{:?}", e));
+                    None
+                },
+            };
+            if cookie.is_none() {
+                return;
             }
-            // 由于使用了 HttpOnly，所以JS读不了cookie
-            // let window = web_sys::window().unwrap();
-            // let document = window.document().unwrap();
-            // let html_document = document.dyn_into::<web_sys::HtmlDocument>().unwrap();
-            // match html_document.cookie() {
-            //     Ok(s) => ConsoleService::log(&s),
-            //     Err(e) => ConsoleService::log(&format!("{:?}", e)),
+            let cookie = cookie.unwrap();
+            let p = cookie.find(CommonVal::USER_AUTH_MARK_HEADER);
+            if p.is_none() {
+                return;
+            }
+            // let p = p.unwrap() + search.len();
+            // let token = match cookie[p..].find(';').map(|i| i + p) {
+            //     Some(semicolon) => &cookie[p..semicolon],
+            //     None => &cookie[p..],
             // };
-            // let task = self.auth.current(self.current_user_response.clone());
-            // self.current_user_task = Some(task);
+            let r = request::get(val::USER_INFO_URL, self.link.callback(Msg::UserInfoResponse));
+            self.fetch_task = Some(r);
         }
     }
 }

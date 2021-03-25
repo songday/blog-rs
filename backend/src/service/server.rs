@@ -45,7 +45,7 @@ where
 // https://stackoverflow.com/questions/54988438/how-to-check-the-authorization-header-using-warp
 
 fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Clone {
-    warp::cookie::optional(val::AUTH_HEADER_NAME).map(|a: Option<String>| match a {
+    warp::cookie::optional(val::SESSION_ID_HEADER_NAME).map(|a: Option<String>| match a {
         Some(s) => match status::check_auth(&s) {
             Ok(u) => Some(u),
             Err(_) => None,
@@ -79,7 +79,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
     let management = warp::get()
         .and(warp::path("management"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(management::index);
     let management_register = warp::post()
         .and(warp::path("management"))
@@ -91,14 +91,14 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("management"))
         .and(warp::path("login"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and(warp::body::json::<AdminUser>())
         .and_then(management::admin_login);
     let user_login = warp::post()
         .and(warp::path("user"))
         .and(warp::path("login"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and(warp::body::json::<UserParams>())
         .and_then(user::login);
     let user_register = warp::post()
@@ -111,19 +111,19 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("user"))
         .and(warp::path("logout"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(user::logout);
     let user_info = warp::get()
         .and(warp::path("user"))
         .and(warp::path("info"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(user::info);
     let verify_image = warp::get()
         .and(warp::path("tool"))
         .and(warp::path("verify-image"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(image::verify_image);
     let post_list = warp::get()
         .and(warp::path("post"))

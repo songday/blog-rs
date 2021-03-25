@@ -4,7 +4,7 @@ use warp::{Rejection, Reply};
 
 use crate::{
     db::tag,
-    facade::{auth_cookie, wrap_json_data, wrap_json_err},
+    facade::{session_id_cookie, wrap_json_data, wrap_json_err},
 };
 
 pub async fn list() -> Result<impl Reply, Rejection> {

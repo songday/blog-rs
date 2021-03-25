@@ -132,13 +132,17 @@ impl Component for Model {
                             value=&self.blog_params.title
                             oninput=self.link.callback(|e: InputData| Msg::UpdateTitle(e.value))
                             />
-                        <textarea
-                            class="pure-input-2-3"
-                            rows="16"
-                            placeholder="Write your article (in markdown)"
-                            value={&self.blog_params.content}
-                            oninput=self.link.callback(|e: InputData| Msg::UpdateContent(e.value))>
-                        </textarea>
+                        // <textarea
+                        //     class="pure-input-2-3"
+                        //     rows="16"
+                        //     placeholder="Write your article (in markdown)"
+                        //     value={&self.blog_params.content}
+                        //     oninput=self.link.callback(|e: InputData| Msg::UpdateContent(e.value))>
+                        // </textarea>
+                        <textarea id="edit-area"></textarea>
+                        <script type="text/javascript">
+                            var easyMDE = new EasyMDE({element: document.getElementById("edit-area")});
+                        </script>
                         <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
                         <input
                             class="pure-input-2-3"

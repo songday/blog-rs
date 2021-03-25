@@ -18,7 +18,7 @@ use blog_common::{
 
 use crate::{
     db::user,
-    facade::{auth_cookie, wrap_json_data, wrap_json_err},
+    facade::{session_id_cookie, wrap_json_data, wrap_json_err},
     image::image,
     service::status,
     util::{
@@ -36,7 +36,10 @@ pub async fn verify_image(token: Option<String>) -> Result<WarpResponse, Rejecti
             let mut r = Response::new(b.into());
             let mut header = HeaderMap::with_capacity(2);
             header.insert(header::CONTENT_TYPE, HeaderValue::from_str("image/png").unwrap());
-            header.insert(header::SET_COOKIE, HeaderValue::from_str(&auth_cookie(&token)).unwrap());
+            header.insert(
+                header::SET_COOKIE,
+                HeaderValue::from_str(&session_id_cookie(&token)).unwrap(),
+            );
             // header.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, HeaderValue::from_str("*").unwrap());
             // header.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, HeaderValue::from_str("true").unwrap());
             let headers = r.headers_mut();

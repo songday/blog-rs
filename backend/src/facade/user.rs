@@ -14,7 +14,7 @@ use blog_common::{
 
 use crate::{
     db::user,
-    facade::{auth_cookie, wrap_json_data, wrap_json_err},
+    facade::{session_id_cookie, wrap_json_data, wrap_json_err},
     service::status,
     util::common,
 };
@@ -38,7 +38,7 @@ pub async fn register(params: UserParams) -> Result<impl Reply, Rejection> {
             };
             let reply = wrap_json_data(&w);
             let reply_with_header =
-                warp::reply::with_header(reply, header::SET_COOKIE.as_str(), auth_cookie(&w.access_token));
+                warp::reply::with_header(reply, header::SET_COOKIE.as_str(), session_id_cookie(&w.access_token));
             Ok(reply_with_header.into_response())
         },
         Err(e) => {
@@ -68,7 +68,7 @@ pub async fn login(token: Option<String>, params: UserParams) -> Result<WarpResp
             };
             let reply = wrap_json_data(&w);
             let reply_with_header =
-                warp::reply::with_header(reply, header::SET_COOKIE.as_str(), auth_cookie(&w.access_token));
+                warp::reply::with_header(reply, header::SET_COOKIE.as_str(), session_id_cookie(&w.access_token));
             Ok(reply_with_header.into_response())
         },
         Err(e) => {

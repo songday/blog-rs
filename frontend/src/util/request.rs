@@ -168,7 +168,7 @@ where
         RequestMethod::POST => Request::post(url),
     };
     request = request.header("Content-Type", "application/json");
-    if let Some(token) = store::get(val::AUTH_HEADER_NAME) {
+    if let Some(token) = store::get(val::SESSION_ID_HEADER_NAME) {
         request = request.header("Authorization", token);
     }
 

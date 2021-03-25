@@ -22,7 +22,10 @@
                 .then(response => response.json())
                 .then(data => {
                     console.log(data);
-                    if (data.status > 0) {
+                    if (data.status === 0) {
+                        document.cookie = 'X-SONGDAY-USER-AUTHED=true; Path=/;';
+                        location.reload();
+                    } else {
                         document.getElementById('errorMessage').value = data.error.detail;
                         document.getElementById('errorMessage').style.display = 'block';
                     }
@@ -36,7 +39,7 @@
 <body>
 <div class="pure-g">
     <div class="pure-u-1-1">
-        管理登录
+        <h1>管理登录</h1>
     </div>
 </div>
 <div class="pure-g">
@@ -48,7 +51,6 @@
                 <div class="pure-control-group">
                     <label for="aligned-email">邮箱地址</label>
                     <input type="email" id="aligned-email" placeholder="邮箱地址"/>
-                    <span class="pure-form-message-inline">用于管理博客或忘记密码之用.</span>
                 </div>
                 <div class="pure-control-group">
                     <label for="aligned-password">登录密码</label>
@@ -56,11 +58,13 @@
                 </div>
                 <div class="pure-control-group">
                     <label for="aligned-captcha">验证码</label>
-                    <img src="/tool/verify-image" /><br/>
-                    <input type="password" id="aligned-captcha" placeholder="验证码"/>
+                    <input type="text" id="aligned-captcha" placeholder="验证码"/>
+                </div>
+                <div class="pure-control-group">
+                    <label></label>
+                    <img src="/tool/verify-image" />
                 </div>
                 <div class="pure-controls">
-                    如果忘记管理员账号，可以删除<br/>
                     <button type="submit" class="pure-button pure-button-primary">登录</button>
                     <button type="button" class="pure-button" onclick="location.href='/';">返回到博客</button>
                 </div>

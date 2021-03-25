@@ -95,11 +95,11 @@ fn response<D: Serialize>(result: CommonResult<D>) -> Result<impl Reply, Rejecti
 // https://stackoverflow.com/questions/62964013/how-can-two-headers-of-the-same-name-be-attached-to-a-warp-reply
 
 #[inline]
-fn auth_cookie(token: &str) -> String {
+fn session_id_cookie(token: &str) -> String {
     format!(
         // "{}={}; Domain=songday.com; Secure; HttpOnly; Path=/",
-        "{}={}; HttpOnly; Path=/",
-        val::AUTH_HEADER_NAME,
+        "{}={}; HttpOnly; Path=/;",
+        val::SESSION_ID_HEADER_NAME,
         token,
     )
 }

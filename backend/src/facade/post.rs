@@ -18,7 +18,7 @@ use blog_common::{
 
 use crate::{
     db::post,
-    facade::{auth_cookie, wrap_json_data, wrap_json_err},
+    facade::{session_id_cookie, wrap_json_data, wrap_json_err},
     service::status,
     util::common,
 };

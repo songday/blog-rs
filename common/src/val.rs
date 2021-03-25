@@ -1,2 +1,3 @@
 pub const MAX_BLOG_UPLOAD_IMAGE_SIZE: usize = 536870912; //512Kb
-pub const AUTH_HEADER_NAME: &'static str = "X-SONGDAY-SESSION-ID";
+pub const SESSION_ID_HEADER_NAME: &'static str = "X-SONGDAY-SESSION-ID";
+pub const USER_AUTH_MARK_HEADER: &'static str = "X-SONGDAY-USER-AUTHED";
