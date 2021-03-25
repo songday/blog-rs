@@ -33,10 +33,6 @@ pub async fn index(token: Option<String>) -> Result<impl Reply, Rejection> {
     Ok(warp::reply::html(html))
 }
 
-pub async fn config(token: Option<String>, setting: Setting) -> Result<impl Reply, Rejection> {
-    Ok(warp::reply::html(CONFIG_HTML))
-}
-
 pub async fn admin_register(params: AdminUser) -> Result<impl Reply, Rejection> {
     facade::response(management::admin_register(&params.email, &params.password).await)
 }

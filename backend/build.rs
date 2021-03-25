@@ -54,8 +54,22 @@ fn gz_files(raw_asset_files: Vec<PathBuf>) -> Result<Vec<PathBuf>, std::io::Erro
     Ok(gz_files)
 }
 
+fn get_content_type(filename: String) -> String {
+    if filename.rfind(".css").is_some() {
+        String::from("text/css")
+    } else if filename.rfind(".js").is_some() {
+        String::from("text/javascript")
+    } else if filename.rfind(".html").is_some() {
+        String::from("text/html; charset=utf-8")
+    } else if filename.rfind(".wasm").is_some() {
+        String::from("application/wasm")
+    } else {
+        String::new()
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
-    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=build.rs,resource/asset/index.html");
 
     // embed all static resource asset files
     let asset_root = Path::new("src").join("resource").join("asset");
@@ -68,12 +82,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     for f in gz_files.iter() {
         writeln!(
             &mut service_asset_file,
-            r##"("{name}", include_bytes!(r#"{file_path}"#)),"##,
+            r##"("{name}", include_bytes!(r#"{file_path}"#), "{mime}"),"##,
             name = format!("{}", f.display())
                 .replace(asset_root, "")
                 .replace(".gz", "")
                 .replace("\\", "/"),
             file_path = format!("{}", f.display()).replace("src", ".."),
+            mime = get_content_type(format!("{}", f.display())),
         )?;
     }
     writeln!(&mut service_asset_file, r##"]"##,)?;

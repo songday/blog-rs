@@ -94,13 +94,6 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
         .and(warp::body::json::<AdminUser>())
         .and_then(management::admin_login);
-    let management_config = warp::get()
-        .and(warp::path("management"))
-        .and(warp::path("config"))
-        .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
-        .and(warp::body::json::<Setting>())
-        .and_then(management::config);
     let user_login = warp::post()
         .and(warp::path("user"))
         .and(warp::path("login"))
@@ -206,7 +199,6 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(management)
         .or(management_register)
         .or(management_login)
-        .or(management_config)
         .or(user_login)
         .or(user_register)
         .or(user_logout)

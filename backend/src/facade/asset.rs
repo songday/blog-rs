@@ -5,24 +5,22 @@ use warp::{filters::path::Tail, http::Response, Rejection, Reply};
 
 use crate::service::asset;
 
-pub async fn index() -> Result<impl Reply, Rejection> {
-    // let s = include_str!("../resource/page/index.html");
-    Ok(warp::reply::html(""))
-}
+pub async fn index() -> Result<impl Reply, Rejection> { Ok(response_asset("index.html")) }
 
-pub async fn get_asset(tail: Tail) -> Result<Response<Body>, Rejection> {
-    let file = asset::get_asset(tail.as_str());
+pub async fn get_asset(tail: Tail) -> Result<Response<Body>, Rejection> { Ok(response_asset(tail.as_str())) }
+
+fn response_asset(asset: &str) -> Response<Body> {
+    let file = asset::get_asset(asset);
     if file.is_none() {
-        let r = Response::builder().status(404).body("".into()).unwrap();
-        Ok(r)
+        Response::builder().status(404).body("".into()).unwrap()
     } else {
-        let (name, data) = file.unwrap();
+        let (_name, data, mime) = file.unwrap();
         let r = Response::builder()
-            .header(header::CONTENT_TYPE, &asset::get_content_type(name))
+            .header(header::CONTENT_TYPE, mime)
             .header(header::CONTENT_LENGTH, data.len())
             .header(header::CONTENT_ENCODING, "gzip")
             .body(data.into())
             .unwrap();
-        Ok(r)
+        r
     }
 }

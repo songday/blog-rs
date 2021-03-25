@@ -60,15 +60,17 @@ impl Component for Model {
                 if self.props.user.is_none() {
                     html! {
                     <>
-                        <div><RouterAnchor<AppRoute> route=AppRoute::UserLogin> {"登录"} </RouterAnchor<AppRoute>></div>
-                        <div><RouterAnchor<AppRoute> route=AppRoute::UserRegister> {"注册"} </RouterAnchor<AppRoute>></div>
+                        <div><a href="/management"> {"登录"} </a></div>
+                        // <div><RouterAnchor<AppRoute> route=AppRoute::UserLogin> {"登录"} </RouterAnchor<AppRoute>></div>
+                        // <div><RouterAnchor<AppRoute> route=AppRoute::UserRegister> {"注册"} </RouterAnchor<AppRoute>></div>
                     </>
                     }
                 } else {
                     html! {
                     <>
                         <div>{self.props.user.as_ref().unwrap().email.as_str()}</div>
-                        <div><RouterAnchor<AppRoute> route=AppRoute::BlogCompose> {"新建内容"} </RouterAnchor<AppRoute>></div>
+                        <div><a href="/management"> {"管理"} </a></div>
+                        <div><RouterAnchor<AppRoute> route=AppRoute::BlogCompose> {"写博客"} </RouterAnchor<AppRoute>></div>
                         <div><a href="#logout" onclick=self.link.callback(|_| Msg::Logout)> { "退出" } </a></div>
                     </>
                     }
