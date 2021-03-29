@@ -1,5 +1,6 @@
 use alloc::{boxed::Box, string::String, vec::Vec};
 
+use wasm_bindgen::prelude::*;
 use yew::{
     agent::Bridged, html, services::fetch::FetchTask, Bridge, Callback, Component, ComponentLink, FocusEvent, Html,
     InputData, ShouldRender,
@@ -14,6 +15,14 @@ use crate::{
     util::{request, Error},
     val,
 };
+
+#[wasm_bindgen(module = "/asset/editor.js")]
+extern "C" {
+    #[wasm_bindgen(js_name = initEditor)]
+    fn init_editor();
+    #[wasm_bindgen(js_name = getContent)]
+    fn get_content();
+}
 
 pub(crate) struct Model {
     blog_params: NewPost,
@@ -36,6 +45,7 @@ pub(crate) enum Msg {
     Request,
     Response(Result<PostDetail, Error>),
     TagsResponse(Result<Vec<Tag>, Error>),
+    InitEditor,
 }
 
 impl Component for Model {
@@ -111,6 +121,10 @@ impl Component for Model {
                 self.fetch_task = None;
                 return true;
             },
+            Msg::InitEditor => {
+                init_editor();
+                return true;
+            },
         }
         false
     }
@@ -119,7 +133,7 @@ impl Component for Model {
 
     fn view(&self) -> Html {
         html! {
-            <div>
+            <>
                 <form class="pure-form pure-form-stacked" onsubmit=self.link.callback(|ev: FocusEvent| {
                     ev.prevent_default();
                     Msg::Request
@@ -139,10 +153,7 @@ impl Component for Model {
                         //     value={&self.blog_params.content}
                         //     oninput=self.link.callback(|e: InputData| Msg::UpdateContent(e.value))>
                         // </textarea>
-                        <textarea id="edit-area"></textarea>
-                        <script type="text/javascript">
-                            var easyMDE = new EasyMDE({element: document.getElementById("edit-area")});
-                        </script>
+                        <div id="editor"></div>
                         <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
                         <input
                             class="pure-input-2-3"
@@ -173,7 +184,10 @@ impl Component for Model {
                         </button>
                     </fieldset>
                 </form>
-            </div>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.48.4/codemirror.min.css" />
+                <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+                <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js" onload=self.link.callback(|_| Msg::InitEditor)></script>
+            </>
         }
     }
 
