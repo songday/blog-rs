@@ -9,7 +9,7 @@ use yew::{
     ChangeData, Component, ComponentLink, Html, ShouldRender,
 };
 
-use blog_common::dto::blog::UploadImage;
+use blog_common::dto::post::UploadImage;
 
 use crate::{
     util::{request, Error},

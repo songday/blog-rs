@@ -10,7 +10,7 @@ use yew::{
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
 
 use blog_common::dto::{
-    blog::{BlogDetail, NewBlog},
+    post::{NewPost, PostDetail},
     PaginationData,
 };
 
@@ -31,17 +31,17 @@ pub(crate) struct Model {
     props: Props,
     error: Option<Error>,
     fetch_task: Option<FetchTask>,
-    response: Callback<Result<PaginationData<Vec<BlogDetail>>, Error>>,
+    response: Callback<Result<PaginationData<Vec<PostDetail>>, Error>>,
     router_agent: Box<dyn Bridge<RouteAgent>>,
     link: ComponentLink<Self>,
-    blogs: Vec<BlogDetail>,
+    blogs: Vec<PostDetail>,
     total_page_num: u8,
 }
 
 pub(crate) enum Msg {
     Ignore,
     Request,
-    Response(Result<PaginationData<Vec<BlogDetail>>, Error>),
+    Response(Result<PaginationData<Vec<PostDetail>>, Error>),
     PaginationChanged(u8),
 }
 
@@ -57,7 +57,7 @@ impl Model {
         }
         url.push_str(self.props.current_page.to_string().as_str());
 
-        let fetch_task = request::get::<PaginationData<Vec<BlogDetail>>>(&url, self.response.clone());
+        let fetch_task = request::get::<PaginationData<Vec<PostDetail>>>(&url, self.response.clone());
         self.fetch_task = Some(fetch_task);
     }
 }
@@ -85,7 +85,7 @@ impl Component for Model {
             Msg::Request => {
                 self.request();
             },
-            Msg::Response(Ok::<PaginationData<Vec<BlogDetail>>, _>(blog)) => {
+            Msg::Response(Ok::<PaginationData<Vec<PostDetail>>, _>(blog)) => {
                 self.blogs = blog.data;
                 self.total_page_num = (blog.total / 20) as u8;
                 if blog.total % 20 != 0 {

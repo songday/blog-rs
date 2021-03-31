@@ -3,14 +3,14 @@ use tokio::{
     sync::oneshot,
 };
 
-use blog_backend::{db, result, server, service};
+use blog_backend::{db, service, util::result};
 
 fn main() -> result::Result<()> {
     let runtime = Builder::new_multi_thread()
         .worker_threads(4)
         .enable_all()
-        .thread_name("songday-web-service")
-        .thread_stack_size(64 * 1024)
+        .thread_name("Songday-blog-service")
+        .thread_stack_size(1024 * 1024)
         .build()?;
 
     let (tx, rx) = oneshot::channel::<()>();
@@ -34,7 +34,7 @@ fn main() -> result::Result<()> {
     runtime.block_on(db::init_datasource());
 
     println!("Creating server instance...");
-    let server = runtime.block_on(server::create_warp_server("127.0.0.1:9270", rx))?;
+    let server = runtime.block_on(service::server::create_warp_server("127.0.0.1:9270", rx))?;
 
     runtime.spawn(service::status::scanner());
 

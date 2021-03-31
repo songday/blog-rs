@@ -23,7 +23,7 @@ use blog_common::{
     result::{Error, Result},
 };
 
-use crate::var;
+use crate::util::val;
 
 lazy_static! {
     static ref UPLOAD_DIR_LAYOUT: StrftimeItems<'static> = StrftimeItems::new("%Y/%m/%d");
@@ -66,7 +66,7 @@ async fn get_upload_file_writer(
     let day = now.day().to_string();
 
     let mut path_buf = PathBuf::with_capacity(128);
-    path_buf.push(var::IMAGE_ROOT_PATH);
+    path_buf.push(val::IMAGE_ROOT_PATH);
     path_buf.push(year.as_str());
     path_buf.push(month.as_str());
     path_buf.push(day.as_str());

@@ -10,16 +10,19 @@ use sqlx::{
 };
 
 use blog_common::result::Error;
+use model::Tag;
 
-use crate::{model::Tag, result::Result};
+use crate::util::result::Result;
 
-pub(crate) mod blog;
+pub mod model;
+pub(crate) mod post;
+mod setting;
 pub(crate) mod tag;
 pub(crate) mod user;
 
 type SqliteConnPool = sqlx::Pool<Sqlite>;
 
-static DATASOURCE: OnceCell<DataSource> = OnceCell::new();
+static DATA_SOURCE: OnceCell<DataSource> = OnceCell::new();
 
 // pub trait SqliteParam = for<'q> Encode<'q, Sqlite> + Type<Sqlite>;
 
@@ -33,8 +36,7 @@ pub enum SqlParam {
 
 #[derive(Clone)]
 pub struct DataSource {
-    user: sled::Db,
-    blog: sled::Db,
+    setting: sled::Db,
     sqlite: SqliteConnPool,
 }
 
@@ -50,28 +52,18 @@ pub async fn init_datasource() {
         .connect_timeout(Duration::from_secs(2))
         .test_before_acquire(false);
     let pool = pool_ops
-        .connect("sqlite://./data/all.db")
+        .connect("sqlite://./data/blog.db")
         .await
         .expect("Init datasource failed.");
 
     let datasource = DataSource {
-        user: sled::open("data/user").expect("open"),
-        blog: sled::open("data/blog").expect("open"),
+        setting: sled::open("data/setting").expect("open"),
         sqlite: pool,
     };
 
-    if let Err(e) = DATASOURCE.set(datasource) {
+    if let Err(e) = DATA_SOURCE.set(datasource) {
         panic!(e);
     }
-
-    match sqlite_get_list::<Tag>("SELECT name FROM blog_tag ORDER BY name ASC", None).await {
-        Ok(tags) => {
-            for tag in tags.iter() {
-                tag::cache_tag_id(&tag.name);
-            }
-        },
-        Err(e) => panic!(e),
-    };
 
     /*
     下面这个不会打印，解决：
@@ -90,10 +82,9 @@ pub async fn init_datasource() {
 }
 
 pub async fn shutdown() {
-    let ds = DATASOURCE.get().unwrap();
+    let ds = DATA_SOURCE.get().unwrap();
     ds.sqlite.close().await;
-    ds.blog.flush();
-    ds.user.flush();
+    ds.setting.flush();
 }
 
 #[inline]
@@ -153,7 +144,7 @@ where
             };
         }
     }
-    let r: Vec<D> = q.fetch_all(&DATASOURCE.get().unwrap().sqlite).await?;
+    let r: Vec<D> = q.fetch_all(&DATA_SOURCE.get().unwrap().sqlite).await?;
     // let d = sqlx::query_as::<Sqlite, D>(query)
     //     .bind(0i32)
     //     .bind(crate::vars::BLOG_PAGE_SIZE)

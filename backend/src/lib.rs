@@ -7,12 +7,8 @@
 // #[macro_use]
 // extern crate lazy_static;
 
-pub mod controller;
 pub mod db;
-pub mod image;
-pub mod model;
-pub mod result;
-pub mod server;
+mod facade;
+mod image;
 pub mod service;
 pub mod util;
-pub mod var;

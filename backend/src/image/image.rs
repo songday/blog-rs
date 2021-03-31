@@ -3,20 +3,18 @@ use std::{io::Write, path::Path, vec::Vec};
 use bytes::{buf::BufMut, Bytes, BytesMut};
 use image::{
     self,
-    codecs::jpeg::JpegEncoder,
-    // png::PngEncoder,
-    codecs::png::{CompressionType, FilterType, PngEncoder},
+    codecs::{
+        jpeg::JpegEncoder,
+        png::{CompressionType, FilterType, PngEncoder},
+    },
     ColorType, DynamicImage, GenericImage, GenericImageView, ImageBuffer, ImageFormat, Luma, Rgb, Rgba, RgbaImage,
 };
 use rand::{thread_rng, Rng};
 use tokio::fs::copy;
 
-use blog_common::{
-    dto::UploadFileInfo,
-    result::{Error, Result},
-};
+use blog_common::{dto::UploadFileInfo, result::Error};
 
-use crate::var;
+use crate::util::{result::Result, val};
 
 pub type ImageWidth = u32;
 pub type ImageHeight = u32;
@@ -81,7 +79,12 @@ pub fn gen_verify_image(numbers: &[u8]) -> Bytes {
                 img.put_pixel(
                     x,
                     y,
-                    Rgba([rng.gen_range(0..=255), rng.gen_range(0..=255), rng.gen_range(0..=255), 100]),
+                    Rgba([
+                        rng.gen_range(0..=255),
+                        rng.gen_range(0..=255),
+                        rng.gen_range(0..=255),
+                        100,
+                    ]),
                 );
             } else {
                 img.put_pixel(x + x_offset, y, *pixel);
@@ -104,7 +107,7 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<String> {
         "gif" => ImageFormat::Gif,
         "jpg" | "jpeg" => ImageFormat::Jpeg,
         "png" => ImageFormat::Png,
-        _ => return Err(Error::UnsupportedFileType(file.extension.clone())),
+        _ => return Err(Error::UnsupportedFileType(file.extension.clone()).into()),
     };
 
     let filepath = file.filepath.as_path();
@@ -113,7 +116,7 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<String> {
         Ok((w, h)) => (w, h),
         Err(e) => {
             dbg!(e);
-            return Err(Error::UnknownFileType);
+            return Err(Error::UnknownFileType.into());
         },
     };
 
@@ -126,7 +129,7 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<String> {
     if h <= MAX_DIMENSION && w <= MAX_DIMENSION {
         return match copy(filepath, &dest_path).await {
             Ok(_) => Ok(dest_path),
-            Err(_) => Err(Error::CreateThumbnailFailed),
+            Err(_) => Err(Error::CreateThumbnailFailed.into()),
         };
     }
 
@@ -134,7 +137,7 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<String> {
         Ok(i) => i,
         Err(e) => {
             err(e);
-            return Err(Error::UnknownFileType);
+            return Err(Error::UnknownFileType.into());
         },
     };
 
@@ -152,10 +155,10 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<String> {
     let d = dynamic_image.thumbnail_exact(w, h);
     if let Err(e) = d.save_with_format(&dest_path, image_format) {
         dbg!(e);
-        return Err(Error::CreateThumbnailFailed);
+        return Err(Error::CreateThumbnailFailed.into());
     }
 
-    Ok(dest_path[var::IMAGE_ROOT_PATH_LENGTH + 1..].replace(r"\", "/"))
+    Ok(dest_path[val::IMAGE_ROOT_PATH_LENGTH + 1..].replace(r"\", "/"))
 }
 
 // 下面这个，如果写成：B, 'a，就会提示找不到生命周期
@@ -167,7 +170,7 @@ where
         Ok(t) => t,
         Err(e) => {
             err(e);
-            return Err(Error::UnknownFileType);
+            return Err(Error::UnknownFileType.into());
         },
     };
 
@@ -175,7 +178,7 @@ where
         Ok(i) => i,
         Err(e) => {
             err(e);
-            return Err(Error::UnknownFileType);
+            return Err(Error::UnknownFileType.into());
         },
     };
 
