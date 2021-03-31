@@ -17,7 +17,7 @@ argon2 = "0.1"
 base64 = "0.13"
 bytes = "1"
 chrono = { version = "0.4", features = ["serde"] }
-comrak = "0.9"
+comrak = "0.10"
 # ctrlc = { version = "3.0", features = ["termination"] }
 # crc = "^1.0.0"
 futures = "0.3"

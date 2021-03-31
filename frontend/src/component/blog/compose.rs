@@ -2,8 +2,13 @@ use alloc::{boxed::Box, string::String, vec::Vec};
 
 use wasm_bindgen::prelude::*;
 use yew::{
-    agent::Bridged, html, services::fetch::FetchTask, Bridge, Callback, Component, ComponentLink, FocusEvent, Html,
-    InputData, ShouldRender,
+    agent::Bridged,
+    html,
+    services::{
+        fetch::FetchTask,
+        reader::{File, FileChunk, FileData, ReaderService, ReaderTask},
+    },
+    Bridge, Callback, ChangeData, Component, ComponentLink, FocusEvent, Html, InputData, ShouldRender,
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
 
@@ -15,13 +20,14 @@ use crate::{
     util::{request, Error},
     val,
 };
+use yew::services::ConsoleService;
 
 #[wasm_bindgen(module = "/asset/editor.js")]
 extern "C" {
     #[wasm_bindgen(js_name = initEditor)]
     fn init_editor();
     #[wasm_bindgen(js_name = getContent)]
-    fn get_content();
+    fn get_content() -> String;
 }
 
 pub(crate) struct Model {
@@ -39,7 +45,7 @@ pub(crate) enum Msg {
     AppendTag(String),
     Ignore,
     UpdateTitle(String),
-    UpdateContent(String),
+    // UpdateContent(String),
     UpdateNewTag(String),
     RemoveTag(String),
     Request,
@@ -78,7 +84,7 @@ impl Component for Model {
             },
             Msg::Ignore => {},
             Msg::UpdateTitle(s) => self.blog_params.title = s,
-            Msg::UpdateContent(s) => self.blog_params.content = s,
+            // Msg::UpdateContent(s) => self.blog_params.content = s,
             Msg::UpdateNewTag(s) => self.new_tags = s,
             Msg::RemoveTag(s) => {
                 if let Some(tags) = &mut self.blog_params.tags {
@@ -86,6 +92,8 @@ impl Component for Model {
                 }
             },
             Msg::Request => {
+                self.blog_params.content = get_content();
+                ConsoleService::log(&self.blog_params.content);
                 if !self.new_tags.is_empty() {
                     self.blog_params.tags = Some(
                         self.new_tags
@@ -139,6 +147,7 @@ impl Component for Model {
                     Msg::Request
                 })>
                     <fieldset>
+                        <h3>{"标题"}</h3>
                         <input
                             class="pure-input-2-3"
                             type="text"
@@ -153,8 +162,10 @@ impl Component for Model {
                         //     value={&self.blog_params.content}
                         //     oninput=self.link.callback(|e: InputData| Msg::UpdateContent(e.value))>
                         // </textarea>
+                        <h3>{"内容"}</h3>
                         <div id="editor"></div>
-                        <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
+                        // <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
+                        <h3>{"标签"}</h3>
                         <input
                             class="pure-input-2-3"
                             type="text"
@@ -175,18 +186,19 @@ impl Component for Model {
                                 })}
                             }
                         </div>
-                        <br/>
-                        <button
-                            class="pure-button pure-button-primary"
-                            type="submit"
-                            disabled=false>
-                            { "Publish" }
-                        </button>
+                        <div>
+                            <button
+                                class="pure-button pure-button-primary"
+                                type="submit"
+                                disabled=false>
+                                { "发布" }
+                            </button>
+                        </div>
                     </fieldset>
                 </form>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.48.4/codemirror.min.css" />
-                <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
-                <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js" onload=self.link.callback(|_| Msg::InitEditor)></script>
+                <link rel="stylesheet" href="/asset/codemirror.min.css" />
+                <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
+                <script src="/asset/toastui-editor-all.min.js" onload=self.link.callback(|_| Msg::InitEditor)></script>
             </>
         }
     }

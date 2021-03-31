@@ -30,7 +30,7 @@ fn encrypt_password_salt(salt: &[u8], password: &[u8]) -> Result<String> {
     a.hash_password_into(argon2::Algorithm::Argon2id, password, &salt, &[], &mut result)?;
 
     let p = to_phc_string(&salt, result.as_slice());
-    println!("p = {}", &p);
+    // println!("p = {}", &p);
     Ok(p)
 }
 

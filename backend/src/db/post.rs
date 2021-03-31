@@ -1,9 +1,6 @@
 use core::time::Duration;
 use std::time::SystemTime;
 
-use comrak::{markdown_to_html, ComrakOptions};
-use sqlx::{Row, Sqlite};
-
 use blog_common::{
     dto::{
         post::{NewPost, PostDetail},
@@ -11,6 +8,8 @@ use blog_common::{
     },
     result::Error,
 };
+use comrak::{markdown_to_html, ComrakOptions};
+use sqlx::{Row, Sqlite};
 
 use crate::{
     db::{
