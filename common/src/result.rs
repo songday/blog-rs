@@ -58,6 +58,8 @@ pub enum Error {
     ReadBlogIdDataByTagFailed,
     #[error("Saving blog id data by tag failed")]
     SaveBlogIdDataByTagFailed,
+    #[error("Tag not found")]
+    TagNotFound,
 
     #[error("{0}")]
     BusinessException(String),

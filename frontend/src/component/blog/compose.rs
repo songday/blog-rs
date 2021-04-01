@@ -28,11 +28,14 @@ extern "C" {
     fn init_editor();
     #[wasm_bindgen(js_name = getContent)]
     fn get_content() -> String;
+    #[wasm_bindgen(js_name = inputTag)]
+    fn input_tag(event: web_sys::KeyboardEvent);
+    #[wasm_bindgen(js_name = getSelectedTags)]
+    fn get_selected_tags() -> Vec<wasm_bindgen::JsValue>;
 }
 
 pub(crate) struct Model {
     blog_params: NewPost,
-    new_tags: String,
     error: Option<Error>,
     fetch_task: Option<FetchTask>,
     response: Callback<Result<PostDetail, Error>>,
@@ -42,12 +45,11 @@ pub(crate) struct Model {
 }
 
 pub(crate) enum Msg {
-    AppendTag(String),
+    SelectTag(String),
     Ignore,
     UpdateTitle(String),
     // UpdateContent(String),
-    UpdateNewTag(String),
-    RemoveTag(String),
+    InputNewTag(web_sys::KeyboardEvent),
     Request,
     Response(Result<PostDetail, Error>),
     TagsResponse(Result<Vec<Tag>, Error>),
@@ -64,7 +66,6 @@ impl Component for Model {
                 content: String::default(),
                 tags: None,
             },
-            new_tags: String::default(),
             error: None,
             fetch_task: None,
             // response: Default::default(),
@@ -77,32 +78,16 @@ impl Component for Model {
 
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
-            Msg::AppendTag(tag) => {
-                self.new_tags.push_str(tag.as_str());
-                self.new_tags.push(' ');
-                return true;
+            Msg::SelectTag(tag) => {
+                return false;
             },
             Msg::Ignore => {},
             Msg::UpdateTitle(s) => self.blog_params.title = s,
-            // Msg::UpdateContent(s) => self.blog_params.content = s,
-            Msg::UpdateNewTag(s) => self.new_tags = s,
-            Msg::RemoveTag(s) => {
-                if let Some(tags) = &mut self.blog_params.tags {
-                    tags.retain(|t| t != &s);
-                }
-            },
+            Msg::InputNewTag(e) => input_tag(e),
             Msg::Request => {
                 self.blog_params.content = get_content();
                 ConsoleService::log(&self.blog_params.content);
-                if !self.new_tags.is_empty() {
-                    self.blog_params.tags = Some(
-                        self.new_tags
-                            .trim()
-                            .split(|c| c == ' ')
-                            .map(|s| String::from(s))
-                            .collect(),
-                    );
-                }
+                self.blog_params.tags = Some(get_selected_tags().iter().map(|e| e.as_string().unwrap()).collect());
                 let fetch_task = request::post::<NewPost, PostDetail>(
                     val::BLOG_SAVE_URL,
                     self.blog_params.clone(),
@@ -144,7 +129,7 @@ impl Component for Model {
             <>
                 <form class="pure-form pure-form-stacked" onsubmit=self.link.callback(|ev: FocusEvent| {
                     ev.prevent_default();
-                    Msg::Request
+                    Msg::Ignore
                 })>
                     <fieldset>
                         <h3>{"标题"}</h3>
@@ -166,18 +151,19 @@ impl Component for Model {
                         <div id="editor"></div>
                         // <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
                         <h3>{"标签"}</h3>
-                        <input
-                            class="pure-input-2-3"
-                            type="text"
-                            placeholder="Tags"
-                            value=&self.new_tags
-                            oninput=self.link.callback(|e: InputData| Msg::UpdateNewTag(e.value))
-                            />
+                        <div id="tagsBox">
+                            <input id="tagInput"
+                                class="tagInput"
+                                type="text"
+                                placeholder="标签/Tag"
+                                onkeyup=self.link.callback(|e: web_sys::KeyboardEvent| Msg::InputNewTag(e))
+                                />
+                        </div>
                         <div class="tag-list">
                             {
                                 html! {for self.all_tags.iter().map(|tag| {
                                     let t = tag.name.clone();
-                                    let append_tag = self.link.callback(move |ev| Msg::AppendTag(t.to_string()));
+                                    let append_tag = self.link.callback(move |ev| Msg::SelectTag(t.to_string()));
                                     html! {
                                         <span class="tag-btn pure-button" onclick=append_tag>
                                             { &tag.name }
@@ -189,7 +175,8 @@ impl Component for Model {
                         <div>
                             <button
                                 class="pure-button pure-button-primary"
-                                type="submit"
+                                type="button"
+                                onclick=self.link.callback(|_| Msg::Request)
                                 disabled=false>
                                 { "发布" }
                             </button>

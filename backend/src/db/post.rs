@@ -14,13 +14,14 @@ use sqlx::{Row, Sqlite};
 use crate::{
     db::{
         self,
-        model::{Post, Tag, TagUsage},
+        model::{Post, Tag},
         tag,
         tag::get_names,
         SqlParam, DATA_SOURCE,
     },
     util::{result::Result, snowflake},
 };
+use chrono::Timelike;
 
 pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
     let offset: i32 = ((page_num - 1) * page_size) as i32;
@@ -49,12 +50,13 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
 }
 
 pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
-    let tag = sqlx::query_as::<Sqlite, Tag>("SELECT id FROM tag WHERE name = ?")
+    let tag_name = urlencoding::decode(&tag_name)?;
+    let tag = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tag WHERE name = ?")
         .bind(&tag_name)
         .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
     if tag.is_none() {
-        return Err(Error::SqliteDbError.into());
+        return Err(Error::TagNotFound.into());
     }
     let tag = tag.unwrap();
 
@@ -62,22 +64,34 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
         .bind(tag.id)
         .fetch_one(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
-    let r = r.try_get::<i64, usize>(1);
+    let r = r.try_get::<i64, usize>(0);
     if let Err(e) = r {
+        eprintln!("{:?}", e);
         return Err(Error::SqliteDbError.into());
     }
-    let total = r.unwrap() as u64;
+
+    let total = r.unwrap();
     if total < 1 {
-        return Ok(PaginationData { total, data: vec![] });
+        return Ok(PaginationData { total: 0, data: vec![] });
+    }
+
+    let mut offset: i64 = page_num as i64 * page_size as i64;
+    if offset > total {
+        offset = total - page_size as i64;
     }
     let d = sqlx::query_as::<Sqlite, Post>(
-        "SELECT p.* FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? LIMIT ?, ?)",
+        "SELECT * FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
     )
     .bind(tag.id)
+    .bind(offset as i64)
+    .bind(page_size)
     .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
     .await?;
     let d = d.iter().map(|i| i.into()).collect::<Vec<_>>();
-    Ok(PaginationData { total, data: d })
+    Ok(PaginationData {
+        total: total as u64,
+        data: d,
+    })
 }
 
 pub async fn save(new_post: NewPost) -> Result<PostDetail> {
@@ -105,12 +119,12 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
 
     // save to sqlite
     let last_insert_rowid =
-        sqlx::query("INSERT INTO post(id, title, markdown_content, rendered_content, created_at)VALUES(?,?,?,?,?,?)")
+        sqlx::query("INSERT INTO post(id, title, markdown_content, rendered_content, created_at)VALUES(?,?,?,?,?)")
             .bind(&post_detail.id)
             .bind(&post_detail.title)
             .bind(&new_post.content)
             .bind(&post_detail.content)
-            .bind(&post_detail.created_at.timestamp_millis())
+            .bind(post_detail.created_at.second() as i64)
             .execute(&DATA_SOURCE.get().unwrap().sqlite)
             .await?
             .last_insert_rowid();
@@ -129,14 +143,20 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
 
 pub async fn show(id: u64) -> Result<PostDetail> {
     // let r: Option<PostDetail> = db::sled_get(&DATA_SOURCE.get().unwrap().blog, id.to_le_bytes()).await?;
+    let id = id as i64;
     let r = sqlx::query_as::<Sqlite, Post>("SELECT * FROM post WHERE id = ?")
-        .bind(id as i64)
+        .bind(id)
         .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
     if r.is_none() {
         Err(Error::CannotFoundBlog.into())
     } else {
-        sqlx::query_as::<Sqlite, TagUsage>("SELECT tag_id FROM tag_usage WHERE post_id = ?");
-        Ok((&r.unwrap()).into())
+        let tags = sqlx::query_as::<Sqlite, Tag>("SELECT t.id AS id, t.name AS name FROM tag t INNER JOIN tag_usage u ON t.id = u.tag_id WHERE u.post_id = ? ORDER BY t.created_at DESC")
+            .bind(id)
+            .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+            .await?.iter().map(|t| t.name.clone()).collect();
+        let mut post_detail: PostDetail = (&r.unwrap()).into();
+        post_detail.tags = Some(tags);
+        Ok(post_detail)
     }
 }

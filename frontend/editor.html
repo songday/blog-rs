@@ -3,24 +3,133 @@
     <meta charset="utf-8">
     <title>70年代、80年代、90年代，怀旧、复古、回忆</title>
     <link rel="stylesheet" href="/asset/purecss.min-b565cdb90b7aac9f.css">
-    <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
     <style type="text/css">
-        body{padding:20px}
-        .tar{text-align:right}
-        .tac{text-align:center}
-        .tag-btn{color:white;border-radius:4px;text-shadow:0 1px 1px rgba(0, 0, 0, 0.2);background:rgb(28, 184, 65);margin-right:6px}
-        .tag-link{margin-right:6px}
+        body {
+            padding: 20px
+        }
+
+        .tar {
+            text-align: right
+        }
+
+        .tac {
+            text-align: center
+        }
+
+        .tag-btn {
+            color: white;
+            border-radius: 10px;
+            text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+            background: rgb(28, 184, 65);
+            margin-right: 6px
+        }
+
+        .tag-link {
+            margin-right: 6px
+        }
+        .tagBox {
+            background-color:#e3e3e3;
+            padding:4px;
+            margin-right:10px;
+            border-radius:10px
+        }
+        .tagRemove {
+            background-color:gray;
+            color: white;
+            cursor: pointer;
+            border-radius:6px;
+            margin-left: 5px;
+            padding: 2px;
+            font-size: 12px;
+        }
     </style>
-<body><div class="pure-g"><div class="pure-u-1-2"><p>70年代、80年代、90年代</p></div><div class="pure-u-1-2 tar"><p><a href="/">热门标签</a> | <a href="/#/blog/list/1">全部内容</a></p></div></div><div class="pure-g"><div class="pure-u-1-1"><form class="pure-form pure-form-stacked"><fieldset><input class="pure-input-2-3" placeholder="Title" type="text"><div id="editor"></div><a href="/#/blog/upload">Upload image</a><input placeholder="Tags" class="pure-input-2-3" type="text"><div class="tag-list"></div><br><button class="pure-button pure-button-primary" type="submit">Publish</button></fieldset></form><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.48.4/codemirror.min.css"><link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css">
-    <script>
-        const Editor = toastui.Editor;
-        const editor = new Editor({
-            el: document.querySelector('#editor'),
-            previewStyle: 'vertical',
-            initialEditType: 'wysiwyg',
-            height: '500px',
-        });
-    function g() {
-        alert(editor.getMarkdown());
-    }
-</script></div></div><hr><div class="pure-g"><div class="pure-u-1-2"><a href="/#/contribute">欢迎投稿</a><br><a href="/#/about">关于我们</a></div><div class="pure-u-1-2 tar"><div><a href="/management">登录</a></div></div></div><div class="pure-g"><div class="pure-u-1-1 tac"><span>© 2021.</span></div></div><div class="tui-tooltip" style="display: none;"><div class="arrow"></div><span class="text"></span></div></body>
+    <script type="text/javascript">
+        document.onreadystatechange = function() {
+            if(document.readyState==="complete")
+                alert('loaded');
+        }
+        let tagInput;
+        let allTagsBox;
+        function addTag(event){
+            if (event.keyCode !== 13)
+                return;
+            if (!tagInput)
+                tagInput = document.getElementById('tagInput');
+            const val = tagInput.value;
+            if (!val)
+                return;
+
+            if (!allTagsBox)
+                allTagsBox = document.getElementById('tagsBox');
+
+            const tag = document.createElement('span');
+            tag.className = "tagBox";
+
+            const tagText = document.createTextNode(val);
+            tag.appendChild(tagText);
+
+            const a = document.createElement('a');
+            a.innerHTML = 'X';
+            a.addEventListener('click', function () {allTagsBox.removeChild(tag);})
+            a.className = 'tagRemove';
+            tag.appendChild(a);
+
+            allTagsBox.insertBefore(tag, tagInput);
+
+            tagInput.value = '';
+            tagInput.focus();
+        }
+        function getAllTags() {
+            if (!allTagsBox)
+                allTagsBox = document.getElementById('tagsBox');
+            const tags = allTagsBox.childNodes;
+            for (let i = 0; i < tags.length; i++) {
+                // alert(tags[i].tagName);
+                if (tags[i].tagName && tags[i].tagName === 'SPAN')
+                    alert(tags[i].childNodes[0].nodeValue);
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="pure-g">
+    <div class="pure-u-1-2"><p>70年代、80年代、90年代</p></div>
+    <div class="pure-u-1-2 tar"><p><a href="/">热门标签</a> | <a href="/#/blog/list/1">全部内容</a></p></div>
+</div>
+<div class="pure-g">
+    <div class="pure-u-1-1">
+        <form class="pure-form pure-form-stacked">
+            <fieldset><input class="pure-input-2-3" placeholder="Title" type="text">
+                <div id="editor"></div>
+                <a href="/#/blog/upload">Upload image</a><input placeholder="Tags" class="pure-input-2-3" type="text">
+                <div class="tag-list"></div>
+                <br>
+                <button class="pure-button pure-button-primary" type="button" onclick="getAllTags()">Publish</button>
+            </fieldset>
+        </form>
+</div>
+<hr>
+<div class="pure-g">
+    <div class="pure-u-1-1">
+        <div style="border: 1px red solid" id="tagsBox">
+            <input id="tagInput" type="text"/>
+        </div>
+    </div>
+</div>
+    <script type="text/javascript">
+        document.getElementById('tagInput').addEventListener('keyup', addTag, false);
+    </script>
+<hr>
+<div class="pure-g">
+    <div class="pure-u-1-2"><a href="/#/contribute">欢迎投稿</a><br><a href="/#/about">关于我们</a></div>
+    <div class="pure-u-1-2 tar">
+        <div><a href="/management">登录</a></div>
+    </div>
+</div>
+<div class="pure-g">
+    <div class="pure-u-1-1 tac"><span>© 2021.</span></div>
+</div>
+<div class="tui-tooltip" style="display: none;">
+    <div class="arrow"></div>
+    <span class="text"></span></div>
+</body>

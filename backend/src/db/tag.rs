@@ -21,7 +21,7 @@ use tokio::{
 
 use crate::{
     db::{self, model::Tag, DATA_SOURCE},
-    util::{crypt, result::Result, snowflake},
+    util::{common, crypt, result::Result, snowflake},
 };
 
 pub async fn list() -> Result<Vec<String>> {
@@ -58,7 +58,8 @@ pub(super) async fn record_usage(post_id: u64, tags: &Vec<String>) -> Result<()>
     for _i in 0..tags.len() {
         sql.push_str("?,");
     }
-    sql.replace_range(sql.len().., ")");
+    sql.replace_range(sql.len() - 1.., ")");
+    // println!("{}", sql.as_str());
     let mut query = sqlx::query_as::<Sqlite, Tag>(sql.as_str());
     for tag in tags.iter() {
         query = query.bind(tag);
@@ -72,8 +73,9 @@ pub(super) async fn record_usage(post_id: u64, tags: &Vec<String>) -> Result<()>
             let mut tags_in_db_iter = tags_in_db.iter();
             for tag in tags.iter() {
                 if !tags_in_db_iter.any(|e| e.name.eq(tag)) {
-                    let id = sqlx::query("INSERT INTO tag(name, created_at)VALUES(?,NOW())")
+                    let id = sqlx::query("INSERT INTO tag(name, created_at)VALUES(?,?)")
                         .bind(tag)
+                        .bind(common::get_current_sec()? as i64)
                         .execute(&DATA_SOURCE.get().unwrap().sqlite)
                         .await?
                         .last_insert_rowid();

@@ -1,0 +1,19 @@
+.tagBox {
+    background-color:#e3e3e3;
+    padding:4px;
+    margin-right:10px;
+    border-radius:10px
+}
+.tagRemove {
+    background-color:gray;
+    color:white;
+    cursor:pointer;
+    border-radius:6px;
+    margin-left:5px;
+    padding:2px;
+    font-size:12px;
+}
+.tagInput{
+    border:none;
+    border-bottom:black 1px solid;
+}

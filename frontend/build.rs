@@ -16,6 +16,8 @@ impl RequestUrls {
 }
 
 fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+
     let dest_path = Path::new("src").join("val.rs");
 
     let mut urls = RequestUrls::new();
@@ -24,13 +26,12 @@ fn main() {
     urls.append("USER_REGISTER_URL", "user/register");
     urls.append("USER_LOGOUT_URL", "user/logout");
     urls.append("USER_INFO_URL", "user/info");
-    urls.append("BLOG_LIST_URL", "blog/list/");
-    urls.append("BLOG_TAGS_URL", "blog/tags");
-    urls.append("BLOG_TAG_LIST_URL", "blog/tag/");
-    urls.append("BLOG_SAVE_URL", "blog/save");
-    urls.append("BLOG_SHOW_URL", "blog/show/");
-    urls.append("BLOG_IMAGE_SAVE_URL", "blog/image/save/");
+    urls.append("BLOG_LIST_URL", "post/list/");
+    urls.append("BLOG_TAGS_URL", "post/tags");
+    urls.append("BLOG_TAG_LIST_URL", "post/tag/");
+    urls.append("BLOG_SAVE_URL", "post/save");
+    urls.append("BLOG_SHOW_URL", "post/show/");
+    urls.append("BLOG_IMAGE_SAVE_URL", "post/image/save/");
 
     fs::write(&dest_path, &urls.0).unwrap();
-    println!("cargo:rerun-if-changed=build.rs");
 }

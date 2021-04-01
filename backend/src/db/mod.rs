@@ -79,12 +79,13 @@ pub async fn init_datasource() {
         .expect("Init datasource failed.");
 
     if db_file_not_exists {
-        println!("Init database");
+        // println!("Init database");
         let ddl = include_str!("../resource/sql/ddl.sql");
+        // println!("ddl = {}", ddl);
         let mut stream = sqlx::query(ddl).execute_many(&pool).await;
         while let Some(res) = stream.next().await {
             match res {
-                Ok(r) => println!("Init table"),
+                Ok(r) => println!("Initialized table"),
                 Err(e) => eprintln!("err {:?}", e),
             }
         }
