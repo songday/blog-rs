@@ -132,33 +132,40 @@ impl Component for Model {
     fn view(&self) -> Html {
         html! {
             <>
-                <form class="pure-form pure-form-stacked" onsubmit=self.link.callback(|ev: FocusEvent| {
+                <div class="row">
+                    <div class="col">
+                        <h1>新增博客</h1>
+                    </div>
+                </div>
+                <form class="row g-3" onsubmit=self.link.callback(|ev: FocusEvent| {
                     ev.prevent_default();
                     Msg::Ignore
                 })>
-                    <fieldset>
-                        <h3>{"标题"}</h3>
+                    <div class="col-12">
+                        <label class="form-label">{"标题"}</label>
                         <input
-                            class="pure-input-2-3"
+                            class="form-control"
                             type="text"
-                            placeholder="Title"
                             value=&self.blog_params.title
                             oninput=self.link.callback(|e: InputData| Msg::UpdateTitle(e.value))
                             />
-                        // <textarea
-                        //     class="pure-input-2-3"
-                        //     rows="16"
-                        //     placeholder="Write your article (in markdown)"
-                        //     value={&self.blog_params.content}
-                        //     oninput=self.link.callback(|e: InputData| Msg::UpdateContent(e.value))>
-                        // </textarea>
-                        <h3>{"内容"}</h3>
+                    </div>
+                    // <textarea
+                    //     class="pure-input-2-3"
+                    //     rows="16"
+                    //     placeholder="Write your article (in markdown)"
+                    //     value={&self.blog_params.content}
+                    //     oninput=self.link.callback(|e: InputData| Msg::UpdateContent(e.value))>
+                    // </textarea>
+                    <div class="col-12">
+                        <label class="form-label">{"内容"}</label>
                         <div id="editor"></div>
-                        // <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
-                        <h3>{"标签"}</h3>
-                        <div id="tagsBox">
+                    </div>
+                    // <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
+                    <div class="col-12">
+                        <label class="form-label">{"标签"}</label>
+                        <div class="col-md-2" id="tagsBox">
                             <input id="tagInput"
-                                class="tagInput"
                                 type="text"
                                 placeholder="标签/Tag"
                                 onkeyup=self.link.callback(|e: web_sys::KeyboardEvent| Msg::InputNewTag(e))
@@ -170,23 +177,23 @@ impl Component for Model {
                                     let t = String::from(tag);
                                     let select_tag = self.link.callback(move |ev| Msg::SelectTag(t.to_string()));
                                     html! {
-                                        <span class="tag-btn pure-button" onclick=select_tag>
+                                        <button type="button" class="btn badge bg-secondary text-wrap" onclick=select_tag>
                                             { tag }
-                                        </span>
+                                        </button>
                                     }
                                 })}
                             }
                         </div>
-                        <div>
-                            <button
-                                class="pure-button pure-button-primary"
-                                type="button"
-                                onclick=self.link.callback(|_| Msg::Request)
-                                disabled=false>
-                                { "发布" }
-                            </button>
-                        </div>
-                    </fieldset>
+                    </div>
+                    <div class="col-12">
+                        <button
+                            class="btn btn-primary"
+                            type="button"
+                            onclick=self.link.callback(|_| Msg::Request)
+                            disabled=false>
+                            { "发布" }
+                        </button>
+                    </div>
                 </form>
                 <link rel="stylesheet" href="/asset/codemirror.min.css" />
                 <link rel="stylesheet" href="/asset/toastui-editor.min.css" />

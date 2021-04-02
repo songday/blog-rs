@@ -68,10 +68,10 @@ impl Component for Model {
                 } else {
                     html! {
                     <>
-                        <div>{self.props.user.as_ref().unwrap().email.as_str()}</div>
-                        <div><a href="/management"> {"管理"} </a></div>
-                        <div><RouterAnchor<AppRoute> route=AppRoute::BlogCompose> {"写博客"} </RouterAnchor<AppRoute>></div>
-                        <div><a href="#logout" onclick=self.link.callback(|_| Msg::Logout)> { "退出" } </a></div>
+                        {self.props.user.as_ref().unwrap().email.as_str()}
+                        <a href="/management"> {"管理"} </a>
+                        <RouterAnchor<AppRoute> route=AppRoute::BlogCompose> {"写博客"} </RouterAnchor<AppRoute>>
+                        <a href="#logout" onclick=self.link.callback(|_| Msg::Logout)> { "退出" } </a>
                     </>
                     }
                 }

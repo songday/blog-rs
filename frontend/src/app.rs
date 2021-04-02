@@ -124,18 +124,19 @@ impl Component for Model {
         // let none_tag: Option<String> = None;
 
         html! {
-            <>
-                <div class="pure-g">
-                    <div class="pure-u-1-2"><p>{"70年代、80年代、90年代"}</p></div>
-                    <div class="pure-u-1-2 tar">
-                    <p>
+            <div class="container">
+                <div class="row">
+                    <div class="col">
+                        {"70年代、80年代、90年代 | "}
                         <RouterAnchor<AppRoute> route=AppRoute::Home> {"热门标签"} </RouterAnchor<AppRoute>>{" | "}
                         <RouterAnchor<AppRoute> route=AppRoute::BlogList(1)> {"全部内容"} </RouterAnchor<AppRoute>>
-                    </p>
+                    </div>
+                    <div class="col text-end">
+                        <user::Model user=&self.user callback=logout_callback.clone()/>
                     </div>
                 </div>
-                <div class="pure-g">
-                    <div class="pure-u-1-1">
+                <div class="row">
+                    <div class="col">
                         <Router<AppRoute>
                             render = Router::render(move |switch: AppRoute| {
                                 match switch {
@@ -159,22 +160,17 @@ impl Component for Model {
                     </div>
                 </div>
                 <hr/>
-                <div class="pure-g">
-                    <div class="pure-u-1-2">
+                <div class="row">
+                    <div class="col">
                         <RouterAnchor<AppRoute> route=AppRoute::Contribute> {"欢迎投稿"} </RouterAnchor<AppRoute>>
                         <br/>
                         <RouterAnchor<AppRoute> route=AppRoute::About> {"关于我们"} </RouterAnchor<AppRoute>>
                     </div>
-                    <div class="pure-u-1-2 tar">
-                        <user::Model user=&self.user callback=logout_callback.clone()/>
-                    </div>
-                </div>
-                <div class="pure-g">
-                    <div class="pure-u-1-1 tac">
+                    <div class="col text-end">
                         { crate::component::raw_html("span", "&copy; 2021.") }
                     </div>
                 </div>
-            </>
+            </div>
         }
     }
 
