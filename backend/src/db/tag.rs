@@ -25,7 +25,7 @@ use crate::{
 };
 
 pub async fn list() -> Result<Vec<String>> {
-    let tag_list = sqlx::query_as::<Sqlite, Tag>("SELECT name FROM tag ORDER BY created_at DESC")
+    let tag_list = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tag ORDER BY created_at DESC")
         .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
     let name_list = tag_list.iter().map(|i| i.name.clone()).collect::<Vec<String>>();

@@ -30,6 +30,8 @@ extern "C" {
     fn get_content() -> String;
     #[wasm_bindgen(js_name = inputTag)]
     fn input_tag(event: web_sys::KeyboardEvent);
+    #[wasm_bindgen(js_name = selectTag)]
+    fn select_tag(tag: String);
     #[wasm_bindgen(js_name = getSelectedTags)]
     fn get_selected_tags() -> Vec<wasm_bindgen::JsValue>;
 }
@@ -40,7 +42,7 @@ pub(crate) struct Model {
     fetch_task: Option<FetchTask>,
     response: Callback<Result<PostDetail, Error>>,
     router_agent: Box<dyn Bridge<RouteAgent>>,
-    all_tags: Vec<Tag>,
+    all_tags: Vec<String>,
     link: ComponentLink<Self>,
 }
 
@@ -52,7 +54,7 @@ pub(crate) enum Msg {
     InputNewTag(web_sys::KeyboardEvent),
     Request,
     Response(Result<PostDetail, Error>),
-    TagsResponse(Result<Vec<Tag>, Error>),
+    TagsResponse(Result<Vec<String>, Error>),
     InitEditor,
 }
 
@@ -79,6 +81,7 @@ impl Component for Model {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::SelectTag(tag) => {
+                select_tag(tag);
                 return false;
             },
             Msg::Ignore => {},
@@ -104,12 +107,14 @@ impl Component for Model {
                 self.fetch_task = None;
                 return true;
             },
-            Msg::TagsResponse(Ok::<Vec<Tag>, _>(tags)) => {
+            Msg::TagsResponse(Ok::<Vec<String>, _>(tags)) => {
+                ConsoleService::log(tags.len().to_string().as_str());
                 self.fetch_task = None;
                 self.all_tags = tags;
                 return true;
             },
             Msg::TagsResponse(Err::<_, Error>(err)) => {
+                ConsoleService::log("error");
                 self.error = Some(err);
                 self.fetch_task = None;
                 return true;
@@ -162,11 +167,11 @@ impl Component for Model {
                         <div class="tag-list">
                             {
                                 html! {for self.all_tags.iter().map(|tag| {
-                                    let t = tag.name.clone();
-                                    let append_tag = self.link.callback(move |ev| Msg::SelectTag(t.to_string()));
+                                    let t = String::from(tag);
+                                    let select_tag = self.link.callback(move |ev| Msg::SelectTag(t.to_string()));
                                     html! {
-                                        <span class="tag-btn pure-button" onclick=append_tag>
-                                            { &tag.name }
+                                        <span class="tag-btn pure-button" onclick=select_tag>
+                                            { tag }
                                         </span>
                                     }
                                 })}
@@ -192,7 +197,7 @@ impl Component for Model {
 
     fn rendered(&mut self, first_render: bool) {
         if first_render {
-            let task = request::get::<Vec<Tag>>(val::BLOG_TAGS_URL, self.link.callback(Msg::TagsResponse));
+            let task = request::get::<Vec<String>>(val::BLOG_TAGS_URL, self.link.callback(Msg::TagsResponse));
             self.fetch_task = Some(task);
         }
     }

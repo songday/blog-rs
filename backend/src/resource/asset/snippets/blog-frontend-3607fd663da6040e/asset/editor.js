@@ -35,8 +35,8 @@ export function inputTag(event) {
     tagInput.focus();
 }
 
-export function selectTag(tagBox) {
-    addTag(tagBox.childNodes[0].nodeValue);
+export function selectTag(tag) {
+    addTag(tag);
 }
 
 function addTag(val) {

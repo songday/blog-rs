@@ -8,6 +8,7 @@ use blog_common::{
     },
     result::Error,
 };
+use chrono::Timelike;
 use comrak::{markdown_to_html, ComrakOptions};
 use sqlx::{Row, Sqlite};
 
@@ -19,34 +20,63 @@ use crate::{
         tag::get_names,
         SqlParam, DATA_SOURCE,
     },
-    util::{result::Result, snowflake},
+    util::{common, result::Result, snowflake},
 };
-use chrono::Timelike;
+
+fn review_rendered_content(c: &str) -> String {
+    let r = common::HTML_TAG_REGEX.replace(c, "");
+    let r = r.replace(r"\n", "").to_string();
+    if r.len() < 200 {
+        return r;
+    }
+    return r[..200].to_string();
+}
+
+fn to_detail_list(posts: Vec<Post>) -> Vec<PostDetail> {
+    posts
+        .iter()
+        .map(|i| {
+            let mut detail: PostDetail = i.into();
+            detail.content = review_rendered_content(&i.rendered_content);
+            detail
+        })
+        .collect::<Vec<_>>()
+}
 
 pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
-    let offset: i32 = ((page_num - 1) * page_size) as i32;
-    let mut p: Vec<crate::db::SqlParam> = Vec::new();
-    p.push(SqlParam::I32(offset));
-    p.push(SqlParam::I8(page_size as i8));
-
-    let id_array =
-        db::sqlite_get_list::<crate::db::Id>("SELECT id FROM blog ORDER BY id DESC LIMIT ?,?", Some(p)).await?;
-    let id_array: Vec<i64> = id_array.iter().map(|d| d.id).collect();
-
-    let d = db::sled_get_list::<PostDetail>(&DATA_SOURCE.get().unwrap().setting, &id_array).await?;
-
-    // let r = sqlx::query!("SELECT COUNT(id) AS total FROM blog").fetch_all(&DATASOURCE).await?;
-    let row = sqlx::query("SELECT COUNT(id) FROM blog")
-        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
-        // .fetch_one(&DATASOURCE.get().unwrap().sqlite)
+    let row = sqlx::query("SELECT COUNT(id) FROM post")
+        .fetch_one(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
-    let total: i64 = row[0].get(0);
+    let total: i64 = row.get(0);
     // println!("total={}", total);
+    if total < 0 {
+        return Ok(PaginationData { total: 0, data: vec![] });
+    }
 
+    let mut offset: i64 = ((page_num - 1) * page_size) as i64;
+    if offset > total {
+        offset = total - page_size as i64;
+    }
+    let d = sqlx::query_as::<Sqlite, Post>(
+        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ORDER BY id DESC LIMIT ?, ?",
+    )
+        .bind(offset as i64)
+        .bind(page_size)
+        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+        .await?;
     Ok(PaginationData {
         total: total as u64,
-        data: d,
+        data: to_detail_list(d),
     })
+    /*
+    let mut p: Vec<crate::db::SqlParam> = Vec::new();
+    p.push(SqlParam::I64(offset));
+    p.push(SqlParam::I8(page_size as i8));
+    let id_array =
+        db::sqlite_get_list::<crate::db::Id>("SELECT id FROM post ORDER BY id DESC LIMIT ?,?", Some(p)).await?;
+    let id_array: Vec<i64> = id_array.iter().map(|d| d.id).collect();
+    let d = db::sled_get_list::<PostDetail>(&DATA_SOURCE.get().unwrap().setting, &id_array).await?;
+    */
 }
 
 pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
@@ -75,27 +105,26 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
         return Ok(PaginationData { total: 0, data: vec![] });
     }
 
-    let mut offset: i64 = page_num as i64 * page_size as i64;
+    let mut offset: i64 = ((page_num - 1) * page_size) as i64;
     if offset > total {
         offset = total - page_size as i64;
     }
     let d = sqlx::query_as::<Sqlite, Post>(
-        "SELECT * FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
+        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
     )
     .bind(tag.id)
     .bind(offset as i64)
     .bind(page_size)
     .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
     .await?;
-    let d = d.iter().map(|i| i.into()).collect::<Vec<_>>();
     Ok(PaginationData {
         total: total as u64,
-        data: d,
+        data: to_detail_list(d),
     })
 }
 
 pub async fn save(new_post: NewPost) -> Result<PostDetail> {
-    // todo needs to be in a transaction
+    // needs to be in a transaction
     let transaction = DATA_SOURCE.get().unwrap().sqlite.begin().await?;
 
     let id = snowflake::gen_id();
@@ -144,10 +173,12 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
 pub async fn show(id: u64) -> Result<PostDetail> {
     // let r: Option<PostDetail> = db::sled_get(&DATA_SOURCE.get().unwrap().blog, id.to_le_bytes()).await?;
     let id = id as i64;
-    let r = sqlx::query_as::<Sqlite, Post>("SELECT * FROM post WHERE id = ?")
-        .bind(id)
-        .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
-        .await?;
+    let r = sqlx::query_as::<Sqlite, Post>(
+        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id = ?",
+    )
+    .bind(id)
+    .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
+    .await?;
     if r.is_none() {
         Err(Error::CannotFoundBlog.into())
     } else {

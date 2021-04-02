@@ -139,9 +139,14 @@ impl Component for Model {
             {
                 for self.blogs.iter().map(|b| {
                     html! {
+                    <>
                     <div>
                         <RouterAnchor<AppRoute> route=AppRoute::BlogShow({b.id})> {&b.title} </RouterAnchor<AppRoute>>
                     </div>
+                    <div>{&b.content}</div>
+                    <div>{&b.created_at}</div>
+                    <hr/>
+                    </>
                     }
                 })
             }
