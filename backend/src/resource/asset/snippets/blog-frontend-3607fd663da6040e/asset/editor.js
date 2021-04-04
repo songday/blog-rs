@@ -44,20 +44,20 @@ function addTag(val) {
         return;
     initTagElements();
     const tag = document.createElement('span');
-    tag.className = "tagBox";
+    tag.className = "me-3 border-end border-3";
 
     const tagText = document.createTextNode(val);
     tag.appendChild(tagText);
 
-    const a = document.createElement('a');
-    a.innerHTML = 'X';
-    a.addEventListener('click', function () {
+    const btn = document.createElement('i');
+    btn.addEventListener('click', function () {
         allTagsBox.removeChild(tag);
     })
-    a.className = 'tagRemove';
-    tag.appendChild(a);
+    btn.className = 'bi bi-trash';
+    tag.appendChild(btn);
 
-    allTagsBox.insertBefore(tag, tagInput);
+    // allTagsBox.insertBefore(tag, tagInput);
+    allTagsBox.appendChild(tag);
 }
 
 export function getSelectedTags() {

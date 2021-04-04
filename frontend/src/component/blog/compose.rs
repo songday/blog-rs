@@ -134,7 +134,7 @@ impl Component for Model {
             <>
                 <div class="row">
                     <div class="col">
-                        <h1>新增博客</h1>
+                        <h1>{"新增博客"}</h1>
                     </div>
                 </div>
                 <form class="row g-3" onsubmit=self.link.callback(|ev: FocusEvent| {
@@ -164,20 +164,23 @@ impl Component for Model {
                     // <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
                     <div class="col-12">
                         <label class="form-label">{"标签"}</label>
-                        <div class="col-md-2" id="tagsBox">
-                            <input id="tagInput"
-                                type="text"
-                                placeholder="标签/Tag"
-                                onkeyup=self.link.callback(|e: web_sys::KeyboardEvent| Msg::InputNewTag(e))
-                                />
+                        <div class="col-12 d-grid gap-2 d-md-block" id="tagsBox">
                         </div>
-                        <div class="tag-list">
+                        <div class="col-md-6">
+                            {"新增标签："}<input id="tagInput"
+                                type="text"
+                                placeholder="不超过20字"
+                                onkeyup=self.link.callback(|e: web_sys::KeyboardEvent| Msg::InputNewTag(e))
+                                />{"（按回车新增）"}
+                        </div>
+                        <div class="col-12">
+                            {"选择已有标签："}
                             {
                                 html! {for self.all_tags.iter().map(|tag| {
                                     let t = String::from(tag);
                                     let select_tag = self.link.callback(move |ev| Msg::SelectTag(t.to_string()));
                                     html! {
-                                        <button type="button" class="btn badge bg-secondary text-wrap" onclick=select_tag>
+                                        <button type="button" class="btn btn-outline-dark btn-sm ms-1" onclick=select_tag>
                                             { tag }
                                         </button>
                                     }
