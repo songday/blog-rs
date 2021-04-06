@@ -32,15 +32,29 @@ fn review_rendered_content(c: &str) -> String {
     return r[..200].to_string();
 }
 
-fn to_detail_list(posts: Vec<Post>) -> Vec<PostDetail> {
-    posts
+async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
+    let post_ids: Vec<i64> = posts.iter().map(|p| p.id).collect();
+    let tags_map = tag::get_tags_by_post_ids(post_ids).await?;
+    let post_detail_list = posts
         .iter()
         .map(|i| {
             let mut detail: PostDetail = i.into();
             detail.content = review_rendered_content(&i.rendered_content);
+            let tags = tags_map.get(&i.id);
+            if tags.is_some() {
+                detail.tags = Some(tags.unwrap().iter().map(|t| t.name.clone()).collect());
+            }
             detail
         })
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>();
+    // for post in post_detail_list.iter_mut() {
+    //     let tags = tags_map.get(&post.id);
+    // if tags.is_none() {
+    //     continue;
+    // }
+    //     *post.tags = Some(tags.unwrap().iter().map(|t| t.name.clone()).collect());
+    // }
+    Ok(post_detail_list)
 }
 
 pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
@@ -66,7 +80,7 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
         .await?;
     Ok(PaginationData {
         total: total as u64,
-        data: to_detail_list(d),
+        data: to_detail_list(d).await?,
     })
     /*
     let mut p: Vec<crate::db::SqlParam> = Vec::new();
@@ -119,7 +133,7 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
     .await?;
     Ok(PaginationData {
         total: total as u64,
-        data: to_detail_list(d),
+        data: to_detail_list(d).await?,
     })
 }
 

@@ -13,7 +13,7 @@ use blog_common::result::Error;
 use bytes::{Buf, Bytes, BytesMut};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
-use sqlx::Sqlite;
+use sqlx::{Row, Sqlite};
 use tokio::{
     fs::{remove_file, rename, File, OpenOptions},
     io::{self, AsyncReadExt, AsyncSeekExt, AsyncWriteExt, BufReader, BufWriter},
@@ -99,4 +99,30 @@ pub(super) async fn record_usage(post_id: u64, tags: &Vec<String>) -> Result<()>
             .await?;
     }
     Ok(())
+}
+
+pub(crate) async fn get_tags_by_post_ids(ids: Vec<i64>) -> Result<HashMap<i64, Vec<Tag>>> {
+    let mut sql = String::from(
+        "SELECT u.post_id, t.id, t.name FROM tag_usage u INNER JOIN tag t ON u.tag_id = t.id WHERE u.post_id IN (",
+    );
+    for _i in 0..ids.len() {
+        sql.push_str("?,");
+    }
+    sql.replace_range(sql.len() - 1.., ")");
+    let mut query = sqlx::query(&sql);
+    for id in ids.iter() {
+        query = query.bind(id);
+    }
+    let r = query.fetch_all(&DATA_SOURCE.get().unwrap().sqlite).await?;
+    let mut d: HashMap<i64, Vec<Tag>> = HashMap::with_capacity(ids.len());
+
+    for row in r {
+        let tags = d.entry(row.get(0)).or_insert(vec![]);
+        tags.push(Tag {
+            id: row.get(1),
+            name: row.get(2),
+        });
+    }
+
+    Ok(d)
 }
