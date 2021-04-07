@@ -21,7 +21,7 @@ pub fn simple_uuid() -> String {
 
 lazy_static! {
     pub static ref EMAIL_REGEX: Regex = Regex::new(r"[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+").unwrap();
-    pub static ref HTML_TAG_REGEX: Regex = Regex::new(r"<[^>]+>|<[^>]>|<\/[^>]>").unwrap();
+    pub static ref HTML_TAG_REGEX: Regex = Regex::new(r"<[^>]+>|<[^>]>|</[^>]>").unwrap();
 }
 
 pub fn get_current_sec() -> Result<u64> {

@@ -145,31 +145,48 @@ impl Component for Model {
                     </div>
                     <div>{&b.content}</div>
                     <div>{&b.created_at}</div>
+                    <div>
+                    {
+                        if b.tags.is_some() {
+                            html! {
+                                for b.tags.as_ref().unwrap().iter().map(|t| {
+                                    html! {
+                                        <button type="button" class="btn btn-link btn-sm ms-1">{t}</button>
+                                    }
+                                })
+                            }
+                        } else {
+                            html!{}
+                        }
+                    }
+                    </div>
                     <hr/>
                     </>
                     }
                 })
             }
             <br/>
-            {
-                for pages.iter().map(|page| {
-                    let is_current = page == &self.props.current_page;
-                    let page_item_class = if is_current {
-                        "page-item active"
-                    } else {
-                        "page-item"
-                    };
-                    let page = page.clone();
-                    let onclick = self.link.callback(move |ev: MouseEvent| {ev.prevent_default(); Msg::PaginationChanged(page)});
-                    html! {
-                        <button
-                            class=page_item_class
-                            onclick=onclick>
-                            {page}
-                        </button>
-                    }
-                })
-            }
+            <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                {
+                    for pages.iter().map(|page| {
+                        let is_current = page == &self.props.current_page;
+                        let page_item_class = if is_current {
+                            "page-item active"
+                        } else {
+                            "page-item"
+                        };
+                        let page = page.clone();
+                        let onclick = self.link.callback(move |ev: MouseEvent| {ev.prevent_default(); Msg::PaginationChanged(page)});
+                        html! {
+                            <li class=page_item_class>
+                                <a class="page-link" onclick=onclick>{page}</a>
+                            </li>
+                        }
+                    })
+                }
+                </ul>
+            </nav>
             </>
         }
     }
