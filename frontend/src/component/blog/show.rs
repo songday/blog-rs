@@ -94,7 +94,7 @@ impl Component for Model {
                                     {
                                         for blog.tags.as_ref().unwrap().iter().map(|t| {
                                             html! {
-                                                <RouterAnchor<AppRoute> route=AppRoute::BlogListByTag(t.to_string(), 1) classes="tag-link"> {t} </RouterAnchor<AppRoute>>
+                                                <RouterAnchor<AppRoute> route=AppRoute::BlogListByTag(t.to_string(), 1) classes="link-success ms-1"> {t} </RouterAnchor<AppRoute>>
                                             }
                                         })
                                     }

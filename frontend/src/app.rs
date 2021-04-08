@@ -136,6 +136,9 @@ impl Component for Model {
                     </div>
                 </div>
                 <div class="row">
+                    <div class="col">&nbsp;</div>
+                </div>
+                <div class="row">
                     <div class="col">
                         <Router<AppRoute>
                             render = Router::render(move |switch: AppRoute| {

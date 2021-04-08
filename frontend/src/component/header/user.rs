@@ -69,9 +69,9 @@ impl Component for Model {
                     html! {
                     <>
                         {self.props.user.as_ref().unwrap().email.as_str()}
-                        <a href="/management"> {"管理"} </a>
-                        <RouterAnchor<AppRoute> route=AppRoute::BlogCompose> {"写博客"} </RouterAnchor<AppRoute>>
-                        <a href="#logout" onclick=self.link.callback(|_| Msg::Logout)> { "退出" } </a>
+                        <a href="/management"> {" | 管理"} </a>
+                        <RouterAnchor<AppRoute> route=AppRoute::BlogCompose> {" | 写博客"} </RouterAnchor<AppRoute>>
+                        <a href="#logout" onclick=self.link.callback(|_| Msg::Logout)> { " | 退出" } </a>
                     </>
                     }
                 }

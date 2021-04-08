@@ -123,7 +123,8 @@ impl Component for Model {
                 && !self.props.tag.as_ref().unwrap().eq(props.tag.as_ref().unwrap()))
         {
             self.props = props;
-            return true;
+            self.request();
+            // return true;
         }
         false
     }
@@ -151,7 +152,7 @@ impl Component for Model {
                             html! {
                                 for b.tags.as_ref().unwrap().iter().map(|t| {
                                     html! {
-                                        <button type="button" class="btn btn-link btn-sm ms-1">{t}</button>
+                                        <RouterAnchor<AppRoute> route=AppRoute::BlogListByTag(t.to_string(), 1) classes="link-success ms-1"> {t} </RouterAnchor<AppRoute>>
                                     }
                                 })
                             }
