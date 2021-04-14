@@ -165,7 +165,7 @@ where
     // P: SqliteParam,
     // for<'q> P: Encode<'q, Sqlite> + Type<Sqlite> + Send,
 {
-    // let rows: Vec<Id> = sqlx::query_as!(Id, "SELECT id FROM blog ORDER BY id").fetch_all(&d.sqlite).await?;
+    // let rows: Vec<Id> = sqlx::query_as!(Id, "SELECT id FROM post ORDER BY id").fetch_all(&d.sqlite).await?;
     // let mut conn = d.sqlite.acquire().await?;
     let mut q = sqlx::query_as::<Sqlite, D>(query);
     if let Some(params) = params {

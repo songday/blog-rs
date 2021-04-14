@@ -17,11 +17,11 @@ use yew_router::{
 
 use crate::{
     component::{
-        about,
-        blog::{compose, list, show, upload},
-        contribute,
+        about, contribute,
         header::{nav, user},
         index,
+        post::{compose, list, show},
+        tag::top,
         user::{login, register},
     },
     util::{request, store, Error},
@@ -34,16 +34,18 @@ pub(crate) enum AppRoute {
     About,
     #[to = "/#/contribute"]
     Contribute,
-    #[to = "/#/blog/compose"]
-    BlogCompose,
-    #[to = "/#/blog/list/{page}"]
-    BlogList(u8),
-    #[to = "/#/blog/tag/{tag}/{page}"]
-    BlogListByTag(String, u8),
-    #[to = "/#/blog/show/{id}"]
-    BlogShow(i64),
-    #[to = "/#/blog/upload"]
-    BlogUpload,
+    #[to = "/#/post/compose"]
+    PostCompose,
+    #[to = "/#/post/list/{page}"]
+    PostList(u8),
+    #[to = "/#/post/tag/{tag}/{page}"]
+    PostListByTag(String, u8),
+    #[to = "/#/post/show/{id}"]
+    PostShow(i64),
+    // #[to = "/#/post/upload"]
+    // BlogUpload,
+    #[to = "/#/tag/top"]
+    TopTags,
     #[to = "/#/user/login"]
     UserLogin,
     #[to = "/#/user/register"]
@@ -128,15 +130,15 @@ impl Component for Model {
                 <div class="row">
                     <div class="col">
                         {"70年代、80年代、90年代 | "}
-                        <RouterAnchor<AppRoute> route=AppRoute::Home> {"热门标签"} </RouterAnchor<AppRoute>>{" | "}
-                        <RouterAnchor<AppRoute> route=AppRoute::BlogList(1)> {"全部内容"} </RouterAnchor<AppRoute>>
+                        <RouterAnchor<AppRoute> route=AppRoute::TopTags> {"热门标签"} </RouterAnchor<AppRoute>>{" | "}
+                        <RouterAnchor<AppRoute> route=AppRoute::PostList(1)> {"全部内容"} </RouterAnchor<AppRoute>>
                     </div>
                     <div class="col text-end">
                         <user::Model user=&self.user callback=logout_callback.clone()/>
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col">&nbsp;</div>
+                    <div class="col pb-3"></div>
                 </div>
                 <div class="row">
                     <div class="col">
@@ -148,11 +150,12 @@ impl Component for Model {
                                     AppRoute::Contribute => html!{<contribute::Model/>},
                                     AppRoute::UserLogin => html!{<login::Model callback=auth_callback.clone()/>},
                                     AppRoute::UserRegister => html!{<register::Model/>},
-                                    AppRoute::BlogList(page) => html!{<list::Model tag=None::<String> current_page=page/>},
-                                    AppRoute::BlogListByTag(tag, page) => html!{<list::Model tag=tag current_page=page/>},
-                                    AppRoute::BlogCompose => html!{<compose::Model/>},
-                                    AppRoute::BlogShow(id) => html!{<show::Model blog_id=id/>},
-                                    AppRoute::BlogUpload => html!{<upload::Model/>},
+                                    AppRoute::PostList(page) => html!{<list::Model tag=None::<String> current_page=page/>},
+                                    AppRoute::PostListByTag(tag, page) => html!{<list::Model tag=tag current_page=page/>},
+                                    AppRoute::PostCompose => html!{<compose::Model/>},
+                                    AppRoute::PostShow(id) => html!{<show::Model blog_id=id/>},
+                                    // AppRoute::BlogUpload => html!{<upload::Model/>},
+                                    AppRoute::TopTags => html!{<top::Model/>},
                                     _ => html!{"Page not found :("},
                                 }
                             })

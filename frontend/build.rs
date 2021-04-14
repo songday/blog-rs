@@ -27,7 +27,8 @@ fn main() {
     urls.append("USER_LOGOUT_URL", "user/logout");
     urls.append("USER_INFO_URL", "user/info");
     urls.append("BLOG_LIST_URL", "post/list/");
-    urls.append("BLOG_TAGS_URL", "post/tags");
+    urls.append("TAG_LIST_URL", "tag/list");
+    urls.append("TOP_TAG_URL", "tag/top");
     urls.append("BLOG_TAG_LIST_URL", "post/tag/");
     urls.append("BLOG_SAVE_URL", "post/save");
     urls.append("BLOG_SHOW_URL", "post/show/");

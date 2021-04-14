@@ -41,14 +41,14 @@ impl warp::reject::Reject for ErrorWrapper {}
 impl From<std::io::Error> for ErrorWrapper {
     fn from(e: std::io::Error) -> Self {
         eprintln!("{}", e);
-        Error::ReadBlogIdDataByTagFailed.into()
+        Error::ReadPostIdDataByTagFailed.into()
     }
 }
 
 impl From<std::time::SystemTimeError> for ErrorWrapper {
     fn from(e: std::time::SystemTimeError) -> Self {
         eprintln!("{}", e);
-        Error::ReadBlogIdDataByTagFailed.into()
+        Error::ReadPostIdDataByTagFailed.into()
     }
 }
 

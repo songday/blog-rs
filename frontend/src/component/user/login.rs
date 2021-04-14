@@ -74,7 +74,7 @@ impl Component for Model {
             Msg::Response(Ok::<UserInfoWrapper, _>(user)) => {
                 self.fetch_task = None;
                 self.props.callback.emit(user);
-                self.router_agent.send(ChangeRoute(AppRoute::BlogCompose.into()));
+                self.router_agent.send(ChangeRoute(AppRoute::PostCompose.into()));
             },
             Msg::Response(Err::<_, Error>(err)) => {
                 self.error = Some(err);

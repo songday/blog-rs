@@ -132,10 +132,15 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::end())
         .and_then(post::list);
     let tag_list = warp::get()
-        .and(warp::path("post"))
-        .and(warp::path("tags"))
+        .and(warp::path("tag"))
+        .and(warp::path("list"))
         .and(warp::path::end())
         .and_then(tag::list);
+    let top_tags = warp::get()
+        .and(warp::path("tag"))
+        .and(warp::path("top"))
+        .and(warp::path::end())
+        .and_then(tag::top);
     let post_list_by_tag = warp::get()
         .and(warp::path("post"))
         .and(warp::path("tag"))
@@ -206,6 +211,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(verify_image)
         .or(post_list)
         .or(tag_list)
+        .or(top_tags)
         .or(post_list_by_tag)
         .or(post_save)
         .or(post_show)

@@ -9,7 +9,7 @@ use std::{
 };
 
 use ahash::AHasher;
-use blog_common::result::Error;
+use blog_common::{dto::tag::TagUsageAmount, result::Error};
 use bytes::{Buf, Bytes, BytesMut};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
@@ -23,6 +23,21 @@ use crate::{
     db::{self, model::Tag, DATA_SOURCE},
     util::{common, crypt, result::Result, snowflake},
 };
+
+pub async fn top() -> Result<Vec<TagUsageAmount>> {
+    let tags = sqlx::query("SELECT t.id,t.name,u.amount FROM tag t INNER JOIN (SELECT tag_id, COUNT(tag_id) AS amount FROM tag_usage GROUP BY tag_id) u ON t.id=u.tag_id ORDER BY u.amount DESC")
+        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+        .await?;
+    let name_list = tags
+        .iter()
+        .map(|i| TagUsageAmount {
+            id: i.get(0),
+            name: i.get(1),
+            amount: i.get(2),
+        })
+        .collect::<Vec<TagUsageAmount>>();
+    Ok(name_list)
+}
 
 pub async fn list() -> Result<Vec<String>> {
     let tag_list = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tag ORDER BY created_at DESC")
@@ -43,7 +58,7 @@ pub async fn get_names(id_array: Vec<i64>) -> Result<Vec<String>> {
         sql.push(',');
     }
     sql.push('-');
-    sql.replace(",-", ") ORDER BY created_at DESC");
+    let sql = sql.replace(",-", ") ORDER BY created_at DESC");
     let tag_list = sqlx::query_as::<Sqlite, Tag>(sql.as_str())
         .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;

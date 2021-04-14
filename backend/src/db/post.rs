@@ -174,7 +174,7 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
 
     if last_insert_rowid < 1 {
         // println!("last_insert_rowid {}", last_insert_rowid);
-        return Err(Error::SaveBlogFailed.into());
+        return Err(Error::SavePostFailed.into());
     }
 
     // 这里只关心 commit，因为 https://docs.rs/sqlx/0.5.1/sqlx/struct.Transaction.html 说到
@@ -185,7 +185,7 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
 }
 
 pub async fn show(id: u64) -> Result<PostDetail> {
-    // let r: Option<PostDetail> = db::sled_get(&DATA_SOURCE.get().unwrap().blog, id.to_le_bytes()).await?;
+    // let r: Option<PostDetail> = db::sled_get(&DATA_SOURCE.get().unwrap().post, id.to_le_bytes()).await?;
     let id = id as i64;
     let r = sqlx::query_as::<Sqlite, Post>(
         "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id = ?",
@@ -194,7 +194,7 @@ pub async fn show(id: u64) -> Result<PostDetail> {
     .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
     .await?;
     if r.is_none() {
-        Err(Error::CannotFoundBlog.into())
+        Err(Error::CannotFoundPost.into())
     } else {
         let tags = sqlx::query_as::<Sqlite, Tag>("SELECT t.id AS id, t.name AS name FROM tag t INNER JOIN tag_usage u ON t.id = u.tag_id WHERE u.post_id = ? ORDER BY t.created_at DESC")
             .bind(id)
