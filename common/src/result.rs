@@ -34,16 +34,16 @@ pub enum Error {
     InvalidVerifyCode,
     #[error("登录信息失效，请重新登录")]
     NotAuthed,
-    #[error("Login failed")]
+    #[error("登录失败，请重试。")]
     LoginFailed,
     #[error("Registration failed")]
     RegisterFailed,
     #[error("Already registered")]
     AlreadyRegistered,
-    #[error("Saving blog failed")]
-    SaveBlogFailed,
-    #[error("Can not find blog you requested")]
-    CannotFoundBlog,
+    #[error("Saving post failed")]
+    SavePostFailed,
+    #[error("Can not find post you requested")]
+    CannotFoundPost,
     #[error("Can not find tag you requested")]
     CannotFoundTag,
     #[error("Upload failed")]
@@ -54,10 +54,12 @@ pub enum Error {
     UnsupportedFileType(String),
     #[error("Creating thumbnail failed")]
     CreateThumbnailFailed,
-    #[error("Reading blog id data by tag failed")]
-    ReadBlogIdDataByTagFailed,
-    #[error("Saving blog id data by tag failed")]
-    SaveBlogIdDataByTagFailed,
+    #[error("Reading post id data by tag failed")]
+    ReadPostIdDataByTagFailed,
+    #[error("Saving post id data by tag failed")]
+    SavePostIdDataByTagFailed,
+    #[error("Tag not found")]
+    TagNotFound,
 
     #[error("{0}")]
     BusinessException(String),

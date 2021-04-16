@@ -4,12 +4,19 @@ use warp::{Rejection, Reply};
 
 use crate::{
     db::tag,
-    facade::{auth_cookie, response_data, response_err},
+    facade::{session_id_cookie, wrap_json_data, wrap_json_err},
 };
+
+pub async fn top() -> Result<impl Reply, Rejection> {
+    match tag::top().await {
+        Ok(list) => Ok(wrap_json_data(&list)),
+        Err(e) => Ok(wrap_json_err(500, e.0)),
+    }
+}
 
 pub async fn list() -> Result<impl Reply, Rejection> {
     match tag::list().await {
-        Ok(list) => Ok(response_data(&list)),
-        Err(e) => Ok(response_err(500, e.0)),
+        Ok(list) => Ok(wrap_json_data(&list)),
+        Err(e) => Ok(wrap_json_err(500, e.0)),
     }
 }

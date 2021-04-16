@@ -6,8 +6,9 @@ use warp::{self, reject, Filter, Rejection, Server};
 
 use blog_common::{
     dto::{
+        management::{AdminUser, Setting},
         post::NewPost,
-        user::{LoginParams, RegisterParams, UserInfo},
+        user::{UserInfo, UserParams},
     },
     val,
 };
@@ -44,7 +45,7 @@ where
 // https://stackoverflow.com/questions/54988438/how-to-check-the-authorization-header-using-warp
 
 fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Clone {
-    warp::cookie::optional(val::AUTH_HEADER_NAME).map(|a: Option<String>| match a {
+    warp::cookie::optional(val::SESSION_ID_HEADER_NAME).map(|a: Option<String>| match a {
         Some(s) => match status::check_auth(&s) {
             Ok(u) => Some(u),
             Err(_) => None,
@@ -70,47 +71,59 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
 
 pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result<impl Future<Output = ()> + 'static> {
     let index = warp::get().and(warp::path::end()).and_then(asset::index);
+    let asset = warp::get()
+        .and(warp::path("asset"))
+        .and(warp::path::tail())
+        .and(warp::path::end())
+        .and_then(asset::get_asset);
     let management = warp::get()
         .and(warp::path("management"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(management::index);
-    let config = warp::get()
+    let management_register = warp::post()
         .and(warp::path("management"))
-        .and(warp::path("config"))
+        .and(warp::path("register"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
-        .and_then(management::config);
+        .and(warp::body::json::<AdminUser>())
+        .and_then(management::admin_register);
+    let management_login = warp::post()
+        .and(warp::path("management"))
+        .and(warp::path("login"))
+        .and(warp::path::end())
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
+        .and(warp::body::json::<AdminUser>())
+        .and_then(management::admin_login);
     let user_login = warp::post()
         .and(warp::path("user"))
         .and(warp::path("login"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
-        .and(warp::body::json::<LoginParams>())
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
+        .and(warp::body::json::<UserParams>())
         .and_then(user::login);
     let user_register = warp::post()
         .and(warp::path("user"))
         .and(warp::path("register"))
         .and(warp::path::end())
-        .and(warp::body::json::<RegisterParams>())
+        .and(warp::body::json::<UserParams>())
         .and_then(user::register);
     let user_logout = warp::get()
         .and(warp::path("user"))
         .and(warp::path("logout"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(user::logout);
     let user_info = warp::get()
         .and(warp::path("user"))
         .and(warp::path("info"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(user::info);
     let verify_image = warp::get()
         .and(warp::path("tool"))
         .and(warp::path("verify-image"))
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::AUTH_HEADER_NAME))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(image::verify_image);
     let post_list = warp::get()
         .and(warp::path("post"))
@@ -119,10 +132,15 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::end())
         .and_then(post::list);
     let tag_list = warp::get()
-        .and(warp::path("blog"))
-        .and(warp::path("tags"))
+        .and(warp::path("tag"))
+        .and(warp::path("list"))
         .and(warp::path::end())
         .and_then(tag::list);
+    let top_tags = warp::get()
+        .and(warp::path("tag"))
+        .and(warp::path("top"))
+        .and(warp::path::end())
+        .and_then(tag::top);
     let post_list_by_tag = warp::get()
         .and(warp::path("post"))
         .and(warp::path("tag"))
@@ -182,8 +200,10 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .build();
 
     let routes = index
+        .or(asset)
         .or(management)
-        .or(config)
+        .or(management_register)
+        .or(management_login)
         .or(user_login)
         .or(user_register)
         .or(user_logout)
@@ -191,6 +211,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(verify_image)
         .or(post_list)
         .or(tag_list)
+        .or(top_tags)
         .or(post_list_by_tag)
         .or(post_save)
         .or(post_show)

@@ -13,17 +13,25 @@ pub struct UserInfoWrapper {
     pub access_token: String,
 }
 
+// #[derive(Clone, Default, Debug, Deserialize, Serialize)]
+// pub struct RegisterParams {
+//     pub email: String,
+//     pub password1: String,
+//     pub password2: String,
+//     pub captcha: String,
+// }
+//
+// #[derive(Clone, Default, Debug, Deserialize, Serialize)]
+// pub struct LoginParams {
+//     pub email: String,
+//     pub password: String,
+//     pub captcha: String,
+// }
+
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
-pub struct RegisterParams {
+pub struct UserParams {
     pub email: String,
     pub password1: String,
     pub password2: String,
-    pub captcha: String,
-}
-
-#[derive(Clone, Default, Debug, Deserialize, Serialize)]
-pub struct LoginParams {
-    pub email: String,
-    pub password: String,
     pub captcha: String,
 }

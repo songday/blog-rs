@@ -1,6 +1,11 @@
 use core::time::Duration;
-use std::marker::{Send, Unpin};
+use std::{
+    io::ErrorKind,
+    marker::{Send, Unpin},
+    path::Path,
+};
 
+use futures::StreamExt;
 use once_cell::sync::OnceCell;
 use serde::Serialize;
 use sqlx::{
@@ -8,15 +13,16 @@ use sqlx::{
     sqlite::{SqliteArguments, SqliteRow},
     Sqlite, SqlitePool,
 };
+use tokio::fs::{remove_file, rename, File, OpenOptions};
 
 use blog_common::result::Error;
 use model::Tag;
 
 use crate::util::result::Result;
 
+pub(crate) mod management;
 pub mod model;
 pub(crate) mod post;
-mod setting;
 pub(crate) mod tag;
 pub(crate) mod user;
 
@@ -46,18 +52,47 @@ pub struct Id {
 }
 
 pub async fn init_datasource() {
+    let db_file = Path::new(".").join("data").join("blog.dat");
+    let db_file_not_exists = !db_file.exists();
+    if db_file_not_exists {
+        let file = match OpenOptions::new()
+            .read(false)
+            .write(true)
+            .create_new(true)
+            .open(db_file.as_path())
+            .await
+        {
+            Ok(f) => f,
+            // Err(e: ErrorKind::NotFound) => None,
+            Err(e) => panic!(e),
+        };
+    }
     let pool_ops = PoolOptions::<Sqlite>::new()
         .min_connections(8)
         .max_connections(64)
         .connect_timeout(Duration::from_secs(2))
         .test_before_acquire(false);
+    let conn_str = format!("sqlite://{}", db_file.display());
     let pool = pool_ops
-        .connect("sqlite://./data/blog.db")
+        .connect(conn_str.as_str())
         .await
         .expect("Init datasource failed.");
 
+    if db_file_not_exists {
+        // println!("Init database");
+        let ddl = include_str!("../resource/sql/ddl.sql");
+        // println!("ddl = {}", ddl);
+        let mut stream = sqlx::query(ddl).execute_many(&pool).await;
+        while let Some(res) = stream.next().await {
+            match res {
+                Ok(r) => println!("Initialized table"),
+                Err(e) => eprintln!("err {:?}", e),
+            }
+        }
+    }
+
     let datasource = DataSource {
-        setting: sled::open("data/setting").expect("open"),
+        setting: sled::open("data/management").expect("open"),
         sqlite: pool,
     };
 
@@ -130,7 +165,7 @@ where
     // P: SqliteParam,
     // for<'q> P: Encode<'q, Sqlite> + Type<Sqlite> + Send,
 {
-    // let rows: Vec<Id> = sqlx::query_as!(Id, "SELECT id FROM blog ORDER BY id").fetch_all(&d.sqlite).await?;
+    // let rows: Vec<Id> = sqlx::query_as!(Id, "SELECT id FROM post ORDER BY id").fetch_all(&d.sqlite).await?;
     // let mut conn = d.sqlite.acquire().await?;
     let mut q = sqlx::query_as::<Sqlite, D>(query);
     if let Some(params) = params {

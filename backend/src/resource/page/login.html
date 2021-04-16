@@ -3,27 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <title>配置管理用户</title>
+    <link rel="stylesheet" href="/asset/bootstrap.min-6c05f7396999b9df.css">
+    <script type="text/javascript">
+        function login() {
+            const user = {
+                email: document.getElementById('aligned-email').value,
+                password: document.getElementById('aligned-password').value,
+                captcha: document.getElementById('aligned-captcha').value,
+            };
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(user),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            fetch('/management/login', options)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.status === 0) {
+                        document.cookie = 'X-SONGDAY-USER-AUTHED=true; Path=/;';
+                        location.reload();
+                    } else {
+                        document.getElementById('errorMessage').value = data.error.detail;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    // code to handle request errors
+                });
+        }
+    </script>
 </head>
 <body>
-<form class="pure-form pure-form-aligned" action="/user/login">
-    <fieldset>
-        <div class="pure-control-group">
-            <label for="aligned-email">邮箱地址</label>
-            <input type="email" id="aligned-email" placeholder="邮箱地址" />
-            <span class="pure-form-message-inline">用于管理博客或忘记密码之用.</span>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>管理登录</h1>
         </div>
-        <div class="pure-control-group">
-            <label for="aligned-password1">登录密码</label>
-            <input type="password" id="aligned-password1" placeholder="密码" />
+    </div>
+    <div class="row">
+        <div class="col-md"></div>
+        <div class="col-md">
+            <div id="errorMessage" style="color:red;display:none"></div>
+            <form class="row g-3" onsubmit="login();return false;">
+                <div class="col-12">
+                    <label for="aligned-email" class="form-label">邮箱地址</label>
+                    <input type="email" id="aligned-email" class="form-control" placeholder="邮箱地址"/>
+                </div>
+                <div class="col-12">
+                    <label for="aligned-password" class="form-label">登录密码</label>
+                    <input type="password" id="aligned-password" class="form-control" placeholder="密码"/>
+                </div>
+                <div class="col-md-4">
+                    <label for="aligned-captcha" class="form-label">验证码</label>
+                    <input type="text" id="aligned-captcha" class="form-control" placeholder="验证码"/>
+                    <img src="/tool/verify-image"/>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">登录</button>
+                    <button type="button" class="btn" onclick="location.href='/';">返回到博客</button>
+                </div>
+            </form>
         </div>
-        <div class="pure-control-group">
-            <label for="aligned-password2">确认密码</label>
-            <input type="password" id="aligned-password2" placeholder="密码" />
-        </div>
-        <div class="pure-controls">
-            <button type="submit" class="pure-button pure-button-primary">提交</button>
-        </div>
-    </fieldset>
-</form>
+        <div class="col-md"></div>
+    </div>
+</div>
 </body>
 </html>

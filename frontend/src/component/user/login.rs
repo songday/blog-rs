@@ -7,7 +7,7 @@ use yew::{
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
 
-use blog_common::dto::user::{LoginParams, UserInfoWrapper};
+use blog_common::dto::user::{UserInfoWrapper, UserParams};
 
 use crate::{
     app::AppRoute,
@@ -24,7 +24,7 @@ pub struct Props {
 }
 
 pub(crate) struct Model {
-    login_params: LoginParams,
+    login_params: UserParams,
     error: Option<Error>,
     fetch_task: Option<FetchTask>,
     response: Callback<Result<UserInfoWrapper, Error>>,
@@ -47,7 +47,7 @@ impl Component for Model {
     type Properties = Props;
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Model {
-            login_params: LoginParams::default(),
+            login_params: UserParams::default(),
             error: None,
             fetch_task: None,
             response: link.callback(Msg::Response),
@@ -61,10 +61,10 @@ impl Component for Model {
         match msg {
             Msg::Ignore => {},
             Msg::UpdateEmail(s) => self.login_params.email = s,
-            Msg::UpdatePassword(s) => self.login_params.password = s,
+            Msg::UpdatePassword(s) => self.login_params.password1 = s,
             Msg::UpdateCaptcha(s) => self.login_params.captcha = s,
             Msg::Request => {
-                let fetch_task = request::post::<LoginParams, UserInfoWrapper>(
+                let fetch_task = request::post::<UserParams, UserInfoWrapper>(
                     val::USER_LOGIN_URL,
                     self.login_params.clone(),
                     self.response.clone(),
@@ -74,7 +74,7 @@ impl Component for Model {
             Msg::Response(Ok::<UserInfoWrapper, _>(user)) => {
                 self.fetch_task = None;
                 self.props.callback.emit(user);
-                self.router_agent.send(ChangeRoute(AppRoute::BlogCompose.into()));
+                self.router_agent.send(ChangeRoute(AppRoute::PostCompose.into()));
             },
             Msg::Response(Err::<_, Error>(err)) => {
                 self.error = Some(err);
@@ -113,7 +113,7 @@ impl Component for Model {
                             id="stacked-password"
                             type="password"
                             placeholder="Password" required=true
-                            value=&self.login_params.password
+                            value=&self.login_params.password1
                             oninput=self.link.callback(|e: InputData| Msg::UpdatePassword(e.value))
                             />
                         // <label for="stacked-captcha">{"Captcha"}</label>

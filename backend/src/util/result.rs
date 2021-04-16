@@ -40,8 +40,15 @@ impl warp::reject::Reject for ErrorWrapper {}
 
 impl From<std::io::Error> for ErrorWrapper {
     fn from(e: std::io::Error) -> Self {
-        eprintln!("here 2 {}", e);
-        Error::ReadBlogIdDataByTagFailed.into()
+        eprintln!("{}", e);
+        Error::ReadPostIdDataByTagFailed.into()
+    }
+}
+
+impl From<std::time::SystemTimeError> for ErrorWrapper {
+    fn from(e: std::time::SystemTimeError) -> Self {
+        eprintln!("{}", e);
+        Error::ReadPostIdDataByTagFailed.into()
     }
 }
 
@@ -94,3 +101,24 @@ impl From<urlencoding::FromUrlEncodingError> for ErrorWrapper {
         ErrorWrapper(Error::BadRequest)
     }
 }
+
+impl From<argon2::Error> for ErrorWrapper {
+    fn from(e: argon2::Error) -> Self {
+        eprintln!("{:?}", e);
+        ErrorWrapper(Error::BadRequest)
+    }
+}
+
+impl From<base64::DecodeError> for ErrorWrapper {
+    fn from(e: base64::DecodeError) -> Self {
+        eprintln!("{:?}", e);
+        ErrorWrapper(Error::BadRequest)
+    }
+}
+
+// impl From<scrypt::errors::InvalidOutputLen> for ErrorWrapper {
+//     fn from(e: scrypt::errors::InvalidOutputLen) -> Self {
+//         eprintln!("{:?}", e);
+//         ErrorWrapper(Error::BadRequest)
+//     }
+// }

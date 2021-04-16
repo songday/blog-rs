@@ -18,6 +18,15 @@ fn walk_assets(path: impl AsRef<Path>) -> Result<Vec<PathBuf>, std::io::Error> {
                     let mut other_files = walk_assets(entry.path())?;
                     files.append(&mut other_files);
                 } else if file_type.is_file() {
+                    let path = entry.path();
+                    let ext = path.extension();
+                    if ext.is_none() {
+                        continue;
+                    }
+                    let ext = ext.unwrap().to_os_string().into_string().unwrap();
+                    if ext.find("gz").is_some() {
+                        continue;
+                    }
                     files.push(entry.path());
                     // files.push(entry.file_name().to_os_string().into_string().unwrap());
                 }
@@ -45,11 +54,26 @@ fn gz_files(raw_asset_files: Vec<PathBuf>) -> Result<Vec<PathBuf>, std::io::Erro
     Ok(gz_files)
 }
 
+fn get_content_type(filename: String) -> String {
+    if filename.rfind(".css").is_some() {
+        String::from("text/css")
+    } else if filename.rfind(".js").is_some() {
+        String::from("text/javascript")
+    } else if filename.rfind(".html").is_some() {
+        String::from("text/html; charset=utf-8")
+    } else if filename.rfind(".wasm").is_some() {
+        String::from("application/wasm")
+    } else {
+        String::new()
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
-    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=build.rs,resource/asset/index.html");
 
     // embed all static resource asset files
-    let asset_root = format!("{}", Path::new("src").join("resource").join("asset").display());
+    let asset_root = Path::new("src").join("resource").join("asset");
+    let asset_root = format!("{}/", asset_root.display());
     let asset_root = asset_root.as_str();
     let all_static_asset_files = walk_assets(asset_root)?;
     let gz_files = gz_files(all_static_asset_files)?;
@@ -58,12 +82,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     for f in gz_files.iter() {
         writeln!(
             &mut service_asset_file,
-            r##"("{name}", include_bytes!(r#"{file_path}"#)),"##,
+            r##"("{name}", include_bytes!(r#"{file_path}"#), "{mime}"),"##,
             name = format!("{}", f.display())
                 .replace(asset_root, "")
                 .replace(".gz", "")
                 .replace("\\", "/"),
             file_path = format!("{}", f.display()).replace("src", ".."),
+            mime = get_content_type(format!("{}", f.display())),
         )?;
     }
     writeln!(&mut service_asset_file, r##"]"##,)?;
