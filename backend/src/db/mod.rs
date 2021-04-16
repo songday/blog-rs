@@ -5,6 +5,7 @@ use std::{
     path::Path,
 };
 
+use blog_common::result::Error;
 use futures::StreamExt;
 use once_cell::sync::OnceCell;
 use serde::Serialize;
@@ -13,12 +14,10 @@ use sqlx::{
     sqlite::{SqliteArguments, SqliteRow},
     Sqlite, SqlitePool,
 };
-use tokio::fs::{remove_file, rename, File, OpenOptions};
-
-use blog_common::result::Error;
-use model::Tag;
+use tokio::fs::{create_dir, remove_file, rename, File, OpenOptions};
 
 use crate::util::result::Result;
+use model::Tag;
 
 pub(crate) mod management;
 pub mod model;
@@ -52,14 +51,22 @@ pub struct Id {
 }
 
 pub async fn init_datasource() {
-    let db_file = Path::new(".").join("data").join("blog.dat");
-    let db_file_not_exists = !db_file.exists();
+    let path = Path::new(".").join("data");
+    if !path.exists() {
+        if let Err(e) = create_dir(path.as_path()).await {
+            panic!(e);
+        }
+    } else if path.is_file() {
+        panic!("目录下有一个data文件，请移动到另外一个地方再重试。");
+    }
+    let path = path.join("blog.dat");
+    let db_file_not_exists = !path.exists();
     if db_file_not_exists {
         let file = match OpenOptions::new()
             .read(false)
             .write(true)
             .create_new(true)
-            .open(db_file.as_path())
+            .open(path.as_path())
             .await
         {
             Ok(f) => f,
@@ -72,7 +79,7 @@ pub async fn init_datasource() {
         .max_connections(64)
         .connect_timeout(Duration::from_secs(2))
         .test_before_acquire(false);
-    let conn_str = format!("sqlite://{}", db_file.display());
+    let conn_str = format!("sqlite://{}", path.display());
     let pool = pool_ops
         .connect(conn_str.as_str())
         .await
