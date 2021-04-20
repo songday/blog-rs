@@ -130,8 +130,9 @@ impl Component for Model {
                 <div class="row">
                     <div class="col">
                         {"70年代、80年代、90年代 | "}
-                        <RouterAnchor<AppRoute> route=AppRoute::TopTags> {"热门标签"} </RouterAnchor<AppRoute>>{" | "}
-                        <RouterAnchor<AppRoute> route=AppRoute::PostList(1)> {"全部内容"} </RouterAnchor<AppRoute>>
+                        // <RouterAnchor<AppRoute> route=AppRoute::TopTags> {"热门标签"} </RouterAnchor<AppRoute>>{" | "}
+                        <RouterAnchor<AppRoute> route=AppRoute::Home> {"首页"} </RouterAnchor<AppRoute>>{" | "}
+                        <RouterAnchor<AppRoute> route=AppRoute::PostList(1)> {"全部博客"} </RouterAnchor<AppRoute>>
                     </div>
                     <div class="col text-end">
                         <user::Model user=&self.user callback=logout_callback.clone()/>

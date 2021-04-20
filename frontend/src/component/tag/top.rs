@@ -1,6 +1,7 @@
 use alloc::{boxed::Box, format, string::String, vec::Vec};
 use core::iter::Iterator;
 
+use blog_common::dto::tag::TagUsageAmount;
 use yew::{
     agent::Bridged,
     html,
@@ -8,8 +9,6 @@ use yew::{
     Bridge, Callback, Component, ComponentLink, FocusEvent, Html, InputData, MouseEvent, Properties, ShouldRender,
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
-
-use blog_common::dto::tag::TagUsageAmount;
 
 use crate::{
     app::AppRoute,
