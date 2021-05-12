@@ -31,6 +31,8 @@ web-sys = { version = "0.3", features = ["Window", "Document", "HtmlDocument"] }
 wee_alloc = { version = "0.4" }
 yew = "0.17"
 yew-router = "0.14"
+#yew = {git = "https://github.com/yewstack/yew", branch = "master"}
+#yew-router = { git = "https://github.com/yewstack/yew", branch="master" }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

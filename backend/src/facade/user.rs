@@ -86,11 +86,8 @@ pub async fn logout(token: Option<String>) -> Result<impl Reply, Rejection> {
 }
 
 pub async fn info(token: Option<String>) -> Result<impl Reply, Rejection> {
-    if token.is_some() {
-        return match status::check_auth(&token.unwrap()) {
-            Ok(u) => Ok(wrap_json_data(u)),
-            Err(e) => Ok(wrap_json_err(500, e.0)),
-        };
+    match status::check_auth(token) {
+        Ok(u) => Ok(wrap_json_data(u)),
+        Err(e) => Ok(wrap_json_err(500, e.0)),
     }
-    Ok(wrap_json_data(String::new()))
 }
