@@ -1,6 +1,7 @@
 use alloc::{format, vec::Vec};
 use core::fmt::Debug;
 
+use blog_common::{dto::Response as ApiResponse, val};
 use serde::{Deserialize, Serialize};
 use yew::{
     callback::Callback,
@@ -11,13 +12,30 @@ use yew::{
     },
 };
 
-use blog_common::{dto::Response as ApiResponse, val};
-
 use crate::util::{store, Error};
 
 pub(crate) enum RequestMethod {
     GET,
     POST,
+}
+
+fn get_url(uri: &str) -> String {
+    let location = web_sys::window().unwrap().location();
+    let mut prefix = String::with_capacity(32);
+    if let Ok(p) = location.protocol() {
+        prefix.push_str(&p);
+    }
+    prefix.push_str("//");
+    if let Ok(h) = location.hostname() {
+        prefix.push_str(&h);
+    }
+    if let Ok(p) = location.port() {
+        prefix.push(':');
+        prefix.push_str(&p);
+    }
+    prefix.push_str("/");
+    prefix.push_str(uri);
+    prefix
 }
 
 pub(crate) fn text_callback_handler<T>(callback: Callback<Result<T, Error>>) -> impl Fn(Response<Text>) -> ()
@@ -88,25 +106,25 @@ fn fetch_options() -> FetchOptions {
     }
 }
 
-pub(crate) fn get<T>(url: &str, callback: Callback<Result<T, Error>>) -> FetchTask
+pub(crate) fn get<T>(uri: &str, callback: Callback<Result<T, Error>>) -> FetchTask
 where
     for<'de> T: Deserialize<'de> + 'static + Debug,
 {
-    create_fetch_task(RequestMethod::GET, url, Nothing, callback)
+    create_fetch_task(RequestMethod::GET, uri, Nothing, callback)
 }
 
-pub(crate) fn post<B, T>(url: &str, body: B, callback: Callback<Result<T, Error>>) -> FetchTask
+pub(crate) fn post<B, T>(uri: &str, body: B, callback: Callback<Result<T, Error>>) -> FetchTask
 where
     for<'de> T: Deserialize<'de> + 'static + Debug,
     B: Serialize,
 {
     let body: Text = Json(&body).into();
-    create_fetch_task(RequestMethod::POST, url, body, callback)
+    create_fetch_task(RequestMethod::POST, uri, body, callback)
 }
 
 pub(crate) fn create_fetch_task<B, T>(
     method: RequestMethod,
-    url: &str,
+    uri: &str,
     body: B,
     callback: Callback<Result<T, Error>>,
 ) -> FetchTask
@@ -163,6 +181,7 @@ where
     };
     */
 
+    let url = get_url(uri);
     let mut request = match method {
         RequestMethod::GET => Request::get(url),
         RequestMethod::POST => Request::post(url),
@@ -179,7 +198,7 @@ where
     FetchService::fetch_with_options(request, fetch_options(), handler.into()).unwrap()
 }
 
-pub fn post_binary<T>(url: &str, body: Vec<u8>, callback: Callback<Result<T, Error>>) -> FetchTask
+pub fn post_binary<T>(uri: &str, body: Vec<u8>, callback: Callback<Result<T, Error>>) -> FetchTask
 where
     for<'de> T: Deserialize<'de> + 'static + Debug,
 {
@@ -231,7 +250,7 @@ where
             }
         }
     };
-    let builder = Request::post(url);
+    let builder = Request::post(uri);
     let request = builder.body(Ok(body)).unwrap();
     FetchService::fetch_binary_with_options(request, fetch_options(), callback.into()).unwrap()
 }

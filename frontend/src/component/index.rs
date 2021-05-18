@@ -47,7 +47,7 @@ impl Component for Model {
         match msg {
             Msg::PostListResponse(Ok::<PaginationData<Vec<PostDetail>>, _>(d)) => {
                 self.posts = d.data;
-                let r = request::get(val::TOP_TAG_URL, self.link.callback(Msg::TopTagsResponse));
+                let r = request::get(val::TOP_TAG_URI, self.link.callback(Msg::TopTagsResponse));
                 self.fetch_task = Some(r);
                 return true;
             },
@@ -139,7 +139,7 @@ impl Component for Model {
 
     fn rendered(&mut self, first_render: bool) {
         if first_render {
-            let url = format!("{}1", val::BLOG_LIST_URL);
+            let url = format!("{}1", val::BLOG_LIST_URI);
             let r = request::get(&url, self.link.callback(Msg::PostListResponse));
             self.fetch_task = Some(r);
         }

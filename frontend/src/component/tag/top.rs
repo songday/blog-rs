@@ -91,7 +91,7 @@ impl Component for Model {
 
     fn rendered(&mut self, first_render: bool) {
         if first_render {
-            let task = request::get::<Vec<TagUsageAmount>>(val::TOP_TAG_URL, self.link.callback(Msg::Response));
+            let task = request::get::<Vec<TagUsageAmount>>(val::TOP_TAG_URI, self.link.callback(Msg::Response));
             self.fetch_task = Some(task);
         }
     }

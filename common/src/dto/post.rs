@@ -25,6 +25,7 @@ pub struct PostDetail {
     pub tags: Option<Vec<String>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: Option<DateTime<Utc>>,
+    pub editable: bool,
 }
 
 // #[allow(deadcode)]

@@ -49,11 +49,11 @@ impl Model {
     fn request(&mut self) {
         let mut url = String::with_capacity(64);
         if self.props.tag.is_some() {
-            url.push_str(val::BLOG_TAG_LIST_URL);
+            url.push_str(val::BLOG_TAG_LIST_URI);
             url.push_str(self.props.tag.as_ref().unwrap());
             url.push('/');
         } else {
-            url.push_str(val::BLOG_LIST_URL);
+            url.push_str(val::BLOG_LIST_URI);
         }
         url.push_str(self.props.current_page.to_string().as_str());
 

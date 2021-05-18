@@ -56,7 +56,7 @@ impl Component for Model {
             Msg::UpdateCaptcha(s) => self.register_params.captcha = s,
             Msg::Request => {
                 let fetch_task = request::post::<UserParams, UserInfoWrapper>(
-                    val::USER_REGISTER_URL,
+                    val::USER_REGISTER_URI,
                     self.register_params.clone(),
                     self.response.clone(),
                 );
@@ -111,7 +111,7 @@ impl Component for Model {
                             value=&self.register_params.password2
                             oninput=self.link.callback(|e: InputData| Msg::UpdatePassword2(e.value))
                             />
-                        <img src=val::VERIFY_IMAGE_URL />
+                        <img src=val::VERIFY_IMAGE_URI />
                         <input
                             class="form-control form-control-lg"
                             type="text"

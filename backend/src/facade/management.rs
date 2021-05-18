@@ -55,10 +55,10 @@ pub async fn update_settings(token: Option<String>, setting: Setting) -> Result<
 
 pub async fn site_data(token: Option<String>) -> Result<impl Reply, Rejection> {
     let user_info = match status::check_auth(token) {
-        Ok(u) => u,
+        Ok(u) => Some(u),
         Err(e) => {
             eprintln!("{:?}", e);
-            UserInfo::default()
+            None
         },
     };
     let settings = match management::settings().await {

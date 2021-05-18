@@ -1,7 +1,10 @@
 use alloc::{rc::Rc, string::String};
 
 use blog_common::{
-    dto::user::{UserInfo, UserInfoWrapper},
+    dto::{
+        management::{Setting, SiteData},
+        user::{UserInfo, UserInfoWrapper},
+    },
     val as CommonVal,
 };
 use wasm_bindgen::JsCast;
@@ -42,6 +45,8 @@ pub(crate) enum AppRoute {
     PostListByTag(String, u8),
     #[to = "/#/post/show/{id}"]
     PostShow(i64),
+    #[to = "/#/post/edit/{id}"]
+    PostEdit(i64),
     // #[to = "/#/post/upload"]
     // BlogUpload,
     #[to = "/#/tag/top"]
@@ -59,13 +64,14 @@ pub(crate) enum AppRoute {
 }
 
 pub enum Msg {
-    Authenticated(UserInfoWrapper),
+    Authenticated(UserInfo),
     Logout,
     LogoutResponse(Result<String, Error>),
-    UserInfoResponse(Result<UserInfo, Error>),
+    SiteDataResponse(Result<SiteData, Error>),
 }
 
 pub(crate) struct Model {
+    pub settings: Setting,
     pub user: Option<UserInfo>,
     fetch_task: Option<FetchTask>,
     pub link: ComponentLink<Self>,
@@ -77,6 +83,7 @@ impl Component for Model {
 
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
+            settings: Setting::default(),
             user: None,
             fetch_task: None,
             link,
@@ -87,14 +94,14 @@ impl Component for Model {
         match msg {
             Msg::Authenticated(user) => {
                 ConsoleService::log("signed in");
-                store::save(CommonVal::SESSION_ID_HEADER_NAME, Some(user.access_token));
-                ConsoleService::log("saved auth to store");
-                self.user = Some(user.user_info);
+                // store::save(CommonVal::SESSION_ID_HEADER_NAME, Some(user.access_token));
+                // ConsoleService::log("saved auth to store");
+                self.user = Some(user);
                 return true;
             },
             Msg::Logout => {
                 ConsoleService::log("to sign out");
-                let r = request::get(val::USER_LOGOUT_URL, self.link.callback(Msg::LogoutResponse));
+                let r = request::get(val::USER_LOGOUT_URI, self.link.callback(Msg::LogoutResponse));
                 self.fetch_task = Some(r);
             },
             Msg::LogoutResponse(Ok::<String, _>(s)) => {
@@ -105,13 +112,14 @@ impl Component for Model {
                 return true;
             },
             Msg::LogoutResponse(Err::<_, Error>(e)) => {},
-            Msg::UserInfoResponse(Ok::<UserInfo, _>(user)) => {
-                ConsoleService::log("signed in");
-                ConsoleService::log("saved auth to store");
-                self.user = Some(user);
+            Msg::SiteDataResponse(Ok::<SiteData, _>(site_data)) => {
+                ConsoleService::log("Got site data");
+                // ConsoleService::log("saved auth to store");
+                self.settings = site_data.settings;
+                self.user = site_data.user_info;
                 return true;
             },
-            Msg::UserInfoResponse(Err::<_, Error>(e)) => {},
+            Msg::SiteDataResponse(Err::<_, Error>(e)) => {},
         }
         false
     }
@@ -129,7 +137,8 @@ impl Component for Model {
             <div class="container">
                 <div class="row">
                     <div class="col">
-                        {"70年代、80年代、90年代 | "}
+                        {&self.settings.name}
+                        {" | "}
                         // <RouterAnchor<AppRoute> route=AppRoute::TopTags> {"热门标签"} </RouterAnchor<AppRoute>>{" | "}
                         <RouterAnchor<AppRoute> route=AppRoute::Home> {"首页"} </RouterAnchor<AppRoute>>{" | "}
                         <RouterAnchor<AppRoute> route=AppRoute::PostList(1)> {"全部博客"} </RouterAnchor<AppRoute>>
@@ -189,7 +198,7 @@ impl Component for Model {
             // let token = store::get(CommonVal::USER_AUTH_MARK_HEADER);
             // if token.is_some() {
             //     // let token = token.as_ref().unwrap();
-            //     let r = request::get(val::USER_INFO_URL, self.link.callback(Msg::UserInfoResponse));
+            //     let r = request::get(val::USER_INFO_URI, self.link.callback(Msg::SiteDataResponse));
             //     self.fetch_task = Some(r);
             // }
             // cookie
@@ -219,7 +228,7 @@ impl Component for Model {
             //     Some(semicolon) => &cookie[p..semicolon],
             //     None => &cookie[p..],
             // };
-            let r = request::get(val::USER_INFO_URL, self.link.callback(Msg::UserInfoResponse));
+            let r = request::get(val::SITE_DATA_URI, self.link.callback(Msg::SiteDataResponse));
             self.fetch_task = Some(r);
         }
     }

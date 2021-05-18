@@ -20,5 +20,5 @@ pub struct Setting {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SiteData {
     pub settings: Setting,
-    pub user_info: UserInfo,
+    pub user_info: Option<UserInfo>,
 }

@@ -177,6 +177,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
     let post_show = warp::get()
         .and(warp::path("post"))
         .and(warp::path("show"))
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and(warp::path::param::<u64>())
         .and(warp::path::end())
         .and_then(post::show);

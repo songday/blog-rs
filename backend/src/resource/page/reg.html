@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>配置管理用户</title>
-    <link rel="stylesheet" href="/asset/bootstrap.min-8c38f855edf41443.css">
+    <link rel="stylesheet" href="/asset/bootstrap.min-5a2a440f4dcf9658.css">
     <script type="text/javascript">
         function register() {
+            if (document.getElementById('aligned-password1').value !== document.getElementById('aligned-password2').value) {
+                alert('密码不一致');
+                return;
+            }
             const user = {
                 email: document.getElementById('aligned-email').value,
-                password: document.getElementById('aligned-password1').value
+                password: document.getElementById('aligned-password1').value,
+                captcha: '',
             };
             const options = {
                 method: 'POST',
@@ -23,6 +28,7 @@
                 .catch(err => {
                     // code to handle request errors
                 });
+            location.reload();
         }
     </script>
 </head>
@@ -45,7 +51,7 @@
                     </div>
                     <div class="col-12">
                         <label></label>
-                        <span class="pure-form-message-inline">用于管理博客或忘记密码之用，如果忘记管理员账号，可以删除<</span>
+                        <span class="pure-form-message-inline">用于登录博客或忘记密码之用</span>
                     </div>
                     <div class="col-12">
                         <label for="aligned-password1" class="form-label">登录密码</label>

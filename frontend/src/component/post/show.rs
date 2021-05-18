@@ -116,7 +116,7 @@ impl Component for Model {
     fn rendered(&mut self, first_render: bool) {
         if first_render && self.blog_detail.is_none() && self.blog_id > 0 {
             let mut url = String::with_capacity(64);
-            url.push_str(val::BLOG_SHOW_URL);
+            url.push_str(val::BLOG_SHOW_URI);
             url.push_str(self.blog_id.to_string().as_str());
             let fetch_task = request::get::<PostDetail>(url.as_str(), self.response.clone());
             self.fetch_task = Some(fetch_task);
