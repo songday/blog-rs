@@ -6,6 +6,8 @@ pub struct UserInfo {
     pub email: String,
 }
 
+impl yew::html::ImplicitClone for UserInfo {}
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserInfoWrapper {
     pub user_info: UserInfo,
