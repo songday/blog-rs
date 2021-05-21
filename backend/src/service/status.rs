@@ -66,13 +66,17 @@ pub async fn scanner() {
     }
 }
 
-pub(crate) fn check_auth(token: &str) -> Result<UserInfo> {
+pub(crate) fn check_auth(token: Option<String>) -> Result<UserInfo> {
+    if token.is_none() {
+        return Err(Error::NotAuthed.into());
+    }
+    let token = token.unwrap();
     if token.len() != 32 {
         return Err(Error::NotAuthed.into());
     }
     let mut r = ONLINE_USERS.write();
     let d = &mut *r;
-    if let Some(u) = d.get_mut(token) {
+    if let Some(u) = d.get_mut(&token) {
         u.last_active_time = time::current_timestamp();
         return Ok(u.user.clone());
     }

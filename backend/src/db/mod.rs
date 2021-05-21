@@ -41,7 +41,7 @@ pub enum SqlParam {
 
 #[derive(Clone)]
 pub struct DataSource {
-    setting: sled::Db,
+    management: sled::Db,
     sqlite: SqliteConnPool,
 }
 
@@ -99,7 +99,7 @@ pub async fn init_datasource() {
     }
 
     let datasource = DataSource {
-        setting: sled::open("data/management").expect("open"),
+        management: sled::open("data/management").expect("open"),
         sqlite: pool,
     };
 
@@ -126,7 +126,7 @@ pub async fn init_datasource() {
 pub async fn shutdown() {
     let ds = DATA_SOURCE.get().unwrap();
     ds.sqlite.close().await;
-    ds.setting.flush();
+    ds.management.flush();
 }
 
 #[inline]

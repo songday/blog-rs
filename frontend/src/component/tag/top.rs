@@ -1,6 +1,7 @@
 use alloc::{boxed::Box, format, string::String, vec::Vec};
 use core::iter::Iterator;
 
+use blog_common::dto::tag::TagUsageAmount;
 use yew::{
     agent::Bridged,
     html,
@@ -8,8 +9,6 @@ use yew::{
     Bridge, Callback, Component, ComponentLink, FocusEvent, Html, InputData, MouseEvent, Properties, ShouldRender,
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
-
-use blog_common::dto::tag::TagUsageAmount;
 
 use crate::{
     app::AppRoute,
@@ -92,7 +91,7 @@ impl Component for Model {
 
     fn rendered(&mut self, first_render: bool) {
         if first_render {
-            let task = request::get::<Vec<TagUsageAmount>>(val::TOP_TAG_URL, self.link.callback(Msg::Response));
+            let task = request::get::<Vec<TagUsageAmount>>(val::TOP_TAG_URI, self.link.callback(Msg::Response));
             self.fetch_task = Some(task);
         }
     }

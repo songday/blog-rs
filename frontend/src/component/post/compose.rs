@@ -92,7 +92,7 @@ impl Component for Model {
                 ConsoleService::log(&self.blog_params.content);
                 self.blog_params.tags = Some(get_selected_tags().iter().map(|e| e.as_string().unwrap()).collect());
                 let fetch_task = request::post::<NewPost, PostDetail>(
-                    val::BLOG_SAVE_URL,
+                    val::BLOG_SAVE_URI,
                     self.blog_params.clone(),
                     self.response.clone(),
                 );
@@ -207,7 +207,7 @@ impl Component for Model {
 
     fn rendered(&mut self, first_render: bool) {
         if first_render {
-            let task = request::get::<Vec<String>>(val::TAG_LIST_URL, self.link.callback(Msg::TagsResponse));
+            let task = request::get::<Vec<String>>(val::TAG_LIST_URI, self.link.callback(Msg::TagsResponse));
             self.fetch_task = Some(task);
         }
     }

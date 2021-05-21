@@ -1,6 +1,5 @@
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
 use blog_common::result::Error;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 pub type Result<D> = core::result::Result<D, ErrorWrapper>;
 // pub type Result<D> = core::result::Result<D, Error>;

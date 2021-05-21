@@ -56,7 +56,7 @@ impl Component for Model {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::Loaded(file) => {
-                let mut url = String::from(val::BLOG_IMAGE_SAVE_URL);
+                let mut url = String::from(val::BLOG_IMAGE_SAVE_URI);
                 url.push_str(file.name.as_str());
                 self.uploading_files.push(UploadFileStatus {
                     filename: file.name,

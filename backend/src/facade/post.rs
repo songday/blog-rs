@@ -50,9 +50,12 @@ pub async fn save(user: Option<UserInfo>, post: NewPost) -> Result<impl Reply, R
     }
 }
 
-pub async fn show(id: u64) -> Result<impl Reply, Rejection> {
+pub async fn show(token: Option<String>, id: u64) -> Result<impl Reply, Rejection> {
     match post::show(id).await {
-        Ok(blog) => Ok(wrap_json_data(&blog)),
+        Ok(mut blog) => {
+            blog.editable = status::check_auth(token).is_ok();
+            Ok(wrap_json_data(&blog))
+        },
         Err(e) => Ok(wrap_json_err(500, e.0)),
     }
 }

@@ -34,7 +34,7 @@ pub(crate) struct Model {
     response: Callback<Result<PaginationData<Vec<PostDetail>>, Error>>,
     router_agent: Box<dyn Bridge<RouteAgent>>,
     link: ComponentLink<Self>,
-    blogs: Vec<PostDetail>,
+    posts: Vec<PostDetail>,
     total_page_num: u8,
 }
 
@@ -49,11 +49,11 @@ impl Model {
     fn request(&mut self) {
         let mut url = String::with_capacity(64);
         if self.props.tag.is_some() {
-            url.push_str(val::BLOG_TAG_LIST_URL);
+            url.push_str(val::BLOG_TAG_LIST_URI);
             url.push_str(self.props.tag.as_ref().unwrap());
             url.push('/');
         } else {
-            url.push_str(val::BLOG_LIST_URL);
+            url.push_str(val::BLOG_LIST_URI);
         }
         url.push_str(self.props.current_page.to_string().as_str());
 
@@ -74,7 +74,7 @@ impl Component for Model {
             response: link.callback(Msg::Response),
             router_agent: RouteAgent::bridge(link.callback(|_| Msg::Ignore)),
             link,
-            blogs: Vec::new(),
+            posts: Vec::new(),
             total_page_num: 0,
         }
     }
@@ -86,7 +86,7 @@ impl Component for Model {
                 self.request();
             },
             Msg::Response(Ok::<PaginationData<Vec<PostDetail>>, _>(blog)) => {
-                self.blogs = blog.data;
+                self.posts = blog.data;
                 self.total_page_num = (blog.total / 20) as u8;
                 if blog.total % 20 != 0 {
                     self.total_page_num = self.total_page_num + 1;
@@ -138,7 +138,7 @@ impl Component for Model {
         html! {
             <>
             {
-                for self.blogs.iter().map(|b| {
+                for self.posts.iter().map(|b| {
                     html! {
                     <>
                     <div class="row"><div class="col" style="font-size:150%">

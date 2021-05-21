@@ -63,7 +63,7 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
         .await?;
     let total: i64 = row.get(0);
     // println!("total={}", total);
-    if total < 0 {
+    if total < 1 {
         return Ok(PaginationData { total: 0, data: vec![] });
     }
 
@@ -158,6 +158,7 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
         tags: new_post.tags,
         created_at: chrono::offset::Utc::now(),
         updated_at: None,
+        editable: true,
     };
 
     // save to sqlite
