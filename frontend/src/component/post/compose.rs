@@ -8,7 +8,7 @@ use yew::{
         fetch::FetchTask,
         reader::{File, FileChunk, FileData, ReaderService, ReaderTask},
     },
-    Bridge, Callback, ChangeData, Component, ComponentLink, FocusEvent, Html, InputData, ShouldRender,
+    Bridge, Callback, ChangeData, Component, ComponentLink, FocusEvent, Html, InputData, Properties, ShouldRender,
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
 
@@ -32,11 +32,19 @@ extern "C" {
     fn input_tag(event: web_sys::KeyboardEvent);
     #[wasm_bindgen(js_name = selectTag)]
     fn select_tag(tag: String);
+    #[wasm_bindgen(js_name = selectTags)]
+    fn select_tags(tag: Vec<wasm_bindgen::JsValue>);
     #[wasm_bindgen(js_name = getSelectedTags)]
     fn get_selected_tags() -> Vec<wasm_bindgen::JsValue>;
 }
 
+#[derive(Properties, Clone)]
+pub struct Props {
+    pub blog_id: Option<i64>,
+}
+
 pub(crate) struct Model {
+    blog_id: Option<i64>,
     blog_params: NewPost,
     error: Option<Error>,
     fetch_task: Option<FetchTask>,
@@ -54,15 +62,17 @@ pub(crate) enum Msg {
     InputNewTag(web_sys::KeyboardEvent),
     Request,
     Response(Result<PostDetail, Error>),
+    EditPostResponse(Result<PostDetail, Error>),
     TagsResponse(Result<Vec<String>, Error>),
     InitEditor,
 }
 
 impl Component for Model {
     type Message = Msg;
-    type Properties = ();
-    fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
+    type Properties = Props;
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
+            blog_id: props.blog_id,
             blog_params: NewPost {
                 title: String::default(),
                 content: String::default(),
@@ -103,18 +113,42 @@ impl Component for Model {
                 self.router_agent.send(ChangeRoute(AppRoute::PostShow(blog.id).into()));
             },
             Msg::Response(Err::<_, Error>(err)) => {
+                eprintln!("{:?}", err);
                 self.error = Some(err);
                 self.fetch_task = None;
                 return true;
             },
             Msg::TagsResponse(Ok::<Vec<String>, _>(tags)) => {
-                ConsoleService::log(tags.len().to_string().as_str());
-                self.fetch_task = None;
+                // ConsoleService::log(tags.len().to_string().as_str());
                 self.all_tags = tags;
+                if self.blog_id.is_some() {
+                    let mut url = String::with_capacity(64);
+                    url.push_str(val::BLOG_SHOW_URI);
+                    url.push_str(self.blog_id.unwrap().to_string().as_str());
+                    let task = request::get::<PostDetail>(url.as_str(), self.link.callback(Msg::EditPostResponse));
+                    self.fetch_task = Some(task);
+                } else {
+                    self.fetch_task = None;
+                }
                 return true;
             },
             Msg::TagsResponse(Err::<_, Error>(err)) => {
                 ConsoleService::log("error");
+                eprintln!("{:?}", err);
+                self.error = Some(err);
+                self.fetch_task = None;
+                return true;
+            },
+            Msg::EditPostResponse(Ok::<PostDetail, _>(mut post_detail)) => {
+                std::mem::swap(&mut self.blog_params.title, &mut post_detail.title);
+                std::mem::swap(&mut self.blog_params.content, &mut post_detail.content);
+                std::mem::swap(&mut self.blog_params.tags, &mut post_detail.tags);
+                self.fetch_task = None;
+                return true;
+            },
+            Msg::EditPostResponse(Err::<_, Error>(err)) => {
+                ConsoleService::log("error");
+                eprintln!("{:?}", err);
                 self.error = Some(err);
                 self.fetch_task = None;
                 return true;
@@ -146,7 +180,7 @@ impl Component for Model {
                         <input
                             class="form-control"
                             type="text"
-                            value=&self.blog_params.title
+                            value=self.blog_params.title.clone()
                             oninput=self.link.callback(|e: InputData| Msg::UpdateTitle(e.value))
                             />
                     </div>
@@ -159,7 +193,7 @@ impl Component for Model {
                     // </textarea>
                     <div class="col-12">
                         <label class="form-label">{"内容"}</label>
-                        <div id="editor"></div>
+                        <div id="editor">{&self.blog_params.content}</div>
                     </div>
                     // <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
                     <div class="col-12">
@@ -198,8 +232,8 @@ impl Component for Model {
                         </button>
                     </div>
                 </form>
-                <link rel="stylesheet" href="/asset/codemirror.min.css" />
-                <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
+                // <link rel="stylesheet" href="/asset/codemirror.min.css" />
+                // <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
                 <script src="/asset/toastui-editor-all.min.js" onload=self.link.callback(|_| Msg::InitEditor)></script>
             </>
         }
@@ -209,6 +243,17 @@ impl Component for Model {
         if first_render {
             let task = request::get::<Vec<String>>(val::TAG_LIST_URI, self.link.callback(Msg::TagsResponse));
             self.fetch_task = Some(task);
+        }
+        if self.blog_params.tags.is_some() {
+            let val = self
+                .blog_params
+                .tags
+                .as_ref()
+                .unwrap()
+                .iter()
+                .map(|s| wasm_bindgen::JsValue::from_str(s))
+                .collect::<Vec<_>>();
+            select_tags(val)
         }
     }
 }

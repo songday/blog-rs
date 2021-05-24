@@ -25,7 +25,7 @@ struct UploadFileStatus {
 pub struct Model {
     fetch_task: Vec<Option<FetchTask>>,
     link: ComponentLink<Model>,
-    reader: ReaderService,
+    // reader: ReaderService,
     tasks: Vec<ReaderTask>,
     choose_files: Vec<File>,
     uploading_files: Vec<UploadFileStatus>,
@@ -45,7 +45,7 @@ impl Component for Model {
     fn create(_: Self::Properties, link: ComponentLink<Self>) -> Self {
         Model {
             fetch_task: Vec::new(),
-            reader: ReaderService::new(),
+            // reader: ReaderService::new(),
             link,
             tasks: Vec::new(),
             choose_files: Vec::new(),
@@ -80,7 +80,7 @@ impl Component for Model {
                 for file in files.into_iter() {
                     let task = {
                         let callback = self.link.callback(Msg::Loaded);
-                        self.reader.read_file(file, callback).unwrap()
+                        ReaderService::read_file(file, callback).unwrap()
                     };
                     self.tasks.push(task);
                 }

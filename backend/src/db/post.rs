@@ -9,6 +9,8 @@ use blog_common::{
     result::Error,
 };
 use chrono::Timelike;
+// use chrono::offset::Utc;
+// use chrono::DateTime;
 use comrak::{markdown_to_html, ComrakOptions};
 use sqlx::{Row, Sqlite};
 
@@ -22,6 +24,8 @@ use crate::{
     },
     util::{common, result::Result, snowflake},
 };
+
+// const START_TIME: DateTime<Utc> = Utc.ymd(1970, 1, 1).and_hms(0, 1, 1);
 
 fn review_rendered_content(c: &str) -> String {
     let r = common::HTML_TAG_REGEX.replace(c, "");
@@ -168,7 +172,7 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
             .bind(&post_detail.title)
             .bind(&new_post.content)
             .bind(&post_detail.content)
-            .bind(post_detail.created_at.second() as i64)
+            .bind(post_detail.created_at.timestamp() as i64)
             .execute(&DATA_SOURCE.get().unwrap().sqlite)
             .await?
             .last_insert_rowid();

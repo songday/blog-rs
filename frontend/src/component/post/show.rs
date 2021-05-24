@@ -82,7 +82,7 @@ impl Component for Model {
         if self.blog_detail.is_some() {
             let blog = self.blog_detail.as_ref().unwrap();
             html! {
-                <div>
+                <>
                     <h1>{&blog.title}</h1>
                     // <div ref=self.node_ref.clone()/>
                     <div>{ self.view_body() }</div>
@@ -104,7 +104,17 @@ impl Component for Model {
                             html! {}
                         }
                     }
-                </div>
+                    {
+                        if blog.editable {
+                            html! {
+                                <RouterAnchor<AppRoute> route=AppRoute::PostEdit(blog.id) classes="link-success ms-1"> {"编辑"} </RouterAnchor<AppRoute>>
+                            }
+                        } else {
+                            html! {}
+                        }
+                    }
+                    <div>{ blog.created_at }</div>
+                </>
             }
         } else {
             html! {

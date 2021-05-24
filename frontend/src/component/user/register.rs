@@ -83,7 +83,7 @@ impl Component for Model {
                 // <RouterAnchor<AppRoute> route=AppRoute::UserLogin>
                 //     { "Have an account already? Sign in!" }
                 // </RouterAnchor<AppRoute>>
-                <ShowErrors error=&self.error />
+                // <ShowErrors error=&self.error />
                 <form class="pure-form pure-form-stacked" onsubmit=self.link.callback(|ev: FocusEvent| {
                     ev.prevent_default();
                     Msg::Request
@@ -94,21 +94,21 @@ impl Component for Model {
                             class="form-control form-control-lg"
                             type="email"
                             placeholder="Email" required=true
-                            value=&self.register_params.email
+                            // value=self.register_params.email.clone()
                             oninput=self.link.callback(|e: InputData| Msg::UpdateEmail(e.value))
                             />
                         <input
                             class="form-control form-control-lg"
                             type="password"
                             placeholder="Password" required=true
-                            value=&self.register_params.password1
+                            // value=self.register_params.password1.clone()
                             oninput=self.link.callback(|e: InputData| Msg::UpdatePassword1(e.value))
                             />
                         <input
                             class="form-control form-control-lg"
                             type="password"
                             placeholder="Same password again" required=true
-                            value=&self.register_params.password2
+                            // value=self.register_params.password2.clone()
                             oninput=self.link.callback(|e: InputData| Msg::UpdatePassword2(e.value))
                             />
                         <img src=val::VERIFY_IMAGE_URI />
@@ -116,7 +116,7 @@ impl Component for Model {
                             class="form-control form-control-lg"
                             type="text"
                             placeholder="Captcha" required=true
-                            value=&self.register_params.captcha
+                            // value=self.register_params.captcha.clone()
                             oninput=self.link.callback(|e: InputData| Msg::UpdateCaptcha(e.value))
                             />
                         <button
