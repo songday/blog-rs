@@ -1,7 +1,8 @@
 use core::{convert::Infallible, result::Result};
+use std::collections::HashMap;
 
 use blog_common::{
-    dto::{post::NewPost, user::UserInfo, Response as ApiResponse},
+    dto::{post::PostData, user::UserInfo, Response as ApiResponse},
     result::{Error, ErrorResponse},
     val,
 };
@@ -40,7 +41,7 @@ pub async fn list_by_tag(tag: String, page_num: u8) -> Result<impl Reply, Reject
     }
 }
 
-pub async fn save(user: Option<UserInfo>, post: NewPost) -> Result<impl Reply, Rejection> {
+pub async fn save(user: Option<UserInfo>, post: PostData) -> Result<impl Reply, Rejection> {
     if user.is_none() {
         return Ok(wrap_json_err(500, Error::NotAuthed));
     }
@@ -50,8 +51,12 @@ pub async fn save(user: Option<UserInfo>, post: NewPost) -> Result<impl Reply, R
     }
 }
 
-pub async fn show(token: Option<String>, id: u64) -> Result<impl Reply, Rejection> {
-    match post::show(id).await {
+pub async fn show(
+    token: Option<String>,
+    id: u64,
+    query_string: HashMap<String, String>,
+) -> Result<impl Reply, Rejection> {
+    match post::show(id, query_string).await {
         Ok(mut blog) => {
             blog.editable = status::check_auth(token).is_ok();
             Ok(wrap_json_data(&blog))

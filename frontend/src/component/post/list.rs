@@ -10,7 +10,7 @@ use yew::{
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
 
 use blog_common::dto::{
-    post::{NewPost, PostDetail},
+    post::{PostData, PostDetail},
     PaginationData,
 };
 

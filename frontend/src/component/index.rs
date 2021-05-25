@@ -46,12 +46,14 @@ impl Component for Model {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::PostListResponse(Ok::<PaginationData<Vec<PostDetail>>, _>(d)) => {
+                ConsoleService::log("Got post list data");
                 self.posts = d.data;
                 let r = request::get(val::TOP_TAG_URI, self.link.callback(Msg::TopTagsResponse));
                 self.fetch_task = Some(r);
                 return true;
             },
             Msg::PostListResponse(Err::<_, Error>(err)) => {
+                eprintln!("{:?}", err);
                 ConsoleService::log(&format!("{}", &err));
                 self.error = Some(err);
                 self.fetch_task = None;
@@ -63,6 +65,7 @@ impl Component for Model {
                 return true;
             },
             Msg::TopTagsResponse(Err::<_, Error>(err)) => {
+                eprintln!("{:?}", err);
                 ConsoleService::log(&format!("{}", &err));
                 self.error = Some(err);
                 self.fetch_task = None;

@@ -66,7 +66,7 @@ pub async fn get_names(id_array: Vec<i64>) -> Result<Vec<String>> {
     Ok(name_list)
 }
 
-pub(super) async fn record_usage(post_id: u64, tags: &Vec<String>) -> Result<()> {
+pub(super) async fn record_usage(post_id: i64, is_new_post: bool, tags: &Vec<String>) -> Result<()> {
     // query id list by name list
     let mut sql = String::with_capacity(256);
     sql.push_str("SELECT id,name from tag WHERE name IN (");
@@ -88,7 +88,7 @@ pub(super) async fn record_usage(post_id: u64, tags: &Vec<String>) -> Result<()>
             let mut tags_in_db_iter = tags_in_db.iter();
             for tag in tags.iter() {
                 if !tags_in_db_iter.any(|e| e.name.eq(tag)) {
-                    let id = sqlx::query("INSERT INTO tag(name, created_at)VALUES(?,?)")
+                    let id = sqlx::query("REPLACE INTO tag(name, created_at)VALUES(?,?)")
                         .bind(tag)
                         .bind(common::get_current_sec()? as i64)
                         .execute(&DATA_SOURCE.get().unwrap().sqlite)
@@ -105,9 +105,25 @@ pub(super) async fn record_usage(post_id: u64, tags: &Vec<String>) -> Result<()>
         tags_in_db.append(&mut new_tags);
     }
 
-    let post_id = post_id as i64;
+    // 把没有用到的tag id删除
+    if !is_new_post {
+        let mut sql = String::with_capacity(512);
+        sql.push_str("DELETE FROM tag_usage WHERE post_id = ? AND tag_id NOT IN (");
+        for _idx in 0..tags_in_db.len() {
+            sql.push_str("?,");
+        }
+        sql.replace_range(sql.len() - 1.., ")");
+        // println!("{}", sql.as_str());
+        let mut query = sqlx::query(sql.as_str());
+        for tag in tags_in_db.iter() {
+            query = query.bind(tag.id);
+        }
+        let _tags_in_db = query.execute(&DATA_SOURCE.get().unwrap().sqlite).await?;
+    }
+
+    let post_id = post_id;
     for tag in tags_in_db {
-        sqlx::query("INSERT INTO tag_usage(post_id, tag_id)VALUES(?,?)")
+        sqlx::query("REPLACE INTO tag_usage(post_id, tag_id)VALUES(?,?)")
             .bind(post_id)
             .bind(tag.id)
             .execute(&DATA_SOURCE.get().unwrap().sqlite)

@@ -1,5 +1,9 @@
 use alloc::{boxed::Box, string::String, vec::Vec};
 
+use blog_common::dto::{
+    post::{PostData, PostDetail, Tag},
+    user::UserInfo,
+};
 use wasm_bindgen::prelude::*;
 use yew::{
     agent::Bridged,
@@ -11,8 +15,6 @@ use yew::{
     Bridge, Callback, ChangeData, Component, ComponentLink, FocusEvent, Html, InputData, Properties, ShouldRender,
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
-
-use blog_common::dto::post::{NewPost, PostDetail, Tag};
 
 use crate::{
     app::AppRoute,
@@ -26,6 +28,8 @@ use yew::services::ConsoleService;
 extern "C" {
     #[wasm_bindgen(js_name = initEditor)]
     fn init_editor();
+    #[wasm_bindgen(js_name = setInitContent)]
+    fn set_init_content(intent_content: String);
     #[wasm_bindgen(js_name = getContent)]
     fn get_content() -> String;
     #[wasm_bindgen(js_name = inputTag)]
@@ -36,16 +40,20 @@ extern "C" {
     fn select_tags(tag: Vec<wasm_bindgen::JsValue>);
     #[wasm_bindgen(js_name = getSelectedTags)]
     fn get_selected_tags() -> Vec<wasm_bindgen::JsValue>;
+    #[wasm_bindgen(js_name = gotoLogin)]
+    fn goto_login();
 }
 
 #[derive(Properties, Clone)]
 pub struct Props {
     pub blog_id: Option<i64>,
+    pub user_info: Option<UserInfo>,
 }
 
 pub(crate) struct Model {
     blog_id: Option<i64>,
-    blog_params: NewPost,
+    user_info: Option<UserInfo>,
+    blog_params: PostData,
     error: Option<Error>,
     fetch_task: Option<FetchTask>,
     response: Callback<Result<PostDetail, Error>>,
@@ -73,7 +81,9 @@ impl Component for Model {
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             blog_id: props.blog_id,
-            blog_params: NewPost {
+            user_info: props.user_info,
+            blog_params: PostData {
+                id: None,
                 title: String::default(),
                 content: String::default(),
                 tags: None,
@@ -99,9 +109,9 @@ impl Component for Model {
             Msg::InputNewTag(e) => input_tag(e),
             Msg::Request => {
                 self.blog_params.content = get_content();
-                ConsoleService::log(&self.blog_params.content);
+                // ConsoleService::log(&self.blog_params.content);
                 self.blog_params.tags = Some(get_selected_tags().iter().map(|e| e.as_string().unwrap()).collect());
-                let fetch_task = request::post::<NewPost, PostDetail>(
+                let fetch_task = request::post::<PostData, PostDetail>(
                     val::BLOG_SAVE_URI,
                     self.blog_params.clone(),
                     self.response.clone(),
@@ -125,12 +135,13 @@ impl Component for Model {
                     let mut url = String::with_capacity(64);
                     url.push_str(val::BLOG_SHOW_URI);
                     url.push_str(self.blog_id.unwrap().to_string().as_str());
+                    url.push_str("?edit=true");
                     let task = request::get::<PostDetail>(url.as_str(), self.link.callback(Msg::EditPostResponse));
                     self.fetch_task = Some(task);
                 } else {
                     self.fetch_task = None;
+                    return true;
                 }
-                return true;
             },
             Msg::TagsResponse(Err::<_, Error>(err)) => {
                 ConsoleService::log("error");
@@ -140,10 +151,22 @@ impl Component for Model {
                 return true;
             },
             Msg::EditPostResponse(Ok::<PostDetail, _>(mut post_detail)) => {
+                self.blog_params.id = Some(post_detail.id);
                 std::mem::swap(&mut self.blog_params.title, &mut post_detail.title);
-                std::mem::swap(&mut self.blog_params.content, &mut post_detail.content);
-                std::mem::swap(&mut self.blog_params.tags, &mut post_detail.tags);
                 self.fetch_task = None;
+                if post_detail.content.len() > 0 {
+                    set_init_content(post_detail.content.clone());
+                }
+                if post_detail.tags.is_some() {
+                    let val = post_detail
+                        .tags
+                        .as_ref()
+                        .unwrap()
+                        .iter()
+                        .map(|s| wasm_bindgen::JsValue::from_str(s))
+                        .collect::<Vec<_>>();
+                    select_tags(val);
+                }
                 return true;
             },
             Msg::EditPostResponse(Err::<_, Error>(err)) => {
@@ -155,13 +178,14 @@ impl Component for Model {
             },
             Msg::InitEditor => {
                 init_editor();
-                return true;
+                let task = request::get::<Vec<String>>(val::TAG_LIST_URI, self.link.callback(Msg::TagsResponse));
+                self.fetch_task = Some(task);
             },
         }
-        false
+        true
     }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender { false }
+    fn change(&mut self, _props: Self::Properties) -> ShouldRender { true }
 
     fn view(&self) -> Html {
         html! {
@@ -193,7 +217,7 @@ impl Component for Model {
                     // </textarea>
                     <div class="col-12">
                         <label class="form-label">{"内容"}</label>
-                        <div id="editor">{&self.blog_params.content}</div>
+                        <div id="editor"></div>
                     </div>
                     // <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
                     <div class="col-12">
@@ -203,7 +227,7 @@ impl Component for Model {
                         <div class="col-md-6">
                             {"新增标签："}<input id="tagInput"
                                 type="text"
-                                placeholder="不超过20字"
+                                placeholder="不超过10字"
                                 onkeyup=self.link.callback(|e: web_sys::KeyboardEvent| Msg::InputNewTag(e))
                                 />{"（按回车新增）"}
                         </div>
@@ -239,21 +263,9 @@ impl Component for Model {
         }
     }
 
-    fn rendered(&mut self, first_render: bool) {
-        if first_render {
-            let task = request::get::<Vec<String>>(val::TAG_LIST_URI, self.link.callback(Msg::TagsResponse));
-            self.fetch_task = Some(task);
-        }
-        if self.blog_params.tags.is_some() {
-            let val = self
-                .blog_params
-                .tags
-                .as_ref()
-                .unwrap()
-                .iter()
-                .map(|s| wasm_bindgen::JsValue::from_str(s))
-                .collect::<Vec<_>>();
-            select_tags(val)
+    fn rendered(&mut self, _first_render: bool) {
+        if self.user_info.is_none() {
+            goto_login();
         }
     }
 }

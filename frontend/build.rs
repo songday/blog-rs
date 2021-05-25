@@ -33,6 +33,7 @@ fn main() {
     urls.append("TOP_TAG_URI", "tag/top");
     urls.append("BLOG_TAG_LIST_URI", "post/tag/");
     urls.append("BLOG_SAVE_URI", "post/save");
+    urls.append("BLOG_UPDATE_URI", "post/update");
     urls.append("BLOG_SHOW_URI", "post/show/");
     urls.append("BLOG_IMAGE_SAVE_URI", "post/image/save/");
 

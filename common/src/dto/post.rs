@@ -11,7 +11,8 @@ use serde_json::ser::Formatter;
 // use crate::result::Error;
 
 #[derive(Clone, Deserialize, Serialize)]
-pub struct NewPost {
+pub struct PostData {
+    pub id: Option<i64>,
     pub title: String,
     pub content: String,
     pub tags: Option<Vec<String>>,

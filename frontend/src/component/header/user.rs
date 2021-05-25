@@ -43,6 +43,9 @@ impl Component for Model {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        if self.props.user.is_none() && props.user.is_none() {
+            return false;
+        }
         if self.props.user.is_none() && props.user.is_some() {
             self.props = props;
             return true;
@@ -56,24 +59,22 @@ impl Component for Model {
 
     fn view(&self) -> VNode {
         html! {
-            {
-                if self.props.user.is_none() {
-                    html! {
-                    <>
-                        <div><a href="/management"> {"登录"} </a></div>
-                        // <div><RouterAnchor<AppRoute> route=AppRoute::UserLogin> {"登录"} </RouterAnchor<AppRoute>></div>
-                        // <div><RouterAnchor<AppRoute> route=AppRoute::UserRegister> {"注册"} </RouterAnchor<AppRoute>></div>
-                    </>
-                    }
-                } else {
-                    html! {
-                    <>
-                        {self.props.user.as_ref().unwrap().email.as_str()}{" | "}
-                        <a href="/management"> {"管理"} </a>{" | "}
-                        <RouterAnchor<AppRoute> route=AppRoute::PostCompose> {"写博客"} </RouterAnchor<AppRoute>>{" | "}
-                        <a href="#logout" onclick=self.link.callback(|_| Msg::Logout)> { "退出" } </a>
-                    </>
-                    }
+            if self.props.user.is_none() {
+                html! {
+                <>
+                    <div><a href="/management"> {"登录"} </a></div>
+                    // <div><RouterAnchor<AppRoute> route=AppRoute::UserLogin> {"登录"} </RouterAnchor<AppRoute>></div>
+                    // <div><RouterAnchor<AppRoute> route=AppRoute::UserRegister> {"注册"} </RouterAnchor<AppRoute>></div>
+                </>
+                }
+            } else {
+                html! {
+                <>
+                    {self.props.user.as_ref().unwrap().email.as_str()}{" | "}
+                    <a href="/management"> {"管理"} </a>{" | "}
+                    <RouterAnchor<AppRoute> route=AppRoute::PostCompose> {"写博客"} </RouterAnchor<AppRoute>>{" | "}
+                    <a href="#logout" onclick=self.link.callback(|_| Msg::Logout)> { "退出" } </a>
+                </>
                 }
             }
         }

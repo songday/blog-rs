@@ -10,5 +10,6 @@ pub(crate) const TAG_LIST_URI: &str = "tag/list";
 pub(crate) const TOP_TAG_URI: &str = "tag/top";
 pub(crate) const BLOG_TAG_LIST_URI: &str = "post/tag/";
 pub(crate) const BLOG_SAVE_URI: &str = "post/save";
+pub(crate) const BLOG_UPDATE_URI: &str = "post/update";
 pub(crate) const BLOG_SHOW_URI: &str = "post/show/";
 pub(crate) const BLOG_IMAGE_SAVE_URI: &str = "post/image/save/";

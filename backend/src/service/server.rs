@@ -1,4 +1,4 @@
-use std::{convert::Infallible, net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, convert::Infallible, net::SocketAddr, sync::Arc};
 
 use futures::future::Future;
 use tokio::sync::oneshot::Receiver;
@@ -7,7 +7,7 @@ use warp::{self, reject, Filter, Rejection, Server};
 use blog_common::{
     dto::{
         management::{AdminUser, Setting},
-        post::NewPost,
+        post::PostData,
         user::{UserInfo, UserParams},
     },
     val,
@@ -172,13 +172,14 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("save"))
         .and(warp::path::end())
         .and(auth())
-        .and(warp::body::json::<NewPost>())
+        .and(warp::body::json::<PostData>())
         .and_then(post::save);
     let post_show = warp::get()
         .and(warp::path("post"))
         .and(warp::path("show"))
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and(warp::path::param::<u64>())
+        .and(warp::query::<HashMap<String, String>>())
         .and(warp::path::end())
         .and_then(post::show);
     let upload_image = warp::post()

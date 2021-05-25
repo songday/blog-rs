@@ -6,8 +6,15 @@ export function initEditor() {
         el: document.querySelector('#editor'),
         previewStyle: 'vertical',
         initialEditType: 'wysiwyg',
+        initialValue: '',
         height: '500px',
     });
+}
+
+export function setInitContent(intentContent) {
+    if (editor == null)
+        this.initEditor();
+    editor.setMarkdown(intentContent, false);
 }
 
 export function getContent() {
@@ -39,6 +46,11 @@ export function selectTag(tag) {
     addTag(tag);
 }
 
+export function selectTags(tags) {
+    for (let i = 0; i < tags.length; i++)
+        addTag(tags[i]);
+}
+
 function addTag(val) {
     if (!val)
         return;
@@ -67,4 +79,8 @@ export function getSelectedTags() {
             tags.push(allTagsBox.childNodes[i].firstChild.nodeValue);
     }
     return tags;
+}
+
+export function gotoLogin() {
+    location.href = '/management';
 }

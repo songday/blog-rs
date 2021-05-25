@@ -6,7 +6,7 @@ use warp::filters::multipart::{FormData, Part};
 
 use blog_common::{
     dto::{
-        post::{NewPost, PostDetail, UploadImage},
+        post::{PostData, PostDetail, UploadImage},
         PaginationData,
     },
     result::Error,

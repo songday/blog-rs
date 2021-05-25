@@ -117,9 +117,12 @@ impl Component for Model {
                 // ConsoleService::log("saved auth to store");
                 self.settings = site_data.settings;
                 self.user = site_data.user_info;
+                ConsoleService::log("Set site data");
                 return true;
             },
-            Msg::SiteDataResponse(Err::<_, Error>(e)) => {},
+            Msg::SiteDataResponse(Err::<_, Error>(e)) => {
+                eprintln!("{:?}", e);
+            },
         }
         false
     }
@@ -132,6 +135,7 @@ impl Component for Model {
         // let callback_logout = self.link.callback(|_| Msg::Logout);
         let logout_callback = Rc::new(self.link.callback(|_| Msg::Logout));
         // let none_tag: Option<String> = None;
+        let user = self.user.clone();
 
         html! {
             <div class="container">
@@ -162,9 +166,9 @@ impl Component for Model {
                                     AppRoute::UserRegister => html!{<register::Model/>},
                                     AppRoute::PostList(page) => html!{<list::Model tag=None::<String> current_page=page/>},
                                     AppRoute::PostListByTag(tag, page) => html!{<list::Model tag=tag current_page=page/>},
-                                    AppRoute::PostCompose => html!{<compose::Model blog_id=None::<i64>/>},
+                                    AppRoute::PostCompose => html!{<compose::Model blog_id=None::<i64> user_info=user.clone()/>},
                                     AppRoute::PostShow(id) => html!{<show::Model blog_id=id/>},
-                                    AppRoute::PostEdit(id) => html!{<compose::Model blog_id=id/>},
+                                    AppRoute::PostEdit(id) => html!{<compose::Model blog_id=id user_info=user.clone()/>},
                                     // AppRoute::BlogUpload => html!{<upload::Model/>},
                                     AppRoute::TopTags => html!{<top::Model/>},
                                     _ => html!{"Page not found :("},
