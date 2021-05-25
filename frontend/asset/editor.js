@@ -81,6 +81,12 @@ export function getSelectedTags() {
     return tags;
 }
 
+export function clearSelectedTags() {
+    for (let i = 0; i < allTagsBox.childNodes.length; i++) {
+        allTagsBox.removeChild(allTagsBox.childNodes[i]);
+    }
+}
+
 export function gotoLogin() {
     location.href = '/management';
 }

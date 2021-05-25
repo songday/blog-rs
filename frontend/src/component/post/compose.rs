@@ -40,6 +40,8 @@ extern "C" {
     fn select_tags(tag: Vec<wasm_bindgen::JsValue>);
     #[wasm_bindgen(js_name = getSelectedTags)]
     fn get_selected_tags() -> Vec<wasm_bindgen::JsValue>;
+    #[wasm_bindgen(js_name = clearSelectedTags)]
+    fn clear_selected_tags();
     #[wasm_bindgen(js_name = gotoLogin)]
     fn goto_login();
 }
@@ -74,6 +76,13 @@ pub(crate) enum Msg {
     TagsResponse(Result<Vec<String>, Error>),
     InitEditor,
 }
+impl Model {
+    fn request(&mut self) {
+        let task = request::get::<Vec<String>>(val::TAG_LIST_URI, self.link.callback(Msg::TagsResponse));
+        self.fetch_task = Some(task);
+    }
+}
+
 
 impl Component for Model {
     type Message = Msg;
@@ -140,6 +149,11 @@ impl Component for Model {
                     self.fetch_task = Some(task);
                 } else {
                     self.fetch_task = None;
+                    self.blog_params.id = None;
+                    self.blog_params.title.clear();
+                    self.blog_params.tags = None;
+                    set_init_content(String::new());
+                    clear_selected_tags();
                     return true;
                 }
             },
@@ -178,14 +192,24 @@ impl Component for Model {
             },
             Msg::InitEditor => {
                 init_editor();
-                let task = request::get::<Vec<String>>(val::TAG_LIST_URI, self.link.callback(Msg::TagsResponse));
-                self.fetch_task = Some(task);
+                self.request();
             },
         }
-        true
+        false
     }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender { true }
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        // if self.blog_params.id.is_none() && props.blog_id.is_none() {
+        //     return false;
+        // }
+        // if self.blog_params.id.is_some() && props.blog_id.is_some() && self.blog_params.id.unwrap().eq(props.blog_id.as_ref().unwrap()) {
+        //     return false;
+        // }
+        self.blog_id = props.blog_id;
+        self.user_info = props.user_info;
+        self.request();
+        true
+    }
 
     fn view(&self) -> Html {
         html! {
