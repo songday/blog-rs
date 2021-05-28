@@ -111,11 +111,14 @@ impl Component for Model {
         match msg {
             Msg::SelectTag(tag) => {
                 select_tag(tag);
-                return false;
+                return true;
             },
             Msg::Ignore => {},
             Msg::UpdateTitle(s) => self.blog_params.title = s,
-            Msg::InputNewTag(e) => input_tag(e),
+            Msg::InputNewTag(e) => {
+                input_tag(e);
+                return true;
+            },
             Msg::Request => {
                 self.blog_params.content = get_content();
                 // ConsoleService::log(&self.blog_params.content);

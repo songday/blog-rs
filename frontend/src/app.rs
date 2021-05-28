@@ -188,7 +188,7 @@ impl Component for Model {
                         <RouterAnchor<AppRoute> route=AppRoute::About> {"关于我们"} </RouterAnchor<AppRoute>>
                     </div>
                     <div class="col text-end">
-                        { crate::component::raw_html("span", "&copy; 2021.") }
+                        { crate::component::raw_html("span", "&copy; 2021") }
                     </div>
                 </div>
             </div>
