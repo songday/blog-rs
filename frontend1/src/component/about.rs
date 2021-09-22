@@ -1,17 +1,17 @@
-use yew::{html, Component, ComponentLink, Html, ShouldRender};
+use yew::{html, Component, Context, Html};
 
 pub(crate) struct Model {}
 
 impl Component for Model {
     type Message = ();
     type Properties = ();
-    fn create(_: Self::Properties, _link: ComponentLink<Self>) -> Self { Self {} }
+    fn create(_ctx: &Context<Self>) -> Self { Self {} }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender { false }
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool { false }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender { false }
+    fn changed(&mut self, _ctx: &Context<Self>) -> bool { false }
 
-    fn view(&self) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <>
                 <h2>{"欢迎来到这里"}</h2>

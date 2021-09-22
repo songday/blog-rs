@@ -4,7 +4,7 @@ use core::iter::Iterator;
 use yew::{
     agent::Bridged,
     html,
-    services::{fetch::FetchTask, ConsoleService},
+    services::{fetch::FetchTask},
     Bridge, Callback, Component, ComponentLink, FocusEvent, Html, InputData, MouseEvent, Properties, ShouldRender,
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
@@ -95,7 +95,7 @@ impl Component for Model {
                 return true;
             },
             Msg::Response(Err::<_, Error>(err)) => {
-                ConsoleService::log(&format!("{}", &err));
+                console_log!(&format!("{}", &err));
                 self.error = Some(err);
                 self.fetch_task = None;
                 return true;
@@ -143,7 +143,7 @@ impl Component for Model {
                     <>
                     <div class="row"><div class="col" style="font-size:150%">
                         <i class="bi bi-journal-text"></i>
-                        <RouterAnchor<AppRoute> route=AppRoute::PostShow({b.id})> {&b.title} </RouterAnchor<AppRoute>>
+                        <RouterAnchor<AppRoute> route={AppRoute::PostShow({b.id})}> {&b.title} </RouterAnchor<AppRoute>>
                     </div></div>
                     <div class="row"><div class="col">{&b.content}</div></div>
                     <div class="row"><div class="col" style="font-size:80%;font-color:gray">{&b.created_at}</div></div>
@@ -156,7 +156,7 @@ impl Component for Model {
                                 {
                                     for b.tags.as_ref().unwrap().iter().map(|t| {
                                         html! {
-                                            <RouterAnchor<AppRoute> route=AppRoute::PostListByTag(t.to_string(), 1) classes="link-success ms-1"> {t} </RouterAnchor<AppRoute>>
+                                            <RouterAnchor<AppRoute> route={AppRoute::PostListByTag(t.to_string(), 1)} classes="link-success ms-1"> {t} </RouterAnchor<AppRoute>>
                                         }
                                     })
                                 }
@@ -185,8 +185,8 @@ impl Component for Model {
                         let page = page.clone();
                         let onclick = self.link.callback(move |ev: MouseEvent| {ev.prevent_default(); Msg::PaginationChanged(page)});
                         html! {
-                            <li class=page_item_class>
-                                <a class="page-link" onclick=onclick>{page}</a>
+                            <li class={page_item_class}>
+                                <a class="page-link" onclick={onclick}>{page}</a>
                             </li>
                         }
                     })

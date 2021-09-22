@@ -106,7 +106,7 @@ impl Component for Model {
         html! {
             <>
                 <div>
-                    <input type="file" multiple=true accept="image/*" onchange=self.link.callback(move |value| {
+                    <input type="file" multiple=true accept="image/*" onchange={self.link.callback(move |value| {
                             let mut result = Vec::new();
                             if let ChangeData::Files(files) = value {
                                 let files = js_sys::try_iter(&files)
@@ -117,8 +117,8 @@ impl Component for Model {
                                 result.extend(files);
                             }
                             Msg::AppendFiles(result)
-                        })/>
-                    <button type="button" onclick=self.link.callback(|_| Msg::Upload)>
+                        })}/>
+                    <button type="button" onclick={self.link.callback(|_| Msg::Upload)}>
                         { "Upload" }
                     </button>
                 </div>

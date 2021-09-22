@@ -22,7 +22,6 @@ use crate::{
     util::{request, Error},
     val,
 };
-use yew::services::ConsoleService;
 
 #[wasm_bindgen(module = "/asset/editor.js")]
 extern "C" {
@@ -121,7 +120,7 @@ impl Component for Model {
             },
             Msg::Request => {
                 self.blog_params.content = get_content();
-                // ConsoleService::log(&self.blog_params.content);
+                // console_log!(&self.blog_params.content);
                 self.blog_params.tags = Some(get_selected_tags().iter().map(|e| e.as_string().unwrap()).collect());
                 let fetch_task = request::post::<PostData, PostDetail>(
                     val::BLOG_SAVE_URI,
@@ -141,7 +140,7 @@ impl Component for Model {
                 return true;
             },
             Msg::TagsResponse(Ok::<Vec<String>, _>(tags)) => {
-                // ConsoleService::log(tags.len().to_string().as_str());
+                // console_log!(tags.len().to_string().as_str());
                 self.all_tags = tags;
                 if self.blog_id.is_some() {
                     let mut url = String::with_capacity(64);
@@ -161,7 +160,7 @@ impl Component for Model {
                 }
             },
             Msg::TagsResponse(Err::<_, Error>(err)) => {
-                ConsoleService::log("error");
+                console_log!("error");
                 eprintln!("{:?}", err);
                 self.error = Some(err);
                 self.fetch_task = None;
@@ -187,7 +186,7 @@ impl Component for Model {
                 return true;
             },
             Msg::EditPostResponse(Err::<_, Error>(err)) => {
-                ConsoleService::log("error");
+                console_log!("error");
                 eprintln!("{:?}", err);
                 self.error = Some(err);
                 self.fetch_task = None;
@@ -222,17 +221,17 @@ impl Component for Model {
                         <h1>{"新增博客"}</h1>
                     </div>
                 </div>
-                <form class="row g-3" onsubmit=self.link.callback(|ev: FocusEvent| {
+                <form class="row g-3" onsubmit={self.link.callback(|ev: FocusEvent| {
                     ev.prevent_default();
                     Msg::Ignore
-                })>
+                })}>
                     <div class="col-12">
                         <label class="form-label">{"标题"}</label>
                         <input
                             class="form-control"
                             type="text"
-                            value=self.blog_params.title.clone()
-                            oninput=self.link.callback(|e: InputData| Msg::UpdateTitle(e.value))
+                            value={self.blog_params.title.clone()}
+                            oninput={self.link.callback(|e: InputData| Msg::UpdateTitle(e.value))}
                             />
                     </div>
                     // <textarea

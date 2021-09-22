@@ -5,7 +5,7 @@ use blog_common::dto::tag::TagUsageAmount;
 use yew::{
     agent::Bridged,
     html,
-    services::{fetch::FetchTask, ConsoleService},
+    services::{fetch::FetchTask},
     Bridge, Callback, Component, ComponentLink, FocusEvent, Html, InputData, MouseEvent, Properties, ShouldRender,
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
@@ -61,7 +61,7 @@ impl Component for Model {
                 return true;
             },
             Msg::Response(Err::<_, Error>(err)) => {
-                ConsoleService::log(&format!("{}", &err));
+                console_log!(&format!("{}", &err));
                 self.error = Some(err);
                 self.fetch_task = None;
                 return true;
@@ -79,7 +79,7 @@ impl Component for Model {
                 for self.tags.iter().map(|t| {
                     html! {
                     <li class="list-group-item d-flex justify-content-between align-items-start">
-                        <i class="bi bi-tag"></i> <RouterAnchor<AppRoute> route=AppRoute::PostListByTag((&t.name).to_string(), 1)> {&t.name} </RouterAnchor<AppRoute>>
+                        <i class="bi bi-tag"></i> <RouterAnchor<AppRoute> route={AppRoute::PostListByTag((&t.name).to_string(), 1)}> {&t.name} </RouterAnchor<AppRoute>>
                         <span class="badge bg-primary rounded-pill">{&t.amount}</span>
                     </li>
                     }

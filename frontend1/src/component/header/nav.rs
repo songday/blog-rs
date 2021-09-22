@@ -18,7 +18,7 @@ impl Component for Model {
     fn view(&self) -> VNode {
         html! {
             <>
-                <div><RouterAnchor<AppRoute> route=AppRoute::About> {"关于我们"} </RouterAnchor<AppRoute>></div>
+                <div><RouterAnchor<AppRoute> route={AppRoute::About}> {"关于我们"} </RouterAnchor<AppRoute>></div>
                 // <RouterButton<AppRoute> route=AppRoute::About> {"About"} </RouterButton<AppRoute>>
             </>
         }

@@ -3,8 +3,8 @@ use core::{convert::Into, default::Default, option::Option};
 
 use blog_common::dto::{management::AdminUser, user::UserInfo};
 use yew::{
-    agent::Bridged, html, services::fetch::FetchTask, Bridge, Callback, Component, ComponentLink, FocusEvent, Html,
-    InputData, Properties, ShouldRender,
+    agent::Bridged, Context, html, Bridge, Callback, Component, ComponentLink, FocusEvent, Html,
+    InputData, Properties,
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
 
@@ -25,11 +25,9 @@ pub struct Props {
 pub(crate) struct Model {
     login_params: AdminUser,
     error: Option<Error>,
-    fetch_task: Option<FetchTask>,
     response: Callback<Result<UserInfo, Error>>,
     router_agent: Box<dyn Bridge<RouteAgent>>,
     props: Props,
-    link: ComponentLink<Self>,
 }
 
 pub(crate) enum Msg {
@@ -44,19 +42,17 @@ pub(crate) enum Msg {
 impl Component for Model {
     type Message = Msg;
     type Properties = Props;
-    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
         Model {
             login_params: AdminUser::default(),
             error: None,
-            fetch_task: None,
-            response: link.callback(Msg::Response),
-            router_agent: RouteAgent::bridge(link.callback(|_| Msg::Ignore)),
+            response: ctx.link().callback(Msg::Response),
+            router_agent: RouteAgent::bridge(ctx.link().callback(|_| Msg::Ignore)),
             props,
-            link,
         }
     }
 
-    fn update(&mut self, msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::Ignore => {},
             Msg::UpdateEmail(s) => self.login_params.email = s,
@@ -84,9 +80,9 @@ impl Component for Model {
         false
     }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender { false }
+    fn changed(&mut self, _ctx: &Context<Self>) -> ShouldRender { false }
 
-    fn view(&self) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <>
                 // <RouterAnchor<AppRoute> route=AppRoute::UserRegister>
@@ -101,21 +97,21 @@ impl Component for Model {
                     <div class="col-md"></div>
                     <div class="col-md">
                         <div id="errorMessage" style="color:red;display:none"></div>
-                        <form class="row g-3" onsubmit=self.link.callback(|ev: FocusEvent| {
+                        <form class="row g-3" onsubmit={self.link.callback(|ev: FocusEvent| {
                             ev.prevent_default();
                             Msg::Request
-                        })>
+                        })}>
                             <div class="col-12">
                                 <label for="aligned-email" class="form-label">{"邮箱地址"}</label>
-                                <input type="email" id="aligned-email" class="form-control" placeholder="邮箱地址" oninput=self.link.callback(|e: InputData| Msg::UpdateEmail(e.value))/>
+                                <input type="email" id="aligned-email" class="form-control" placeholder="邮箱地址" oninput={self.link.callback(|e: InputData| Msg::UpdateEmail(e.value))}/>
                             </div>
                             <div class="col-12">
                                 <label for="aligned-password" class="form-label">{"登录密码"}</label>
-                                <input type="password" id="aligned-password" class="form-control" placeholder="密码" oninput=self.link.callback(|e: InputData| Msg::UpdatePassword(e.value))/>
+                                <input type="password" id="aligned-password" class="form-control" placeholder="密码" oninput={self.link.callback(|e: InputData| Msg::UpdatePassword(e.value))}/>
                             </div>
                             <div class="col-md-4">
                                 <label for="aligned-captcha" class="form-label">{"验证码"}</label>
-                                <input type="text" id="aligned-captcha" class="form-control" placeholder="验证码" oninput=self.link.callback(|e: InputData| Msg::UpdateCaptcha(e.value))/>
+                                <input type="text" id="aligned-captcha" class="form-control" placeholder="验证码" oninput={self.link.callback(|e: InputData| Msg::UpdateCaptcha(e.value))}/>
                                 <img src="/tool/verify-image"/>
                             </div>
                             <div class="col-12">

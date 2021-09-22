@@ -84,10 +84,10 @@ impl Component for Model {
                 //     { "Have an account already? Sign in!" }
                 // </RouterAnchor<AppRoute>>
                 // <ShowErrors error=&self.error />
-                <form class="pure-form pure-form-stacked" onsubmit=self.link.callback(|ev: FocusEvent| {
+                <form class="pure-form pure-form-stacked" onsubmit={self.link.callback(|ev: FocusEvent| {
                     ev.prevent_default();
                     Msg::Request
-                })>
+                })}>
                     <fieldset>
                         <legend>{"Sign Up"}</legend>
                         <input
@@ -95,21 +95,21 @@ impl Component for Model {
                             type="email"
                             placeholder="Email" required=true
                             // value=self.register_params.email.clone()
-                            oninput=self.link.callback(|e: InputData| Msg::UpdateEmail(e.value))
+                            oninput={self.link.callback(|e: InputData| Msg::UpdateEmail(e.value))}
                             />
                         <input
                             class="form-control form-control-lg"
                             type="password"
                             placeholder="Password" required=true
                             // value=self.register_params.password1.clone()
-                            oninput=self.link.callback(|e: InputData| Msg::UpdatePassword1(e.value))
+                            oninput={self.link.callback(|e: InputData| Msg::UpdatePassword1(e.value))}
                             />
                         <input
                             class="form-control form-control-lg"
                             type="password"
                             placeholder="Same password again" required=true
                             // value=self.register_params.password2.clone()
-                            oninput=self.link.callback(|e: InputData| Msg::UpdatePassword2(e.value))
+                            oninput={self.link.callback(|e: InputData| Msg::UpdatePassword2(e.value))}
                             />
                         <img src=val::VERIFY_IMAGE_URI />
                         <input
@@ -117,7 +117,7 @@ impl Component for Model {
                             type="text"
                             placeholder="Captcha" required=true
                             // value=self.register_params.captcha.clone()
-                            oninput=self.link.callback(|e: InputData| Msg::UpdateCaptcha(e.value))
+                            oninput={self.link.callback(|e: InputData| Msg::UpdateCaptcha(e.value))}
                             />
                         <button
                             class="pure-button pure-button-primary"

@@ -2,7 +2,7 @@ use blog_common::dto::{post::PostDetail, tag::TagUsageAmount, PaginationData};
 use yew::{
     agent::Bridged,
     html,
-    services::{fetch::FetchTask, ConsoleService},
+    services::{fetch::FetchTask},
     Bridge, Callback, Component, ComponentLink, FocusEvent, Html, InputData, MouseEvent, Properties, ShouldRender,
 };
 use yew_router::{agent::RouteRequest::ChangeRoute, prelude::*};
@@ -46,7 +46,7 @@ impl Component for Model {
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             Msg::PostListResponse(Ok::<PaginationData<Vec<PostDetail>>, _>(d)) => {
-                ConsoleService::log("Got post list data");
+                console_log!("Got post list data");
                 self.posts = d.data;
                 let r = request::get(val::TOP_TAG_URI, self.link.callback(Msg::TopTagsResponse));
                 self.fetch_task = Some(r);
@@ -54,7 +54,7 @@ impl Component for Model {
             },
             Msg::PostListResponse(Err::<_, Error>(err)) => {
                 eprintln!("{:?}", err);
-                ConsoleService::log(&format!("{}", &err));
+                console_log!(&format!("{}", &err));
                 self.error = Some(err);
                 self.fetch_task = None;
                 return true;
@@ -66,7 +66,7 @@ impl Component for Model {
             },
             Msg::TopTagsResponse(Err::<_, Error>(err)) => {
                 eprintln!("{:?}", err);
-                ConsoleService::log(&format!("{}", &err));
+                console_log!(&format!("{}", &err));
                 self.error = Some(err);
                 self.fetch_task = None;
                 return true;
@@ -87,7 +87,7 @@ impl Component for Model {
                         <>
                         <div class="row"><div class="col" style="font-size:150%">
                             <i class="bi bi-journal-text"></i>
-                            <RouterAnchor<AppRoute> route=AppRoute::PostShow({b.id})> {&b.title} </RouterAnchor<AppRoute>>
+                            <RouterAnchor<AppRoute> route={AppRoute::PostShow({b.id})}> {&b.title} </RouterAnchor<AppRoute>>
                         </div></div>
                         <div class="row"><div class="col">{&b.content}</div></div>
                         <div class="row"><div class="col" style="font-size:80%;font-color:gray">{&b.created_at}</div></div>
@@ -100,7 +100,7 @@ impl Component for Model {
                                     {
                                         for b.tags.as_ref().unwrap().iter().map(|t| {
                                             html! {
-                                                <RouterAnchor<AppRoute> route=AppRoute::PostListByTag(t.to_string(), 1) classes="link-success ms-1"> {t} </RouterAnchor<AppRoute>>
+                                                <RouterAnchor<AppRoute> route={AppRoute::PostListByTag(t.to_string(), 1)} classes="link-success ms-1"> {t} </RouterAnchor<AppRoute>>
                                             }
                                         })
                                     }
@@ -124,7 +124,7 @@ impl Component for Model {
                         for self.tags.iter().map(|t| {
                             html! {
                             <>
-                                <RouterAnchor<AppRoute> route=AppRoute::PostListByTag((&t.name).to_string(), 1) classes="list-group-item list-group-item-action">
+                                <RouterAnchor<AppRoute> route={AppRoute::PostListByTag((&t.name).to_string(), 1)} classes="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                       <h6 class="mb-1"><i class="bi bi-tag"></i> {&t.name}</h6>
                                       <span class="badge bg-primary rounded-pill">{&t.amount}</span>

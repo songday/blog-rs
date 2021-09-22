@@ -94,7 +94,7 @@ impl Component for Model {
                                     {
                                         for blog.tags.as_ref().unwrap().iter().map(|t| {
                                             html! {
-                                                <RouterAnchor<AppRoute> route=AppRoute::PostListByTag(t.to_string(), 1) classes="link-success ms-1"> {t} </RouterAnchor<AppRoute>>
+                                                <RouterAnchor<AppRoute> route={AppRoute::PostListByTag(t.to_string(), 1)} classes="link-success ms-1"> {t} </RouterAnchor<AppRoute>>
                                             }
                                         })
                                     }
@@ -107,7 +107,7 @@ impl Component for Model {
                     {
                         if blog.editable {
                             html! {
-                                <RouterAnchor<AppRoute> route=AppRoute::PostEdit(blog.id) classes="link-success ms-1"> {"编辑"} </RouterAnchor<AppRoute>>
+                                <RouterAnchor<AppRoute> route={AppRoute::PostEdit(blog.id)} classes="link-success ms-1"> {"编辑"} </RouterAnchor<AppRoute>>
                             }
                         } else {
                             html! {}
