@@ -6,7 +6,7 @@ use warp::{self, reject, Filter, Rejection, Server};
 
 use blog_common::{
     dto::{
-        management::{AdminUser, Setting},
+        management::{AdminUser, Settings},
         post::PostData,
         user::{UserInfo, UserParams},
     },
@@ -77,7 +77,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::end())
         .and_then(asset::get_asset);
     let management = warp::get()
-        .and(warp::path("management"))
+        .and(warp::path("settings"))
         .and(warp::path::end())
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(management::index);
@@ -105,7 +105,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
-        .and(warp::body::json::<Setting>())
+        .and(warp::body::json::<Settings>())
         .and_then(management::update_settings);
     let management_site_data = warp::get()
         .and(warp::path("management"))
@@ -207,8 +207,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
                 "http://localhost:9270",
                 "http://127.0.0.1:8080",
                 "http://127.0.0.1:9270",
-                "http://www.songday.com",
-                "https://www.songday.com",
+                // todo 读取配置里面的域名信息，然后填写在这里
             ]
             .into_iter(),
         )

@@ -5,6 +5,8 @@ use crate::page::{Home, post::{PostCompose, PostDetail, PostList}};
 
 #[derive(Routable, PartialEq, Clone, Debug)]
 pub enum Route {
+    #[at("/#/user/login")]
+    UserLogin,
     #[at("/#/posts/:id")]
     Post { id: u64 },
     #[at("/#/posts")]
@@ -25,7 +27,7 @@ pub enum Route {
 #[function_component(EasterEgg)]
 fn easter_egg() -> Html {
     html! {
-        <h1>{ "Easter Egg!" }</h1>
+        <h1>{ "Congrats, You've found an Easter Egg!" }</h1>
     }
 }
 

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>配置博客信息</title>
+    <link rel="stylesheet" href="css/bulma.min.css">
+    <link rel="stylesheet" href="css/fontawesome.min.css">
+    <link rel="stylesheet" href="css/regular.min.css">
+    <link rel="stylesheet" href="css/solid.min.css">
+    <script type="application/javascript">
+        function post() {
+            const data = {
+                name:document.getElementById('aligned-name').value,
+                domain:document.getElementById('aligned-domain').value,
+                copyright:document.getElementById('aligned-copyright').value,
+                license:document.getElementById('aligned-license').value,
+            };
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            fetch('/management/settings/update', options);
+            const b = document.getElementById('toastBox');
+            const t = new bootstrap.Toast(b);
+            t.show();
+        }
+        function get() {
+            fetch('/management/settings').then(res => res.json()).then(res => {
+                const d = res.data;
+                document.getElementById('aligned-name').value=d.name;
+                document.getElementById('aligned-domain').value=d.domain;
+                document.getElementById('aligned-copyright').value=d.copyright;
+                document.getElementById('aligned-license').value=d.license;
+            });
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <h1 class="title">
+        博客信息配置
+    </h1>
+    <p>&nbsp;</p>
+    <div class="field">
+        <label class="label">博客名称</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="text" placeholder="给博客取一个名字" value=""/>
+            <span class="icon is-small is-left">
+              <i class="far fa-user"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label">版权信息</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="text" placeholder="All Copyright reserved." value=""/>
+            <span class="icon is-small is-left">
+              <i class="far fa-registered"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label">备案信息</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="text" placeholder="ICP备案信息" value=""/>
+            <span class="icon is-small is-left">
+              <i class="fas fa-globe"></i>
+            </span>
+        </div>
+    </div>
+    <p>&nbsp;</p>
+    <div class="field">
+        <label class="label">管理密码，如果是在本机登录，则不会用到该密码</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="password" placeholder="" value=""/>
+            <span class="icon is-small is-left">
+              <i class="fas fa-lock"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label">请再输入一次管理密码</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="password" placeholder="" value=""/>
+            <span class="icon is-small is-left">
+              <i class="fas fa-lock"></i>
+            </span>
+        </div>
+    </div>
+    <div>
+        <button class="button is-medium">更新</button>
+        <button class="button is-medium" onclick="location.href='/';">返回</button>
+    </div>
+</div>
+<div id="toastBox" class="toast align-items-center" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+        <div class="toast-body">
+            更新成功！
+        </div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+</div>
+<script>get();</script>
+</body>
+</html>
