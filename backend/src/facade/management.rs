@@ -19,18 +19,31 @@ use crate::{
 };
 use blog_common::dto::management::SiteData;
 
-const CONFIG_HTML: &'static str = include_str!("../resource/page/settings.html");
+pub const SETTINGS_HTML: &'static str = include_str!("../resource/page/settings.html");
 const LOGIN_HTML: &'static str = include_str!("../resource/page/login.html");
 
 pub async fn index(token: Option<String>) -> Result<impl Reply, Rejection> {
-    let html;
-    // if matches!(token, Some(t) if status::check_auth(&t).is_ok()) {
     if status::check_auth(token).is_ok() {
-        html = CONFIG_HTML;
+        let settings = management::settings().await?;
+        let mut context = tera::Context::new();
+        context.insert("name", &settings.name);
+        context.insert("domain", &settings.domain);
+        context.insert("copyright", &settings.copyright);
+        context.insert("license", &settings.license);
+        let mut tera = tera::Tera::default();
+        let r = match tera.render_str(SETTINGS_HTML, &context) {
+            Ok(s) => s,
+            Err(e) => {
+                println!("Parsing error(s): {}", e);
+                ::std::process::exit(1);
+            }
+        };
+        Ok(Response::new(r.into()))
+        // Ok(warp::reply::html(&r))
     } else {
-        html = LOGIN_HTML;
+        Ok(Response::new(LOGIN_HTML.into()))
+        // Ok(warp::reply::html(LOGIN_HTML))
     }
-    Ok(warp::reply::html(html))
 }
 
 pub async fn admin_login(token: Option<String>, params: AdminUser) -> Result<impl Reply, Rejection> {
@@ -41,23 +54,5 @@ pub async fn admin_login(token: Option<String>, params: AdminUser) -> Result<imp
 pub async fn settings() -> Result<impl Reply, Rejection> { facade::response(management::settings().await) }
 
 pub async fn update_settings(token: Option<String>, setting: Settings) -> Result<impl Reply, Rejection> {
-    facade::response(management::update_settings(token, setting).await)
-}
-
-pub async fn site_data(token: Option<String>) -> Result<impl Reply, Rejection> {
-    let user_info = match status::check_auth(token) {
-        Ok(u) => Some(u),
-        Err(e) => {
-            eprintln!("{:?}", e);
-            None
-        },
-    };
-    let settings = match management::settings().await {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("{:?}", e);
-            Settings::default()
-        },
-    };
-    Ok(wrap_json_data(SiteData { settings, user_info }))
+    facade::response(management::update_settings(token, setting.into()).await)
 }

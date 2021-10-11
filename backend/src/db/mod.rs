@@ -39,7 +39,7 @@ pub enum SqlParam {
     STRING(String),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DataSource {
     // management: sled::Db,
     sqlite: SqliteConnPool,
@@ -50,7 +50,7 @@ pub struct Id {
     id: i64,
 }
 
-pub fn get_sqlite() -> &SqliteConnPool {
+pub fn get_sqlite<'a>() -> &'a SqliteConnPool {
     &DATA_SOURCE.get().unwrap().sqlite
 }
 
@@ -70,7 +70,7 @@ pub async fn init_datasource() {
         {
             Ok(f) => f,
             // Err(e: ErrorKind::NotFound) => None,
-            Err(e) => panic!(e),
+            Err(e) => panic!("{:?}", e),
         };
     }
     let pool_ops = PoolOptions::<Sqlite>::new()
@@ -92,12 +92,12 @@ pub async fn init_datasource() {
         while let Some(res) = stream.next().await {
             match res {
                 Ok(r) => println!("Initialized table"),
-                Err(e) => panic!(e),
+                Err(e) => panic!("{:?}", e),
             }
         }
         let dml = include_str!("../resource/sql/dml.sql");
-        if Err(e) = sqlx::query(dml).execute(&pool).await {
-            panic!(e);
+        if let Err(e) = sqlx::query(dml).execute(&pool).await {
+            panic!("{:?}", e);
         }
     }
 
@@ -107,7 +107,7 @@ pub async fn init_datasource() {
     };
 
     if let Err(e) = DATA_SOURCE.set(datasource) {
-        panic!(e);
+        panic!("{:?}", e);
     }
 
     /*
@@ -121,7 +121,7 @@ pub async fn init_datasource() {
             println!("{}", &tag.name);
             tag::put_id_name(tag.id, &tag.name);
         }),
-        Err(e) => panic!(e),
+        Err(e) => panic!("{:?}", e),
     };
     */
 }

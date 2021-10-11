@@ -70,7 +70,10 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
 // }
 
 pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result<impl Future<Output = ()> + 'static> {
-    let index = warp::get().and(warp::path::end()).and_then(asset::index);
+    let index = warp::get()
+        .and(warp::path::end())
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
+        .and_then(crate::facade::index::index);
     let asset = warp::get()
         .and(warp::path("asset"))
         .and(warp::path::tail())
@@ -81,12 +84,6 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::end())
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(management::index);
-    let management_register = warp::post()
-        .and(warp::path("management"))
-        .and(warp::path("register"))
-        .and(warp::path::end())
-        .and(warp::body::json::<AdminUser>())
-        .and_then(management::admin_register);
     let management_login = warp::post()
         .and(warp::path("management"))
         .and(warp::path("login"))
@@ -107,12 +104,6 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and(warp::body::json::<Settings>())
         .and_then(management::update_settings);
-    let management_site_data = warp::get()
-        .and(warp::path("management"))
-        .and(warp::path("site_data"))
-        .and(warp::path::end())
-        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
-        .and_then(management::site_data);
     let user_login = warp::post()
         .and(warp::path("user"))
         .and(warp::path("login"))
@@ -222,11 +213,9 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
     let routes = index
         .or(asset)
         .or(management)
-        .or(management_register)
         .or(management_login)
         .or(management_settings)
         .or(management_update_settings)
-        .or(management_site_data)
         .or(user_login)
         .or(user_register)
         .or(user_logout)

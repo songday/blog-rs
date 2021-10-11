@@ -1,8 +1,4 @@
 [
-("bootstrap-icons-3cf2fecea728aed5.css", include_bytes!(r#"..\resource\asset/bootstrap-icons-3cf2fecea728aed5.css.gz"#), "text/css"),
-("bootstrap.min-ab15090fca6d0965.css", include_bytes!(r#"..\resource\asset/bootstrap.min-ab15090fca6d0965.css.gz"#), "text/css"),
-("bootstrap.min.css.map", include_bytes!(r#"..\resource\asset/bootstrap.min.css.map.gz"#), "text/css"),
-("bootstrap.min.js", include_bytes!(r#"..\resource\asset/bootstrap.min.js.gz"#), "text/javascript"),
 ("codemirror.min-79bbbb1069b6fc3d.css", include_bytes!(r#"..\resource\asset/codemirror.min-79bbbb1069b6fc3d.css.gz"#), "text/css"),
 ("fonts/bootstrap-icons.woff", include_bytes!(r#"..\resource\asset/fonts\bootstrap-icons.woff.gz"#), ""),
 ("fonts/bootstrap-icons.woff2", include_bytes!(r#"..\resource\asset/fonts\bootstrap-icons.woff2.gz"#), ""),

@@ -28,7 +28,7 @@ pub async fn list(mut page_num: u8) -> Result<impl Reply, Rejection> {
         page_num = 1;
     }
 
-    match post::list(page_num, 20).await {
+    match post::list(page_num, 10).await {
         Ok(list) => Ok(wrap_json_data(&list)),
         Err(e) => Ok(wrap_json_err(500, e.0)),
     }
