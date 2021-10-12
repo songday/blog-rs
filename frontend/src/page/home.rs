@@ -39,11 +39,11 @@ impl Home {
     fn view_info_tiles(&self) -> Html {
         html! {
             <>
-            <div>
-                <Link<Route> classes={classes!("has-text-weight-semibold")} route={Route::UserLogin { id: post.meta.author.seed }}>
-                    { &post.meta.author.name }
-                </Link<Route>>
-            </div>
+            // <div>
+                // <Link<Route> classes={classes!("has-text-weight-semibold")} route={Route::UserLogin { id: post.meta.author.seed }}>
+                //     { &post.meta.author.name }
+                // </Link<Route>>
+            // </div>
             <div class="tile is-parent">
                 <div class="tile is-child box">
                     <p class="title">{ "What are yews?" }</p>

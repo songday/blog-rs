@@ -4,17 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>配置博客信息</title>
-    <link rel="stylesheet" href="css/bulma.min.css">
-    <link rel="stylesheet" href="css/fontawesome.min.css">
-    <link rel="stylesheet" href="css/regular.min.css">
-    <link rel="stylesheet" href="css/solid.min.css">
+    <link rel="stylesheet" href="../../../../frontend/asset/css/bulma.min.css">
+    <link rel="stylesheet" href="../../../../frontend/asset/css/fontawesome.min.css">
+    <link rel="stylesheet" href="../../../../frontend/asset/css/regular.min.css">
+    <link rel="stylesheet" href="../../../../frontend/asset/css/solid.min.css">
     <script type="application/javascript">
+        function showNotification() {}
         function post() {
+            if (document.getElementById('admin_password1').value !== document.getElementById('admin_password2').value) {
+                document.getElementById('notification-box').innerHTML
+            }
             const data = {
-                name:document.getElementById('aligned-name').value,
-                domain:document.getElementById('aligned-domain').value,
-                copyright:document.getElementById('aligned-copyright').value,
-                license:document.getElementById('aligned-license').value,
+                name:document.getElementById('name').value,
+                domain:document.getElementById('domain').value,
+                copyright:document.getElementById('copyright').value,
+                license:document.getElementById('license').value,
+                admin_password:document.getElementById('admin_password1').value,
             };
             const options = {
                 method: 'POST',
@@ -24,19 +29,16 @@
                 }
             };
             fetch('/management/settings/update', options);
-            const b = document.getElementById('toastBox');
-            const t = new bootstrap.Toast(b);
-            t.show();
         }
-        function get() {
-            fetch('/management/settings').then(res => res.json()).then(res => {
-                const d = res.data;
-                document.getElementById('aligned-name').value=d.name;
-                document.getElementById('aligned-domain').value=d.domain;
-                document.getElementById('aligned-copyright').value=d.copyright;
-                document.getElementById('aligned-license').value=d.license;
+        document.addEventListener('DOMContentLoaded', () => {
+            (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                const $notification = $delete.parentNode;
+
+                $delete.addEventListener('click', () => {
+                    $notification.parentNode.removeChild($notification);
+                });
             });
-        }
+        });
     </script>
 </head>
 <body>
@@ -48,16 +50,25 @@
     <div class="field">
         <label class="label">博客名称</label>
         <div class="control is-medium has-icons-left has-icons-right">
-            <input class="input" type="text" placeholder="给博客取一个名字" value="{{ name }}"/>
+            <input class="input" type="text" placeholder="给博客取一个名字" id="name" value="{{ name }}"/>
             <span class="icon is-small is-left">
               <i class="far fa-user"></i>
             </span>
         </div>
     </div>
     <div class="field">
+        <label class="label">域名信息</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="text" placeholder="域名" id="domain" value="{{ domain }}"/>
+            <span class="icon is-small is-left">
+              <i class="far fa-registered"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
         <label class="label">版权信息</label>
         <div class="control is-medium has-icons-left has-icons-right">
-            <input class="input" type="text" placeholder="All Copyright reserved." value="{{ copyright }}"/>
+            <input class="input" type="text" placeholder="All Copyright reserved." id="copyright" value="{{ copyright }}"/>
             <span class="icon is-small is-left">
               <i class="far fa-registered"></i>
             </span>
@@ -66,7 +77,7 @@
     <div class="field">
         <label class="label">备案信息</label>
         <div class="control is-medium has-icons-left has-icons-right">
-            <input class="input" type="text" placeholder="ICP备案信息" value="{{ license }}"/>
+            <input class="input" type="text" placeholder="ICP备案信息" id="license" value="{{ license }}"/>
             <span class="icon is-small is-left">
               <i class="fas fa-globe"></i>
             </span>
@@ -76,7 +87,7 @@
     <div class="field">
         <label class="label">管理密码，如果是在本机登录，则不会用到该密码</label>
         <div class="control is-medium has-icons-left has-icons-right">
-            <input class="input" type="password" placeholder="" value=""/>
+            <input class="input" type="password" placeholder="" id="admin_password1" value=""/>
             <span class="icon is-small is-left">
               <i class="fas fa-lock"></i>
             </span>
@@ -85,25 +96,20 @@
     <div class="field">
         <label class="label">请再输入一次管理密码</label>
         <div class="control is-medium has-icons-left has-icons-right">
-            <input class="input" type="password" placeholder="" value=""/>
+            <input class="input" type="password" placeholder="" id="admin_password2" value=""/>
             <span class="icon is-small is-left">
               <i class="fas fa-lock"></i>
             </span>
         </div>
     </div>
     <div>
-        <button class="button is-medium">更新</button>
+        <button class="button is-medium" onclick="post();">更新</button>
         <button class="button is-medium" onclick="location.href='/';">返回</button>
     </div>
 </div>
-<div id="toastBox" class="toast align-items-center" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="d-flex">
-        <div class="toast-body">
-            更新成功！
-        </div>
-        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
+<div id="notification-box" class="notification is-danger">
+    <button class="delete"></button>
+    <span id="notification-msg"></span>
 </div>
-<script>get();</script>
 </body>
 </html>

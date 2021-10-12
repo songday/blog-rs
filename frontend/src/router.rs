@@ -5,8 +5,6 @@ use crate::page::{Home, post::{PostCompose, PostDetail, PostList}};
 
 #[derive(Routable, PartialEq, Clone, Debug)]
 pub enum Route {
-    #[at("/#/user/login")]
-    UserLogin,
     #[at("/#/posts/:id")]
     Post { id: u64 },
     #[at("/#/posts")]
