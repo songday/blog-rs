@@ -13,4 +13,4 @@
 -- INSERT INTO "blog_tag" ("name") VALUES ('往期新闻');
 -- INSERT INTO "blog_tag" ("name") VALUES ('生活用品');
 
-INSERT INTO settings(id,name,domain,copyright,license,admin_password,created_at,updated_at) VALUES (1,'','','','','','2021-10-01 00:00:00','2021-10-01 00:00:00');
+-- INSERT INTO settings(id,name,domain,copyright,license,admin_password,created_at,updated_at) VALUES (1,'','','','','','2021-10-01 00:00:00','2021-10-01 00:00:00');

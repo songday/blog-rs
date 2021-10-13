@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>配置博客信息</title>
-    <link rel="stylesheet" href="../../../../frontend/asset/css/bulma.min.css">
-    <link rel="stylesheet" href="../../../../frontend/asset/css/fontawesome.min.css">
-    <link rel="stylesheet" href="../../../../frontend/asset/css/regular.min.css">
-    <link rel="stylesheet" href="../../../../frontend/asset/css/solid.min.css">
+    <link rel="stylesheet" href="/asset/bulma.min-82aac43507618108.css">
+    <link rel="stylesheet" href="/asset/fontawesome.min-834a8323ca080f62.css">
+    <link rel="stylesheet" href="/asset/regular.min-1865e217533a2c60.css">
+    <link rel="stylesheet" href="/asset/solid.min-6b9dba4e942529f.css">
     <script type="application/javascript">
         function showNotification() {}
         function post() {
@@ -28,7 +28,19 @@
                     'Content-Type': 'application/json'
                 }
             };
-            fetch('/management/settings/update', options);
+            fetch('/management/settings/update', options).then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.status === 0) {
+                        location.href = '/';
+                    } else {
+                        document.getElementById('errorMessage').value = data.error.detail;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                });
         }
         document.addEventListener('DOMContentLoaded', () => {
             (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
@@ -85,13 +97,15 @@
     </div>
     <p>&nbsp;</p>
     <div class="field">
-        <label class="label">管理密码，如果是在本机登录，则不会用到该密码</label>
+        <label class="label">管理密码</label>
         <div class="control is-medium has-icons-left has-icons-right">
             <input class="input" type="password" placeholder="" id="admin_password1" value=""/>
             <span class="icon is-small is-left">
               <i class="fas fa-lock"></i>
             </span>
         </div>
+        <p class="help">请最少输入1位。</p>
+        <p class="help">如果忘记了密码，请在本机登录（localhost或127.0.0.1），可直接访问设置页面修改密码。</p>
     </div>
     <div class="field">
         <label class="label">请再输入一次管理密码</label>

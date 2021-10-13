@@ -72,15 +72,14 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
 pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result<impl Future<Output = ()> + 'static> {
     let index = warp::get()
         .and(warp::path::end())
-        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(crate::facade::index::index);
     let asset = warp::get()
         .and(warp::path("asset"))
         .and(warp::path::tail())
         .and(warp::path::end())
         .and_then(asset::get_asset);
-    let management = warp::get()
-        .and(warp::path("settings"))
+    let management_settings = warp::get()
+        .and(warp::path("management"))
         .and(warp::path::end())
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(management::index);
@@ -91,11 +90,6 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and(warp::body::json::<AdminUser>())
         .and_then(management::admin_login);
-    let management_settings = warp::get()
-        .and(warp::path("management"))
-        .and(warp::path("settings"))
-        .and(warp::path::end())
-        .and_then(management::settings);
     let management_update_settings = warp::post()
         .and(warp::path("management"))
         .and(warp::path("settings"))
@@ -104,19 +98,6 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and(warp::body::json::<Settings>())
         .and_then(management::update_settings);
-    let user_login = warp::post()
-        .and(warp::path("user"))
-        .and(warp::path("login"))
-        .and(warp::path::end())
-        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
-        .and(warp::body::json::<UserParams>())
-        .and_then(user::login);
-    let user_register = warp::post()
-        .and(warp::path("user"))
-        .and(warp::path("register"))
-        .and(warp::path::end())
-        .and(warp::body::json::<UserParams>())
-        .and_then(user::register);
     let user_logout = warp::get()
         .and(warp::path("user"))
         .and(warp::path("logout"))
@@ -194,9 +175,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         // .allow_any_origin()
         .allow_origins(
             vec![
-                "http://localhost:8080",
                 "http://localhost:9270",
-                "http://127.0.0.1:8080",
                 "http://127.0.0.1:9270",
                 // todo 读取配置里面的域名信息，然后填写在这里
             ]
@@ -212,12 +191,9 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
 
     let routes = index
         .or(asset)
-        .or(management)
-        .or(management_login)
         .or(management_settings)
+        .or(management_login)
         .or(management_update_settings)
-        .or(user_login)
-        .or(user_register)
         .or(user_logout)
         .or(user_info)
         .or(verify_image)

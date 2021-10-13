@@ -43,7 +43,7 @@ pub async fn scanner() {
             let d = &mut *online_users;
             d.retain(|_, v| {
                 if current_timestamp - v.last_active_time > MAX_USER_IDLE_MILLIS {
-                    println!("Remove user {}", dbg!(&v.user.email));
+                    println!("Remove user {}", dbg!(&v.user.id));
                     false
                 } else {
                     true

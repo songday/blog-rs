@@ -30,7 +30,6 @@ pub async fn admin_login(token: &str, password: &str) -> Result<bool> {
         if crypt::verify_password(password, &settings.admin_password)? {
             status::user_online(token, UserInfo {
                 id: 1,
-                email: "".to_owned(),
             });
             return Ok(true);
         }
@@ -44,8 +43,7 @@ pub async fn settings() -> Result<Settings> {
     Ok(settings.unwrap_or(Settings::default()))
 }
 
-pub async fn update_settings(token: Option<String>, settings: Settings) -> Result<()> {
-    status::check_auth(token)?;
+pub async fn update_settings(settings: Settings) -> Result<()> {
     // db::sled_save(&DATA_SOURCE.get().unwrap().management, "settings", &setting).await?;
     let encrypted_password = if settings.admin_password.is_empty() {
         String::new()
@@ -53,20 +51,25 @@ pub async fn update_settings(token: Option<String>, settings: Settings) -> Resul
         crypt::encrypt_password(&settings.admin_password)?
     };
 
-    let r = sqlx::query("UPDATE settings SET name=?,domain=?,copyright=?,license=?,admin_password=? WHERE id=1")
+    let now = chrono::offset::Utc::now().timestamp() as i64;
+
+    let r = sqlx::query("UPDATE settings SET name=?,domain=?,copyright=?,license=?,admin_password=?,updated_at=? WHERE id=1")
         .bind(&settings.name)
         .bind(&settings.domain)
         .bind(&settings.copyright)
         .bind(&settings.license)
-        .bind(&encrypted_password).execute(db::get_sqlite()).await?;
+        .bind(&encrypted_password)
+        .bind(now).execute(db::get_sqlite()).await?;
 
     if r.rows_affected() < 1 {
-        sqlx::query("INSERT INTO settings(id,name,domain,copyright,license,admin_password)VALUES(1,?,?,?,?,?)")
+        sqlx::query("INSERT INTO settings(id,name,domain,copyright,license,admin_password,created_at,updated_at)VALUES(1,?,?,?,?,?,?,?)")
             .bind(&settings.name)
             .bind(&settings.domain)
             .bind(&settings.copyright)
             .bind(&settings.license)
-            .bind(&encrypted_password).execute(db::get_sqlite()).await?;
+            .bind(&encrypted_password)
+            .bind(now)
+            .bind(now).execute(db::get_sqlite()).await?;
     }
     Ok(())
 }

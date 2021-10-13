@@ -51,8 +51,9 @@ pub async fn admin_login(token: Option<String>, params: AdminUser) -> Result<imp
     facade::response(management::admin_login(&token, &params.password).await)
 }
 
-pub async fn settings() -> Result<impl Reply, Rejection> { facade::response(management::settings().await) }
-
 pub async fn update_settings(token: Option<String>, setting: Settings) -> Result<impl Reply, Rejection> {
-    facade::response(management::update_settings(token, setting.into()).await)
+    if let Err(e) = status::check_auth(token) {
+        return facade::response(Err(e));
+    }
+    facade::response(management::update_settings(setting.into()).await)
 }

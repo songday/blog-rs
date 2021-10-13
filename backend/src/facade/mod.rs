@@ -99,7 +99,7 @@ fn response<D: Serialize>(result: CommonResult<D>) -> Result<impl Reply, Rejecti
 fn session_id_cookie(token: &str) -> String {
     format!(
         // "{}={}; Domain=songday.com; Secure; HttpOnly; Path=/",
-        "{}={}; HttpOnly; Path=/;",
+        "{}={}; SameSite=Lax; HttpOnly; Path=/;",
         val::SESSION_ID_HEADER_NAME,
         token,
     )

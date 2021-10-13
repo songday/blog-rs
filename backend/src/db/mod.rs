@@ -95,10 +95,10 @@ pub async fn init_datasource() {
                 Err(e) => panic!("{:?}", e),
             }
         }
-        let dml = include_str!("../resource/sql/dml.sql");
-        if let Err(e) = sqlx::query(dml).execute(&pool).await {
-            panic!("{:?}", e);
-        }
+        // let dml = include_str!("../resource/sql/dml.sql");
+        // if let Err(e) = sqlx::query(dml).execute(&pool).await {
+        //     panic!("{:?}", e);
+        // }
     }
 
     let datasource = DataSource {

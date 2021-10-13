@@ -22,7 +22,6 @@ impl Into<UserInfo> for &User {
     fn into(self) -> UserInfo {
         UserInfo {
             id: self.id,
-            email: self.email.clone(),
         }
     }
 }
