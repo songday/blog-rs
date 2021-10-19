@@ -1,2 +1,2 @@
 pub(crate) mod page;
-mod router;
+pub mod router;

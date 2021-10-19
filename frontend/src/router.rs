@@ -9,7 +9,7 @@ pub enum Route {
     Post { id: u64 },
     #[at("/#/posts")]
     Posts,
-    #[at("/#/posts/compose")]
+    #[at("/posts/compose")]
     ComposePost,
     #[at("/#/posts/:id/edit")]
     EditPost { id: u64 },
@@ -47,7 +47,7 @@ fn not_found() -> Html {
     }
 }
 
-fn switch(routes: &Route) -> Html {
+pub fn switch(routes: &Route) -> Html {
     match routes {
         Route::Post { id } => {
             html! { <PostDetail post_id={*id} /> }

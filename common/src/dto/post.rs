@@ -10,7 +10,7 @@ use serde_json::ser::Formatter;
 
 // use crate::result::Error;
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Default, Deserialize, Serialize)]
 pub struct PostData {
     pub id: Option<i64>,
     pub title: String,
