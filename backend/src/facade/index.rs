@@ -6,7 +6,7 @@ use crate::facade::asset;
 use crate::facade::management;
 use crate::service::status;
 
-const INDEX_HTML: &'static str = include_str!("../resource/page/index.html");
+pub(crate) const INDEX_HTML: &'static str = include_str!("../resource/page/index.html");
 
 pub async fn index() -> Result<impl Reply, Rejection> {
     //检查是否有data.db，有则返回前端 index，否则返回设置页面

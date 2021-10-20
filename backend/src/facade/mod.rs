@@ -28,6 +28,7 @@ use crate::util::result::Result as CommonResult;
 // lazy_static_include_str!(INDEX_PAGE_BYTES, "./src/resource/index.html");
 
 pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply, Infallible> {
+    /*
     dbg!(&err);
 
     let code;
@@ -51,6 +52,8 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
     let json = wrap_json_err(code.as_u16(), error);
 
     Ok(warp::reply::with_status(json, code))
+    */
+    Ok(warp::reply::html(index::INDEX_HTML).into_response())
 }
 
 #[inline]

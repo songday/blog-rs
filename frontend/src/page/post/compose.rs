@@ -145,7 +145,7 @@ impl Component for PostCompose {
                 </form>
                 <link rel="stylesheet" href="/asset/codemirror.min.css" />
                 <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
-                <script src="/asset/toastui-editor-all.min.js" onload={ctx.link().callback(|_| Msg::InitEditor)}></script>
+                <script src="/asset/toastui-editor.min.js" onload={ctx.link().callback(|_| Msg::InitEditor)}></script>
             </>
         }
     }
