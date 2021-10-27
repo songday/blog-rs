@@ -1,8 +1,8 @@
 [package]
 name = "blog-frontend"
-version = "0.1.0"
+version = "0.3.0"
 authors = ["Songday"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "blog_frontend"

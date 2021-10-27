@@ -59,7 +59,7 @@ impl Into<PostDetail> for &Post {
             content: self.rendered_content.clone(),
             tags: None,
             created_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.created_at, 0), Utc),
-            updated_at: None,
+            updated_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.updated_at.unwrap(), 0), Utc),
             editable: false,
         }
     }

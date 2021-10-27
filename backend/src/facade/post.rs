@@ -64,3 +64,8 @@ pub async fn show(
         Err(e) => Ok(wrap_json_err(500, e.0)),
     }
 }
+
+pub async fn random_title_image(id: i64) {
+    // https://source.unsplash.com/random/widthxheight?keywords.join(",")&sig=cache_buster
+    // https://picsum.photos/1000/500
+}

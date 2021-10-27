@@ -1,7 +1,7 @@
 export let editor = null;
 
 export function initEditor() {
-    editor = new toastui.Editor({
+    editor = new Editor({
         el: document.querySelector('#editor'),
         previewStyle: 'vertical',
         initialEditType: 'wysiwyg',

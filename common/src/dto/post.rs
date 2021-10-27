@@ -12,7 +12,7 @@ use serde_json::ser::Formatter;
 
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct PostData {
-    pub id: Option<i64>,
+    pub id: i64,
     pub title: String,
     pub content: String,
     pub tags: Option<Vec<String>>,
@@ -25,7 +25,7 @@ pub struct PostDetail {
     pub content: String,
     pub tags: Option<Vec<String>>,
     pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
+    pub updated_at: DateTime<Utc>,
     pub editable: bool,
 }
 

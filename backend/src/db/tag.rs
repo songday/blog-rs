@@ -66,7 +66,7 @@ pub async fn get_names(id_array: Vec<i64>) -> Result<Vec<String>> {
     Ok(name_list)
 }
 
-pub(super) async fn record_usage(post_id: i64, is_new_post: bool, tags: &Vec<String>) -> Result<()> {
+pub(super) async fn record_usage(post_id: i64, tags: &Vec<String>) -> Result<()> {
     // query id list by name list
     let mut sql = String::with_capacity(256);
     sql.push_str("SELECT id,name from tag WHERE name IN (");
@@ -106,7 +106,7 @@ pub(super) async fn record_usage(post_id: i64, is_new_post: bool, tags: &Vec<Str
     }
 
     // 把没有用到的tag id删除
-    if !is_new_post {
+    if tags_in_db.len() > 0 {
         let mut sql = String::with_capacity(512);
         sql.push_str("DELETE FROM tag_usage WHERE post_id = ? AND tag_id NOT IN (");
         for _idx in 0..tags_in_db.len() {

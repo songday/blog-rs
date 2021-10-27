@@ -22,11 +22,11 @@ extern "C" {
 
 #[derive(Clone, Debug, Eq, PartialEq, Properties)]
 pub struct Props {
-    pub post_id: Option<u64>,
+    pub post_id: u64,
 }
 
 pub struct PostCompose {
-    post_id: Option<u64>,
+    post_id: u64,
     post_data: PostData,
 }
 
@@ -43,7 +43,7 @@ impl Component for PostCompose {
 
     fn create(_ctx: &Context<Self>) -> Self {
         Self {
-            post_id: None,
+            post_id: 0,
             post_data: PostData::default(),
         }
     }
@@ -97,13 +97,7 @@ impl Component for PostCompose {
     }
 
     fn changed(&mut self, ctx: &Context<Self>) -> bool {
-        if self.post_id.is_none() && ctx.props().post_id.is_none() {
-            return false;
-        }
-        if self.post_id.is_some() && ctx.props().post_id.is_some() {
-            return self.post_id.unwrap() != ctx.props().post_id.unwrap();
-        }
-        true
+        self.post_id != ctx.props().post_id
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
@@ -117,13 +111,29 @@ impl Component for PostCompose {
                     Msg::Ignore
                 })}>
                     <div class="field">
+                      <label class="label">{"题图"}</label>
+                      <div class="file is-boxed">
+                        <label class="file-label">
+                          <input class="file-input" type="file" name="resume">
+                          <span class="file-cta">
+                            <span class="file-icon">
+                              <i class="fas fa-upload"></i>
+                            </span>
+                            <span class="file-label">
+                              请选择一张图片…
+                            </span>
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                    <div class="field">
                       <label class="label">{"标题"}</label>
                       <div class="control">
                         <input class="input" type="text" placeholder="博客标题" value={self.post_data.title.clone()}
                                                 oninput={ctx.link().callback(|e: InputEvent| {let input = e.target_unchecked_into::<HtmlInputElement>();Msg::UpdateTitle(input.value())})}/>
                       </div>
                     </div>
-                    <div class="col-12">
+                    <div class="field">
                         <label class="form-label">{"内容"}</label>
                         <div id="editor"></div>
                     </div>
@@ -131,7 +141,7 @@ impl Component for PostCompose {
                     <div class="field">
                       <label class="label">{"标签"}</label>
                       <div class="control">
-                        <input class="input" type="text" placeholder="Lables"/>
+                        <input class="input" type="text" placeholder="回车添加"/>
                       </div>
                     </div>
                     <div class="field is-grouped">
@@ -145,7 +155,7 @@ impl Component for PostCompose {
                 </form>
                 <link rel="stylesheet" href="/asset/codemirror.min.css" />
                 <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
-                <script src="/asset/toastui-editor.min.js" onload={ctx.link().callback(|_| Msg::InitEditor)}></script>
+                <script src="/asset/toastui-editor-all.min.js" onload={ctx.link().callback(|_| Msg::InitEditor)}></script>
             </>
         }
     }
