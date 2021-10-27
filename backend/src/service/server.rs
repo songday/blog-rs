@@ -116,6 +116,12 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::end())
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(image::verify_image);
+    let random_title_image = warp::get()
+        .and(warp::path("tool"))
+        .and(warp::path("random-title-image"))
+        .and(warp::path::end())
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
+        .and_then(image::verify_image);
     let post_list = warp::get()
         .and(warp::path("post"))
         .and(warp::path("list"))
@@ -197,6 +203,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(user_logout)
         .or(user_info)
         .or(verify_image)
+        .or(random_title_image)
         .or(post_list)
         .or(tag_list)
         .or(top_tags)

@@ -44,6 +44,13 @@ impl From<std::io::Error> for ErrorWrapper {
     }
 }
 
+impl From<reqwest::Error> for ErrorWrapper {
+    fn from(e: reqwest::Error) -> Self {
+        eprintln!("{}", e);
+        Error::ReadPostIdDataByTagFailed.into()
+    }
+}
+
 impl From<std::time::SystemTimeError> for ErrorWrapper {
     fn from(e: std::time::SystemTimeError) -> Self {
         eprintln!("{}", e);
