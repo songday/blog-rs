@@ -8,7 +8,7 @@ use std::{
 
 use ahash::AHasher;
 use bytes::{Buf, BufMut, BytesMut};
-use chrono::{format::strftime::StrftimeItems, prelude::*};
+use chrono::prelude::*;
 use futures::StreamExt;
 use image::ImageFormat;
 use lazy_static::lazy_static;
@@ -17,25 +17,20 @@ use tokio::{
     io::{AsyncWriteExt, BufWriter},
 };
 use warp::filters::multipart::{FormData, Part};
-
 use blog_common::{
     dto::UploadFileInfo,
     result::{Error, Result},
 };
 
-use crate::util::val;
-
-lazy_static! {
-    static ref UPLOAD_DIR_LAYOUT: StrftimeItems<'static> = StrftimeItems::new("%Y/%m/%d");
-}
+// lazy_static! {
+//     static ref UPLOAD_DIR_LAYOUT: chrono::format::strftime::StrftimeItems<'static> = chrono::format::strftime::StrftimeItems::new("%Y/%m%d");
+// }
 
 #[derive(PartialEq)]
 pub enum SupportFileType {
     Gif,
     Jpg,
-    Jpeg,
     Png,
-    Html,
 }
 
 impl FromStr for SupportFileType {
@@ -46,7 +41,6 @@ impl FromStr for SupportFileType {
             "png" => Ok(SupportFileType::Png),
             "jpg" | "jpeg" => Ok(SupportFileType::Jpg),
             "gif" => Ok(SupportFileType::Gif),
-            "htm" | "html" => Ok(SupportFileType::Html),
             _ => Err(Error::UnsupportedFileType(String::from(s))),
         }
     }
@@ -65,11 +59,14 @@ async fn get_upload_file_writer(
     let month = now.month().to_string();
     let day = now.day().to_string();
 
-    let mut path_buf = PathBuf::with_capacity(128);
-    path_buf.push(val::IMAGE_ROOT_PATH);
+    let mut sub_folder = String::from(month.as_str());
+    sub_folder.push_str(day.as_str());
+
+    let mut path_buf = PathBuf::with_capacity(64);
+    // path_buf.push(val::IMAGE_ROOT_PATH);
+    path_buf.push(".");
     path_buf.push(year.as_str());
-    path_buf.push(month.as_str());
-    path_buf.push(day.as_str());
+    path_buf.push(sub_folder.as_str());
     if !path_buf.as_path().exists() {
         create_dir_all(path_buf.as_path()).await?;
     }
@@ -105,11 +102,7 @@ async fn get_upload_file_writer(
 }
 
 fn ext(filename: &str) -> Option<&str> {
-    let p = filename.rfind('.');
-    if p.is_none() {
-        return None;
-    }
-    Some(&filename[p.unwrap() + 1..])
+    filename.rfind('.').map(|pos| &filename[pos + 1..])
 }
 
 async fn write_buf(writer: &mut BufWriter<File>, mut body: impl Buf) -> Result<usize> {

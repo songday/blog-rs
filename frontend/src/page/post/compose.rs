@@ -1,4 +1,8 @@
+use std::collections::HashMap;
+
 use blog_common::dto::post::PostData;
+use gloo_file::callbacks::FileReader;
+use gloo_file::File;
 use web_sys::HtmlInputElement;
 use wasm_bindgen::prelude::*;
 use weblog::*;
@@ -28,6 +32,7 @@ pub struct Props {
 pub struct PostCompose {
     post_id: u64,
     post_data: PostData,
+    readers: HashMap<String, FileReader>,
 }
 
 pub enum Msg {
@@ -35,6 +40,8 @@ pub enum Msg {
     UpdateTitle(String),
     InitEditor,
     PostRequest,
+    LoadedBytes(String, Vec<u8>),
+    Files(Vec<File>),
 }
 
 impl Component for PostCompose {
@@ -45,16 +52,17 @@ impl Component for PostCompose {
         Self {
             post_id: 0,
             post_data: PostData::default(),
+            readers: HashMap::default(),
         }
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             // Msg::SelectTag(tag) => {
             //     select_tag(tag);
             //     return false;
             // },
-            Msg::Ignore => {},
+            Msg::Ignore => {}
             Msg::UpdateTitle(s) => self.post_data.title = s,
             Msg::PostRequest => {
                 self.post_data.content = get_content();
@@ -66,7 +74,7 @@ impl Component for PostCompose {
                 //     self.response.clone(),
                 // );
                 // self.fetch_task = Some(fetch_task);
-            },
+            }
             // Msg::Response(Ok::<PostDetail, _>(blog)) => {
             //     self.fetch_task = None;
             //     self.router_agent.send(ChangeRoute(AppRoute::PostShow(blog.id).into()));
@@ -88,10 +96,34 @@ impl Component for PostCompose {
             //     self.fetch_task = None;
             //     return true;
             // },
+            Msg::LoadedBytes(file_name, data) => {
+                let info = format!("file_name: {}, data: {:?}", file_name, data);
+                console_log!(&info);
+                wasm_bindgen_futures::spawn_local(async move {
+                    let response = reqwasm::http::Request::post("").body(&data.as_slice()).send().await.unwrap();
+                });
+                self.readers.remove(&file_name);
+            }
+            Msg::Files(files) => {
+                for file in files.into_iter() {
+                    let file_name = file.name();
+                    let task = {
+                        let file_name = file_name.clone();
+                        let link = ctx.link().clone();
+                        gloo_file::callbacks::read_as_bytes(&file, move |res| {
+                            link.send_message(Msg::LoadedBytes(
+                                file_name,
+                                res.expect("failed to read file"),
+                            ))
+                        })
+                    };
+                    self.readers.insert(file_name, task);
+                }
+            }
             Msg::InitEditor => {
                 init_editor();
                 return false;
-            },
+            }
         }
         false
     }
@@ -101,7 +133,7 @@ impl Component for PostCompose {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let Self { post_id, post_data } = self;
+        let Self { post_id, post_data, readers } = self;
 
         html! {
             <>
@@ -112,19 +144,56 @@ impl Component for PostCompose {
                 })}>
                     <div class="field">
                       <label class="label">{"题图"}</label>
-                      <div class="file is-boxed">
-                        <label class="file-label">
-                          <input class="file-input" type="file" name="resume">
-                          <span class="file-cta">
-                            <span class="file-icon">
-                              <i class="fas fa-upload"></i>
-                            </span>
-                            <span class="file-label">
-                              请选择一张图片…
-                            </span>
-                          </span>
-                        </label>
-                      </div>
+            <nav class="level">
+              <p class="level-item has-text-centered">
+    {"&nbsp;"}
+  </p>
+<p class="level-item has-text-centered">
+            <div class="file is-normal">
+  <label class="file-label">
+    <input class="file-input" multiple=false accept="image/*" type="file" name="resume" onchange={ctx.link().callback(move |e: Event| {
+                            let mut result = Vec::new();
+                            let input: HtmlInputElement = e.target_unchecked_into();
+
+                            if let Some(files) = input.files() {
+                                let files = js_sys::try_iter(&files)
+                                    .unwrap()
+                                    .unwrap()
+                                    .map(|v| web_sys::File::from(v.unwrap()))
+                                    .map(File::from);
+                                result.extend(files);
+                            }
+                            Msg::Files(result)
+                        })}/>
+    <span class="file-cta">
+      <span class="file-icon">
+        <i class="fas fa-upload"></i>
+      </span>
+      <span class="file-label">
+        {"上传图片"}
+      </span>
+    </span>
+  </label>
+</div>
+  </p>
+  <p class="level-item has-text-centered">
+    {"或"}
+  </p>
+  <p class="level-item has-text-centered">
+              <button class="button">
+    <span class="icon">
+      <i class="fas fa-download"></i>
+    </span>
+    <span>{"随机下载一张"}</span>
+  </button>
+  </p>
+            <p class="level-item has-text-centered">
+    &nbsp;
+  </p>
+</nav>
+                <section class="hero is-medium is-light has-background">
+                  <img src="" class="hero-background is-transparent"/>
+                </section>
                     </div>
                     <div class="field">
                       <label class="label">{"标题"}</label>
@@ -134,10 +203,9 @@ impl Component for PostCompose {
                       </div>
                     </div>
                     <div class="field">
-                        <label class="form-label">{"内容"}</label>
+                        <label class="label">{"内容"}</label>
                         <div id="editor"></div>
                     </div>
-                    // <RouterAnchor<AppRoute> route=AppRoute::BlogUpload> {"Upload image"} </RouterAnchor<AppRoute>>
                     <div class="field">
                       <label class="label">{"标签"}</label>
                       <div class="control">

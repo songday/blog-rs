@@ -9,10 +9,8 @@ pub enum Route {
     Post { id: u64 },
     #[at("/#/posts")]
     Posts,
-    #[at("/posts/compose")]
-    ComposePost,
-    #[at("/#/posts/:id/edit")]
-    EditPost { id: u64 },
+    #[at("/posts/compose/:id")]
+    ComposePost { id: u64 },
     #[at("/#/easter-egg")]
     EasterEgg,
     #[at("/")]
@@ -55,10 +53,7 @@ pub fn switch(routes: &Route) -> Html {
         Route::Posts => {
             html! { <PostList /> }
         }
-        Route::ComposePost => {
-            html! { <PostCompose post_id={None} /> }
-        }
-        Route::EditPost { id } => {
+        Route::ComposePost { id } => {
             html! { <PostCompose post_id={*id} /> }
         }
         Route::Home => {

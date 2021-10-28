@@ -28,8 +28,24 @@ impl Component for PostDetail {
         let Self { post_id } = self;
 
         html! {
-            <>
-            </>
+            <main>
+                <section class="hero is-medium is-light has-background">
+                  <img src="" class="hero-background is-transparent"/>
+                  <div class="hero-body">
+                    <div class="container">
+                    <p class="title">
+                      {"Medium hero"}
+                    </p>
+                    <p class="subtitle">
+                      {"Medium subtitle"}
+                    </p>
+                    <div class="tags">
+                        <span class="tag is-info">{"tag"}</span>
+                    </div>
+                    </div>
+                  </div>
+                </section>
+            </main>
         }
     }
 }
