@@ -25,6 +25,14 @@ use crate::{
     util::common,
 };
 
+pub async fn new(token: Option<String>) -> Result<impl Reply, Rejection> {
+    if status::check_auth(token).is_err() {
+        return Ok(wrap_json_err(500, Error::NotAuthed));
+    }
+    post::new_post().await.map(|id| wrap_json_data(&id))
+        .or_else(|e| Ok(wrap_json_err(500, e.0)))
+}
+
 pub async fn list(mut page_num: u8) -> Result<impl Reply, Rejection> {
     if page_num < 1 {
         page_num = 1;

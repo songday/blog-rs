@@ -145,6 +145,12 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::param::<u8>())
         .and(warp::path::end())
         .and_then(post::list_by_tag);
+    let post_new = warp::get()
+        .and(warp::path("post"))
+        .and(warp::path("new"))
+        .and(warp::path::end())
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
+        .and_then(post::new);
     let post_save = warp::post()
         .and(warp::path("post"))
         .and(warp::path("save"))
@@ -208,6 +214,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(tag_list)
         .or(top_tags)
         .or(post_list_by_tag)
+        .or(post_new)
         .or(post_save)
         .or(post_show)
         .or(upload_image)

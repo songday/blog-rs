@@ -19,7 +19,7 @@ use crate::util::{result::Result, val};
 pub type ImageWidth = u32;
 pub type ImageHeight = u32;
 
-const MAX_DIMENSION: u32 = 800;
+const MAX_DIMENSION: u32 = 1000;
 
 /*
 https://stackoverflow.com/questions/35488820/how-to-create-a-rust-struct-with-an-imageimagebuffer-as-a-member

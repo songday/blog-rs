@@ -22,6 +22,10 @@ extern "C" {
     fn select_tag(tag: String);
     #[wasm_bindgen(js_name = getSelectedTags)]
     fn get_selected_tags() -> Vec<wasm_bindgen::JsValue>;
+    #[wasm_bindgen(js_name = randomTitleImage)]
+    fn random_title_image(id: u64);
+    #[wasm_bindgen(js_name = goBack)]
+    fn go_back();
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Properties)]
@@ -42,6 +46,8 @@ pub enum Msg {
     PostRequest,
     LoadedBytes(String, Vec<u8>),
     Files(Vec<File>),
+    RetrieveRandomTitleImage,
+    GoBack,
 }
 
 impl Component for PostCompose {
@@ -99,9 +105,9 @@ impl Component for PostCompose {
             Msg::LoadedBytes(file_name, data) => {
                 let info = format!("file_name: {}, data: {:?}", file_name, data);
                 console_log!(&info);
-                wasm_bindgen_futures::spawn_local(async move {
-                    let response = reqwasm::http::Request::post("").body(&data.as_slice()).send().await.unwrap();
-                });
+                // wasm_bindgen_futures::spawn_local(async move {
+                //     let response = reqwasm::http::Request::post("").body(&data.as_slice()).send().await.unwrap();
+                // });
                 self.readers.remove(&file_name);
             }
             Msg::Files(files) => {
@@ -124,6 +130,12 @@ impl Component for PostCompose {
                 init_editor();
                 return false;
             }
+            Msg::RetrieveRandomTitleImage => {
+                random_title_image(self.post_id);
+            }
+            Msg::GoBack => {
+                go_back();
+            }
         }
         false
     }
@@ -137,16 +149,21 @@ impl Component for PostCompose {
 
         html! {
             <>
-                <h1>{"新增博客"}</h1>
+            <div class="container">
+                <h1 class="title is-1">{"新增博客"}</h1>
+            </div>
+            <p>{" "}</p>
                 <form class="row g-3" onsubmit={ctx.link().callback(|ev: FocusEvent| {
                     ev.prevent_default();
                     Msg::Ignore
                 })}>
+            <div class="container">
                     <div class="field">
                       <label class="label">{"题图"}</label>
+                    </div>
             <nav class="level">
               <p class="level-item has-text-centered">
-    {"&nbsp;"}
+    {""}
   </p>
 <p class="level-item has-text-centered">
             <div class="file is-normal">
@@ -180,7 +197,7 @@ impl Component for PostCompose {
     {"或"}
   </p>
   <p class="level-item has-text-centered">
-              <button class="button">
+              <button class="button" onclick={ctx.link().callback(|_| Msg::RetrieveRandomTitleImage)}>
     <span class="icon">
       <i class="fas fa-download"></i>
     </span>
@@ -188,13 +205,14 @@ impl Component for PostCompose {
   </button>
   </p>
             <p class="level-item has-text-centered">
-    &nbsp;
+    {""}
   </p>
 </nav>
-                <section class="hero is-medium is-light has-background">
-                  <img src="" class="hero-background is-transparent"/>
-                </section>
                     </div>
+                <section class="hero is-medium is-light has-background">
+                  <img id="title-image" src="" class="hero-background is-transparent"/>
+                </section>
+            <div class="container">
                     <div class="field">
                       <label class="label">{"标题"}</label>
                       <div class="control">
@@ -217,9 +235,10 @@ impl Component for PostCompose {
                         <button class="button is-link" onclick={ctx.link().callback(|_| Msg::PostRequest)}>{ "发布" }</button>
                       </div>
                       <div class="control">
-                        <button class="button is-link is-light">{ "返回" }</button>
+                        <button class="button is-link is-light" onclick={ctx.link().callback(|_| Msg::GoBack)}>{ "返回" }</button>
                       </div>
                     </div>
+            </div>
                 </form>
                 <link rel="stylesheet" href="/asset/codemirror.min.css" />
                 <link rel="stylesheet" href="/asset/toastui-editor.min.css" />

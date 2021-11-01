@@ -28,7 +28,7 @@ impl Component for PostDetail {
         let Self { post_id } = self;
 
         html! {
-            <main>
+            <>
                 <section class="hero is-medium is-light has-background">
                   <img src="" class="hero-background is-transparent"/>
                   <div class="hero-body">
@@ -45,7 +45,7 @@ impl Component for PostDetail {
                     </div>
                   </div>
                 </section>
-            </main>
+            </>
         }
     }
 }

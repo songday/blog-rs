@@ -1,30 +1,19 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::page::{Home, post::{PostCompose, PostDetail, PostList}};
+use crate::page::{post::{PostCompose, PostDetail, PostList}};
 
 #[derive(Routable, PartialEq, Clone, Debug)]
 pub enum Route {
-    #[at("/#/posts/:id")]
-    Post { id: u64 },
-    #[at("/#/posts")]
-    Posts,
+    #[at("/posts/:id")]
+    ShowPost { id: u64 },
     #[at("/posts/compose/:id")]
     ComposePost { id: u64 },
-    #[at("/#/easter-egg")]
-    EasterEgg,
     #[at("/")]
-    Home,
+    ListPosts,
     #[not_found]
     #[at("/#/404")]
     NotFound,
-}
-
-#[function_component(EasterEgg)]
-fn easter_egg() -> Html {
-    html! {
-        <h1>{ "Congrats, You've found an Easter Egg!" }</h1>
-    }
 }
 
 #[function_component(NotFound)]
@@ -47,22 +36,16 @@ fn not_found() -> Html {
 
 pub fn switch(routes: &Route) -> Html {
     match routes {
-        Route::Post { id } => {
+        Route::ShowPost { id } => {
             html! { <PostDetail post_id={*id} /> }
         }
-        Route::Posts => {
+        Route::ListPosts => {
             html! { <PostList /> }
         }
         Route::ComposePost { id } => {
             html! { <PostCompose post_id={*id} /> }
         }
-        Route::Home => {
-            html! { <Home /> }
-        }
-        Route::EasterEgg => {
-            html! { <EasterEgg /> }
-        }
-        Route::NotFound => {
+        _ => {
             html! { <NotFound /> }
         }
     }

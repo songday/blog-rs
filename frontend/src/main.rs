@@ -1,6 +1,5 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
-
 use blog_frontend::router::{Route, switch};
 
 #[function_component(App)]

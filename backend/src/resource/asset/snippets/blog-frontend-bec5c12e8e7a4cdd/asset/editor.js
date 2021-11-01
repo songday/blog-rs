@@ -87,6 +87,20 @@ export function clearSelectedTags() {
     }
 }
 
-export function gotoLogin() {
-    location.href = '/management';
+export function goBack() {
+    location.href = '/';
+}
+
+export function randomTitleImage(post_id) {
+    fetch('/tool/random-title-image/' + post_id)
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            if (data.status === 0) {
+                document.getElementById('title-image').setAttribute("src", data.data);
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
 }
