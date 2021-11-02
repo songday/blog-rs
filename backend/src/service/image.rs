@@ -2,12 +2,10 @@ use std::{collections::HashMap, path::Path, sync::Arc};
 
 use bytes::Buf;
 use rand::Rng;
-use v_htmlescape;
 use warp::filters::multipart::{FormData, Part};
 use blog_common::{
     dto::{
-        post::{PostData, PostDetail, UploadImage},
-        PaginationData,
+        post::UploadImage,
     },
     result::Error,
 };
@@ -49,7 +47,7 @@ pub async fn save(filename: String, body: impl Buf) -> Result<UploadImage> {
 // pub async fn resize_blog_image<B: AsRef<&[u8]>, T: AsRef<&str>>(b: B, type: T) {}
 
 // https://rust-lang-nursery.github.io/rust-cookbook/web/clients/download.html
-pub async fn random_title_image(id: i64) -> crate::util::result::Result<String> {
+pub async fn random_title_image(id: u64) -> Result<String> {
     let url = {
         let mut rng = rand::thread_rng();
         if rng.gen_range(1..=100) > 70 {
@@ -92,8 +90,12 @@ pub async fn random_title_image(id: i64) -> crate::util::result::Result<String> 
                 None => "",
             }
         );
+    if file_ext.is_empty() {
+        return Err(Error::UploadFailed.into());
+    }
     let filename = format!("{}.{}", id, file_ext);
-    let mut file = tokio::fs::File::create(Path::new(&filename)).await?;
+    // let mut file = tokio::fs::File::create(Path::new(&filename)).await?;
+    let (mut file, filename) = crate::util::io::get_save_file(id, &filename).await?;
     let b = response.bytes().await?;
     tokio::io::copy_buf(&mut &b[..], &mut file).await?;
     Ok(filename)

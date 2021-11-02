@@ -50,6 +50,58 @@ impl From<Option<&str>> for SupportFileType {
     fn from(_: Option<&str>) -> Self { unimplemented!() }
 }
 
+pub async fn gen_new_upload_filename(post_id: u64, origin_filename: &str) -> String {
+    let mut filename = String::with_capacity(128);
+
+    let id = post_id.to_string();
+    filename.push_str(&id);
+    filename.push('-');
+
+    let now = time::OffsetDateTime::now_utc();
+    let mill_sec = now.millisecond().to_string();
+    filename.push_str(&mill_sec);
+    filename.push('-');
+
+    let mut hasher = AHasher::default();
+    hasher.write(origin_filename.as_bytes());
+    filename.push_str(hasher.finish().to_string().as_str());
+
+    filename
+}
+
+pub async fn get_save_file(
+    post_id: u64,
+    filename: &str,
+) -> std::io::Result<(File, String)> {
+    let id = post_id.to_string();
+
+    let mut path_buf = PathBuf::with_capacity(64);
+    // path_buf.push(val::IMAGE_ROOT_PATH);
+    path_buf.push("upload");
+    path_buf.push(&id[id.len() - 1..]);
+    if !path_buf.as_path().exists() {
+        create_dir_all(path_buf.as_path()).await?;
+    }
+
+    path_buf.set_file_name(filename);
+
+    let path = dbg!(path_buf.as_path());
+
+    let f = path.display().to_string();
+
+    #[cfg(target_os = "windows")]
+    let f = f.replace("\\", "/");
+
+    let file = OpenOptions::new()
+        .read(false)
+        .write(true)
+        .create(true)
+        .open(path)
+        .await?;
+
+    Ok((file, f))
+}
+
 async fn get_upload_file_writer(
     original_filename: &str,
     ext: &str,
