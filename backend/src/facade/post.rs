@@ -74,9 +74,3 @@ pub async fn show(
         Err(e) => Ok(wrap_json_err(500, e.0)),
     }
 }
-
-pub async fn random_title_image(id: i64) -> Result<impl Reply, Rejection> {
-    image::random_title_image(id).await
-        .map(|f| wrap_json_data(&f))
-        .or_else(|e| Ok(wrap_json_err(500, e.0)))
-}

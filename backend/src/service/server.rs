@@ -121,7 +121,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("random-title-image"))
         .and(warp::path::param::<i64>())
         .and(warp::path::end())
-        .and_then(post::random_title_image);
+        .and_then(image::random_title_image);
     let post_list = warp::get()
         .and(warp::path("post"))
         .and(warp::path("list"))

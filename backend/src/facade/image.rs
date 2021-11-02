@@ -95,3 +95,9 @@ pub async fn save(filename: String, user: Option<UserInfo>, body: impl Buf) -> R
 }
 
 // pub async fn resize_blog_image<B: AsRef<&[u8]>, T: AsRef<&str>>(b: B, type: T) {}
+
+pub async fn random_title_image(id: i64) -> Result<impl Reply, Rejection> {
+    crate::service::image::random_title_image(id).await
+        .map(|f| wrap_json_data(&f))
+        .or_else(|e| Ok(wrap_json_err(500, e.0)))
+}

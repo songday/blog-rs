@@ -64,7 +64,7 @@ async fn get_upload_file_writer(
 
     let mut path_buf = PathBuf::with_capacity(64);
     // path_buf.push(val::IMAGE_ROOT_PATH);
-    path_buf.push(".");
+    path_buf.push("upload");
     path_buf.push(year.as_str());
     path_buf.push(sub_folder.as_str());
     if !path_buf.as_path().exists() {
@@ -101,6 +101,18 @@ async fn get_upload_file_writer(
     ))
 }
 
+fn get_ext<'a, 'b>(filename: &'a str, allow_file_types: &'b [SupportFileType],) -> Result<&'a str> {
+    if let Some(ext) = filename.rfind('.').map(|pos| &filename[pos + 1..]) {
+        let file_type = ext.parse::<SupportFileType>()?;
+        if let None = allow_file_types.into_iter().find(|&t| t == &file_type) {
+            return Err(Error::UnsupportedFileType(String::from(ext)));
+        }
+        Ok(ext)
+    } else {
+        Err(Error::UnknownFileType)
+    }
+}
+
 fn ext(filename: &str) -> Option<&str> {
     filename.rfind('.').map(|pos| &filename[pos + 1..])
 }
@@ -126,8 +138,7 @@ async fn write_buf(writer: &mut BufWriter<File>, mut body: impl Buf) -> Result<u
         filesize = filesize + cnt;
         body.advance(cnt);
     }
-    dbg!(filesize);
-    Ok(filesize)
+    Ok(dbg!(filesize))
 }
 
 pub async fn save_upload_file(data: FormData, allow_file_types: &[SupportFileType]) -> Result<UploadFileInfo> {
@@ -151,15 +162,7 @@ pub async fn save_upload_file(data: FormData, allow_file_types: &[SupportFileTyp
             Ok(mut p) => {
                 if writer.is_none() && p.filename().is_some() {
                     let origin_filename = dbg!(p.filename().unwrap());
-                    let ext = ext(&origin_filename);
-                    if ext.is_none() {
-                        return Err(Error::UnknownFileType);
-                    }
-                    let ext = ext.unwrap();
-                    let file_type = ext.parse::<SupportFileType>()?;
-                    if let None = allow_file_types.into_iter().find(|&t| t == &file_type) {
-                        return Err(Error::UnsupportedFileType(String::from(ext)));
-                    }
+                    let ext = get_ext(&origin_filename, allow_file_types)?;
                     upload_info.origin_filename.push_str(origin_filename);
                     upload_info.extension.push_str(ext);
 
@@ -222,16 +225,7 @@ pub async fn save_upload_stream(
 ) -> Result<UploadFileInfo> {
     let mut upload_info = UploadFileInfo::new();
 
-    let ext = ext(&filename);
-    if ext.is_none() {
-        return Err(Error::UnknownFileType);
-    }
-
-    let ext = ext.unwrap();
-    let file_type = ext.parse::<SupportFileType>()?;
-    if let None = allow_file_types.into_iter().find(|&t| t == &file_type) {
-        return Err(Error::UnsupportedFileType(String::from(ext)));
-    }
+    let ext = get_ext(&filename, allow_file_types)?;
 
     let mut writer = match get_upload_file_writer(&filename, ext).await {
         Ok((w, p, new_filename_len)) => {
