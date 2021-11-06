@@ -50,7 +50,7 @@ impl From<Option<&str>> for SupportFileType {
     fn from(_: Option<&str>) -> Self { unimplemented!() }
 }
 
-pub async fn gen_new_upload_filename(post_id: u64, origin_filename: &str) -> String {
+pub fn gen_new_upload_filename(post_id: u64, origin_filename: &str) -> String {
     let mut filename = String::with_capacity(128);
 
     let id = post_id.to_string();
@@ -71,11 +71,11 @@ pub async fn gen_new_upload_filename(post_id: u64, origin_filename: &str) -> Str
 
 pub async fn get_save_file(
     post_id: u64,
-    filename: &str,
-) -> std::io::Result<(File, String)> {
+    save_filename: &str,
+) -> std::io::Result<(File, PathBuf, String)> {
     let id = post_id.to_string();
 
-    let mut path_buf = PathBuf::with_capacity(64);
+    let mut path_buf = PathBuf::with_capacity(128);
     // path_buf.push(val::IMAGE_ROOT_PATH);
     path_buf.push("upload");
     path_buf.push(&id[id.len() - 1..]);
@@ -83,11 +83,12 @@ pub async fn get_save_file(
         create_dir_all(path_buf.as_path()).await?;
     }
 
-    path_buf.set_file_name(filename);
+    path_buf.push(save_filename);
 
     let path = dbg!(path_buf.as_path());
 
-    let f = path.display().to_string();
+    let mut f = path.display().to_string();
+    f.insert(0, '/');
 
     #[cfg(target_os = "windows")]
     let f = f.replace("\\", "/");
@@ -99,57 +100,27 @@ pub async fn get_save_file(
         .open(path)
         .await?;
 
-    Ok((file, f))
+    Ok((file, path_buf, f))
 }
 
 async fn get_upload_file_writer(
+    post_id: u64,
     original_filename: &str,
     ext: &str,
-) -> std::io::Result<(BufWriter<File>, PathBuf, usize)> {
-    let now = chrono::offset::Utc::now();
-    let year = now.year().to_string();
-    let month = now.month().to_string();
-    let day = now.day().to_string();
+) -> std::io::Result<(BufWriter<File>, UploadFileInfo)> {
+    let mut upload_file_info = UploadFileInfo::new();
+    upload_file_info.origin_filename.push_str(original_filename);
+    upload_file_info.extension.push_str(ext);
 
-    let mut sub_folder = String::from(month.as_str());
-    sub_folder.push_str(day.as_str());
+    let new_filename = gen_new_upload_filename(post_id, &original_filename);
 
-    let mut path_buf = PathBuf::with_capacity(64);
-    // path_buf.push(val::IMAGE_ROOT_PATH);
-    path_buf.push("upload");
-    path_buf.push(year.as_str());
-    path_buf.push(sub_folder.as_str());
-    if !path_buf.as_path().exists() {
-        create_dir_all(path_buf.as_path()).await?;
-    }
-
-    let mut filename = String::with_capacity(128);
-    filename.push_str(year.as_str());
-    filename.push_str(month.as_str());
-    filename.push_str(day.as_str());
-    filename.push_str(now.timestamp_subsec_nanos().to_string().as_str());
-    let mut hasher = AHasher::default();
-    hasher.write(original_filename.as_bytes());
-    filename.push_str(hasher.finish().to_string().as_str());
-
-    let new_filename_len = path_buf.as_path().to_str().unwrap().len() + filename.len();
-
-    filename.push_str("_original");
-    path_buf.push(filename.as_str());
-    path_buf.set_extension(ext);
-    dbg!(&path_buf);
-
-    let file = OpenOptions::new()
-        .read(false)
-        .write(true)
-        .create(true)
-        .open(path_buf.as_path())
-        .await?;
+    let (file, save_path_buf, relative_file_path) = get_save_file(post_id, &new_filename).await?;
+    upload_file_info.filepath = save_path_buf;
+    upload_file_info.relative_path = relative_file_path;
 
     Ok((
         BufWriter::<File>::with_capacity(32768, file),
-        path_buf,
-        new_filename_len,
+        upload_file_info,
     ))
 }
 
@@ -193,13 +164,12 @@ async fn write_buf(writer: &mut BufWriter<File>, mut body: impl Buf) -> Result<u
     Ok(dbg!(filesize))
 }
 
-pub async fn save_upload_file(data: FormData, allow_file_types: &[SupportFileType]) -> Result<UploadFileInfo> {
+pub async fn save_upload_file(post_id: u64, data: FormData, allow_file_types: &[SupportFileType]) -> Result<UploadFileInfo> {
     // data need to be: mut data: FormData
     // https://docs.rs/futures/0.3.5/futures/stream/trait.StreamExt.html#method.next
     // loop {
     //     let part = data.next().await;
     //     if let Some(r) = part {
-    //         //todo
     //     } else {
     //         break;
     //     }
@@ -207,7 +177,7 @@ pub async fn save_upload_file(data: FormData, allow_file_types: &[SupportFileTyp
     // https://docs.rs/futures/0.3.5/futures/stream/trait.StreamExt.html#method.collect
     let parts = data.collect::<Vec<std::result::Result<Part, warp::Error>>>().await;
     let mut filesize = 0usize;
-    let mut upload_info = UploadFileInfo::new();
+    let mut upload_info: Option<UploadFileInfo> = None;
     let mut writer: Option<BufWriter<File>> = None;
     for r in parts {
         match r {
@@ -215,14 +185,11 @@ pub async fn save_upload_file(data: FormData, allow_file_types: &[SupportFileTyp
                 if writer.is_none() && p.filename().is_some() {
                     let origin_filename = dbg!(p.filename().unwrap());
                     let ext = get_ext(&origin_filename, allow_file_types)?;
-                    upload_info.origin_filename.push_str(origin_filename);
-                    upload_info.extension.push_str(ext);
 
-                    match get_upload_file_writer(origin_filename, ext).await {
-                        Ok((w, p, new_filename_len)) => {
+                    match get_upload_file_writer(post_id, origin_filename, ext).await {
+                        Ok((w, upload_file_info)) => {
                             writer = Some(w);
-                            upload_info.filepath.push(p);
-                            upload_info.new_filename_len = new_filename_len;
+                            upload_info = Some(upload_file_info);
                         },
                         Err(e) => {
                             dbg!(e);
@@ -267,22 +234,22 @@ pub async fn save_upload_file(data: FormData, allow_file_types: &[SupportFileTyp
         Error::UploadFailed
     })?;
 
-    Ok(upload_info)
+    Ok(upload_info.unwrap())
 }
 
 pub async fn save_upload_stream(
+    post_id: u64,
     filename: String,
     body: impl Buf,
     allow_file_types: &[SupportFileType],
 ) -> Result<UploadFileInfo> {
-    let mut upload_info = UploadFileInfo::new();
+    let mut upload_info:Option<UploadFileInfo> = None;
 
     let ext = get_ext(&filename, allow_file_types)?;
 
-    let mut writer = match get_upload_file_writer(&filename, ext).await {
-        Ok((w, p, new_filename_len)) => {
-            upload_info.filepath.push(p);
-            upload_info.new_filename_len = new_filename_len;
+    let mut writer = match get_upload_file_writer(post_id, &filename, ext).await {
+        Ok((w, p)) => {
+            upload_info = Some(p);
             w
         },
         Err(e) => {
@@ -291,19 +258,14 @@ pub async fn save_upload_stream(
         },
     };
 
+    let mut upload_info = upload_info.unwrap();
     upload_info.filesize = write_buf(&mut writer, body).await?;
 
-    match writer.shutdown().await {
-        Ok(t) => {},
-        Err(e) => {
-            dbg!(&e);
-            eprintln!("{}", e);
-            return Err(Error::UploadFailed);
-        },
-    };
-
-    upload_info.extension.push_str(ext);
-    upload_info.origin_filename.push_str(&filename);
+    if let Err(e) = writer.shutdown().await {
+        dbg!(&e);
+        eprintln!("{:?}", e);
+        return Err(Error::UploadFailed);
+    }
 
     Ok(upload_info)
 }

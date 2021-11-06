@@ -78,6 +78,11 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::tail())
         .and(warp::path::end())
         .and_then(asset::get_asset);
+    let asset = warp::get()
+        .and(warp::path("upload"))
+        .and(warp::path::tail())
+        .and(warp::path::end())
+        .and_then(image::get_upload_image);
     let management_settings = warp::get()
         .and(warp::path("management"))
         .and(warp::path::end())
@@ -169,6 +174,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
     let upload_image = warp::post()
         .and(warp::path("image"))
         .and(warp::path("upload"))
+        .and(warp::path::param::<u64>())
         .and(warp::path::end())
         .and(auth())
         .and(warp::multipart::form().max_length(val::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))
@@ -176,6 +182,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
     let save_image = warp::post()
         .and(warp::path("image"))
         .and(warp::path("save"))
+        .and(warp::path::param::<u64>())
         .and(warp::path::param::<String>())
         .and(warp::path::end())
         .and(warp::body::content_length_limit(val::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))

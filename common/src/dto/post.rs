@@ -59,14 +59,14 @@ pub struct PostDetail {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UploadImage {
-    pub path: String,
+    pub relative_path: String,
     pub original_filename: String,
 }
 
 impl UploadImage {
     pub fn new(path: String, original_filename: String) -> Self {
         UploadImage {
-            path,
+            relative_path: path,
             original_filename,
         }
     }

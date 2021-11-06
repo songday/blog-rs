@@ -97,7 +97,7 @@ export function randomTitleImage(post_id) {
         .then(data => {
             console.log(data);
             if (data.status === 0) {
-                document.getElementById('title-image').setAttribute("src", data.data);
+                document.getElementById('title-image').setAttribute("src", data.data + "?_rnd=" + Math.random());
             }
         })
         .catch(err => {

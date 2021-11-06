@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path, sync::Arc};
+use std::{collections::HashMap, path::{Path, PathBuf}, sync::Arc};
 
 use bytes::Buf;
 use rand::Rng;
@@ -19,28 +19,46 @@ use crate::{
     },
 };
 
-pub async fn upload(data: FormData) -> Result<UploadImage> {
+pub async fn upload(post_id: u64, data: FormData) -> Result<UploadImage> {
     let file_info = io::save_upload_file(
+        post_id,
         data,
         &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
     )
     .await?;
-    let thumbnail = image::resize_from_file(&file_info).await?;
-    let d = UploadImage::new(thumbnail, file_info.origin_filename);
+    image::resize_from_file(&file_info).await?;
+    let d = UploadImage::new(file_info.relative_path, file_info.origin_filename);
     Ok(d)
 }
 
-pub async fn save(filename: String, body: impl Buf) -> Result<UploadImage> {
+pub async fn get_upload_image(path: &str) -> Result<Vec<u8>> {
+    let mut path_buf = PathBuf::with_capacity(32);
+    path_buf.push("upload");
+    let v: Vec<&str> = path.split_terminator('/').collect();
+    for n in v {
+        path_buf.push(n);
+    }
+    match tokio::fs::read(path_buf.as_path()).await {
+        Ok(d) => Ok(d),
+        Err(e) => {
+            eprintln!("{:?}", e);
+            Err(Error::UploadFailed.into())
+        },
+    }
+}
+
+pub async fn save(post_id: u64, filename: String, body: impl Buf) -> Result<UploadImage> {
     let filename = urlencoding::decode(&filename)?;
 
     let file_info = io::save_upload_stream(
+        post_id,
         filename,
         body,
         &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
     )
     .await?;
-    let thumbnail = image::resize_from_file(&file_info).await?;
-    let d = UploadImage::new(thumbnail, file_info.origin_filename);
+    image::resize_from_file(&file_info).await?;
+    let d = UploadImage::new(file_info.relative_path, file_info.origin_filename);
     Ok(d)
 }
 
@@ -95,8 +113,8 @@ pub async fn random_title_image(id: u64) -> Result<String> {
     }
     let filename = format!("{}.{}", id, file_ext);
     // let mut file = tokio::fs::File::create(Path::new(&filename)).await?;
-    let (mut file, filename) = crate::util::io::get_save_file(id, &filename).await?;
+    let (mut file, path_buf, relative_path) = crate::util::io::get_save_file(id, &filename).await?;
     let b = response.bytes().await?;
     tokio::io::copy_buf(&mut &b[..], &mut file).await?;
-    Ok(filename)
+    Ok(relative_path)
 }
