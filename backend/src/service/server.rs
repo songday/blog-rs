@@ -78,7 +78,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::tail())
         .and(warp::path::end())
         .and_then(asset::get_asset);
-    let asset = warp::get()
+    let get_upload = warp::get()
         .and(warp::path("upload"))
         .and(warp::path::tail())
         .and(warp::path::end())
@@ -210,6 +210,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
 
     let routes = index
         .or(asset)
+        .or(get_upload)
         .or(management_settings)
         .or(management_login)
         .or(management_update_settings)

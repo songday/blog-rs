@@ -26,6 +26,8 @@ extern "C" {
     fn random_title_image(id: u64);
     #[wasm_bindgen(js_name = goBack)]
     fn go_back();
+    #[wasm_bindgen(js_name = uploadTitleImage)]
+    fn upload_title_image(post_id: u64, files: Vec<web_sys::File>);
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Properties)]
@@ -45,7 +47,7 @@ pub enum Msg {
     InitEditor,
     PostRequest,
     LoadedBytes(String, Vec<u8>),
-    Files(Vec<File>),
+    Files(u64, Vec<web_sys::File>),
     RetrieveRandomTitleImage,
     GoBack,
 }
@@ -110,21 +112,22 @@ impl Component for PostCompose {
                 // });
                 self.readers.remove(&file_name);
             }
-            Msg::Files(files) => {
-                for file in files.into_iter() {
-                    let file_name = file.name();
-                    let task = {
-                        let file_name = file_name.clone();
-                        let link = ctx.link().clone();
-                        gloo_file::callbacks::read_as_bytes(&file, move |res| {
-                            link.send_message(Msg::LoadedBytes(
-                                file_name,
-                                res.expect("failed to read file"),
-                            ))
-                        })
-                    };
-                    self.readers.insert(file_name, task);
-                }
+            Msg::Files(post_id, files) => {
+                // for file in files.into_iter() {
+                    // let file_name = file.name();
+                    // let task = {
+                    //     let file_name = file_name.clone();
+                    //     let link = ctx.link().clone();
+                    //     gloo_file::callbacks::read_as_bytes(&file, move |res| {
+                    //         link.send_message(Msg::LoadedBytes(
+                    //             file_name,
+                    //             res.expect("failed to read file"),
+                    //         ))
+                    //     })
+                    // };
+                    // self.readers.insert(file_name, task);
+                // }
+                upload_title_image(post_id, files);
             }
             Msg::InitEditor => {
                 init_editor();
@@ -146,6 +149,7 @@ impl Component for PostCompose {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let Self { post_id, post_data, readers } = self;
+        let post_id = *post_id;
 
         html! {
             <>
@@ -168,7 +172,7 @@ impl Component for PostCompose {
 <p class="level-item has-text-centered">
             <div class="file is-normal">
   <label class="file-label">
-    <input class="file-input" multiple=false accept="image/*" type="file" name="resume" onchange={ctx.link().callback(move |e: Event| {
+    <input class="file-input" multiple=false accept="image/*" type="file" name="title-image" onchange={ctx.link().callback(move |e: Event| {
                             let mut result = Vec::new();
                             let input: HtmlInputElement = e.target_unchecked_into();
 
@@ -177,10 +181,11 @@ impl Component for PostCompose {
                                     .unwrap()
                                     .unwrap()
                                     .map(|v| web_sys::File::from(v.unwrap()))
-                                    .map(File::from);
+                                    // .map(File::from)
+                                    ;
                                 result.extend(files);
                             }
-                            Msg::Files(result)
+                            Msg::Files(post_id, result)
                         })}/>
     <span class="file-cta">
       <span class="file-icon">

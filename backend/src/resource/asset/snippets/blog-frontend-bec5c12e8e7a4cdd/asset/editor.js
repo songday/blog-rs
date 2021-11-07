@@ -97,10 +97,42 @@ export function randomTitleImage(post_id) {
         .then(data => {
             console.log(data);
             if (data.status === 0) {
-                document.getElementById('title-image').setAttribute("src", data.data);
+                document.getElementById('title-image').setAttribute("src", "/"+data.data+"?_rnd="+Math.random());
             }
         })
         .catch(err => {
             console.log(err);
         });
+}
+
+export const uploadTitleImage = (postId, files) => {
+    console.log('进来了');
+    const file = files[0];
+    // check file type
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        // document.getElementById('uploaded_image').innerHTML = '<div class="alert alert-danger">Only .jpg and .png image are allowed</div>';
+        // document.getElementsByName('sample_image')[0].value = '';
+        return;
+    }
+    console.log('进来了1' + file.size);
+    // check file size (< 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+        // document.getElementById('uploaded_image').innerHTML = '<div class="alert alert-danger">File must be less than 2 MB</div>';
+        // document.getElementsByName('sample_image')[0].value = '';
+        return;
+    }
+    console.log('进来了2');
+    const form_data = new FormData();
+    form_data.append('title-image', file);
+    fetch("/image/upload/" + postId, {
+        method:"POST",
+        body : form_data
+    }).then(response => response.json()).then(data => {
+        // document.getElementById('uploaded_image').innerHTML = '<div class="alert alert-success">Image Uploaded Successfully</div> <img src="'+responseData.image_source+'" class="img-thumbnail" />';
+        // document.getElementsByName('sample_image')[0].value = '';
+        console.log(data);
+        if (data.status === 0) {
+            document.getElementById('title-image').setAttribute("src", "/"+data.data.relative_path+"?_rnd="+Math.random());
+        }
+    });
 }

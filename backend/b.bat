@@ -2,7 +2,7 @@ cls
 rem set DATABASE_URL=sqlite://data/all.db
 cd ..\frontend
 del /S /Q dist\*
-rmdir /S /Q dist\*
+rmdir /S /Q dist
 trunk build
 @REM trunk build --release
 cd dist
