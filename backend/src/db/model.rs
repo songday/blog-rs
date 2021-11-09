@@ -20,9 +20,7 @@ pub struct User {
 
 impl Into<UserInfo> for &User {
     fn into(self) -> UserInfo {
-        UserInfo {
-            id: self.id,
-        }
+        UserInfo { id: self.id }
     }
 }
 

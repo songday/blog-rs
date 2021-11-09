@@ -1,3 +1,4 @@
+use std::io::Read;
 use std::{
     cmp::PartialEq,
     hash::Hasher,
@@ -5,9 +6,12 @@ use std::{
     str::FromStr,
     vec::Vec,
 };
-use std::io::Read;
 
 use ahash::AHasher;
+use blog_common::{
+    dto::UploadFileInfo,
+    result::{Error, Result},
+};
 use bytes::{Buf, BufMut, BytesMut};
 use chrono::prelude::*;
 use futures::StreamExt;
@@ -18,10 +22,6 @@ use tokio::{
     io::{AsyncWriteExt, BufWriter},
 };
 use warp::filters::multipart::{FormData, Part};
-use blog_common::{
-    dto::UploadFileInfo,
-    result::{Error, Result},
-};
 
 // lazy_static! {
 //     static ref UPLOAD_DIR_LAYOUT: chrono::format::strftime::StrftimeItems<'static> = chrono::format::strftime::StrftimeItems::new("%Y/%m%d");
@@ -48,7 +48,9 @@ impl FromStr for SupportFileType {
 }
 
 impl From<Option<&str>> for SupportFileType {
-    fn from(_: Option<&str>) -> Self { unimplemented!() }
+    fn from(_: Option<&str>) -> Self {
+        unimplemented!()
+    }
 }
 
 pub fn gen_new_upload_filename(post_id: u64, origin_filename: &str, ext: &str) -> String {
@@ -72,10 +74,7 @@ pub fn gen_new_upload_filename(post_id: u64, origin_filename: &str, ext: &str) -
     filename
 }
 
-pub async fn get_save_file(
-    post_id: u64,
-    save_filename: &str,
-) -> std::io::Result<(File, PathBuf, String)> {
+pub async fn get_save_file(post_id: u64, save_filename: &str) -> std::io::Result<(File, PathBuf, String)> {
     let id = post_id.to_string();
 
     let mut path_buf = PathBuf::with_capacity(128);
@@ -121,13 +120,10 @@ async fn get_upload_file_writer(
     upload_file_info.filepath = save_path_buf;
     upload_file_info.relative_path = relative_file_path;
 
-    Ok((
-        BufWriter::<File>::with_capacity(32768, file),
-        upload_file_info,
-    ))
+    Ok((BufWriter::<File>::with_capacity(32768, file), upload_file_info))
 }
 
-fn get_ext<'a, 'b>(filename: &'a str, allow_file_types: &'b [SupportFileType],) -> Result<&'a str> {
+fn get_ext<'a, 'b>(filename: &'a str, allow_file_types: &'b [SupportFileType]) -> Result<&'a str> {
     if let Some(ext) = filename.rfind('.').map(|pos| &filename[pos + 1..]) {
         let file_type = ext.parse::<SupportFileType>()?;
         if let None = allow_file_types.into_iter().find(|&t| t == &file_type) {
@@ -172,13 +168,17 @@ async fn write_bytes(writer: &mut BufWriter<File>, b: &[u8]) -> Result<usize> {
             Err(e) => {
                 dbg!(e);
                 return Err(Error::UploadFailed);
-            },
+            }
         };
     }
     return Ok(cnt);
 }
 
-pub async fn save_upload_file(post_id: u64, data: FormData, allow_file_types: &[SupportFileType]) -> Result<UploadFileInfo> {
+pub async fn save_upload_file(
+    post_id: u64,
+    data: FormData,
+    allow_file_types: &[SupportFileType],
+) -> Result<UploadFileInfo> {
     // data need to be: mut data: FormData
     // https://docs.rs/futures/0.3.5/futures/stream/trait.StreamExt.html#method.next
     // loop {
@@ -204,11 +204,11 @@ pub async fn save_upload_file(post_id: u64, data: FormData, allow_file_types: &[
                         Ok((w, upload_file_info)) => {
                             writer = Some(w);
                             upload_info = Some(upload_file_info);
-                        },
+                        }
                         Err(e) => {
                             dbg!(e);
                             return Err(Error::UploadFailed);
-                        },
+                        }
                     };
                 }
                 if (&writer).is_none() {
@@ -221,21 +221,21 @@ pub async fn save_upload_file(post_id: u64, data: FormData, allow_file_types: &[
                                 Some(ref mut w) => {
                                     filesize += buf.remaining();
                                     w.write_all_buf(&mut buf).await;
-                                },
-                                None => {},
+                                }
+                                None => {}
                             };
-                        },
+                        }
                         Err(e) => {
                             dbg!(e);
                             return Err(Error::UploadFailed);
-                        },
+                        }
                     };
                 }
-            },
+            }
             Err(e) => {
                 dbg!(e);
                 return Err(Error::UploadFailed);
-            },
+            }
         };
     }
 
@@ -258,7 +258,7 @@ pub async fn save_upload_stream(
     mut body: impl Buf,
     allow_file_types: &[SupportFileType],
 ) -> Result<UploadFileInfo> {
-    let mut upload_info:Option<UploadFileInfo> = None;
+    let mut upload_info: Option<UploadFileInfo> = None;
 
     let ext = get_ext(&filename, allow_file_types)?;
 
@@ -266,11 +266,11 @@ pub async fn save_upload_stream(
         Ok((w, p)) => {
             upload_info = Some(p);
             w
-        },
+        }
         Err(e) => {
             dbg!(e);
             return Err(Error::UploadFailed);
-        },
+        }
     };
 
     let mut upload_info = upload_info.unwrap();

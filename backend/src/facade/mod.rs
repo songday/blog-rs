@@ -1,10 +1,10 @@
 pub(crate) mod asset;
 pub(crate) mod image;
+pub(crate) mod index;
 pub(crate) mod management;
 pub(crate) mod post;
 pub(crate) mod tag;
 pub(crate) mod user;
-pub(crate) mod index;
 
 use core::{convert::Infallible, result::Result};
 
@@ -91,7 +91,7 @@ fn response<D: Serialize>(result: CommonResult<D>) -> Result<impl Reply, Rejecti
                 Error::BusinessException(m) => wrap_json_err(400, Error::BusinessException(m)),
                 _ => wrap_json_err(500, e),
             }
-        },
+        }
     };
     Ok(r)
 }

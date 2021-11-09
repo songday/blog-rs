@@ -6,7 +6,6 @@
 
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
-use serde_json::ser::Formatter;
 
 // use crate::result::Error;
 
@@ -34,7 +33,7 @@ pub struct PostDetail {
 // pub struct OptionBlogDetail(pub Option<BlogDetail>);
 //
 // impl Display for OptionBlogDetail {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//     fn fmt(&self, f: &mut serde_json::ser::Formatter<'_>) -> fmt::Result {
 //         if self.0.is_none() {
 //             f.write_str("")
 //         } else {

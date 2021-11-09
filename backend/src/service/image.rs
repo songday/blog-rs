@@ -1,15 +1,14 @@
-use std::{collections::HashMap, path::{Path, PathBuf}, sync::Arc};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
+use blog_common::{dto::post::UploadImage, result::Error};
 use bytes::Buf;
 use rand::Rng;
 use tokio::io::AsyncWriteExt;
 use warp::filters::multipart::{FormData, Part};
-use blog_common::{
-    dto::{
-        post::UploadImage,
-    },
-    result::Error,
-};
 
 use crate::{
     db::{model::Tag, post},
@@ -44,7 +43,7 @@ pub async fn get_upload_image(path: &str) -> Result<Vec<u8>> {
         Err(e) => {
             eprintln!("{:?}", e);
             Err(Error::UploadFailed.into())
-        },
+        }
     }
 }
 
@@ -82,33 +81,29 @@ pub async fn random_title_image(id: u64) -> Result<String> {
         .path_segments()
         .and_then(|segments| segments.last())
         .and_then(|name| {
-            if name.is_empty() { None }
-            else {
-                name.find(".")
-                    .map(|pos| &name[pos+1..])
+            if name.is_empty() {
+                None
+            } else {
+                name.find(".").map(|pos| &name[pos + 1..])
             }
         })
-        .unwrap_or(
-            match response.headers().get("Content-Type") {
-                Some(h) => {
-                    let r = h.to_str();
-                    match r {
-                        Ok(header) => {
-                            match header {
-                                "image/jpeg" => "jpg",
-                                "image/png" => "png",
-                                _ => ""
-                            }
-                        },
-                        Err(e) => {
-                            eprintln!("{:?}", e);
-                            ""
-                        }
+        .unwrap_or(match response.headers().get("Content-Type") {
+            Some(h) => {
+                let r = h.to_str();
+                match r {
+                    Ok(header) => match header {
+                        "image/jpeg" => "jpg",
+                        "image/png" => "png",
+                        _ => "",
+                    },
+                    Err(e) => {
+                        eprintln!("{:?}", e);
+                        ""
                     }
-                },
-                None => "",
+                }
             }
-        );
+            None => "",
+        });
     if file_ext.is_empty() {
         return Err(Error::UploadFailed.into());
     }

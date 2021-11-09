@@ -14,10 +14,8 @@ impl Component for PostDetail {
     type Message = ();
     type Properties = Props;
 
-    fn create(ctx: &Context<Self>) -> Self {
-        Self {
-            post_id: 0,
-        }
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self { post_id: 0 }
     }
 
     fn changed(&mut self, ctx: &Context<Self>) -> bool {
@@ -30,21 +28,32 @@ impl Component for PostDetail {
         html! {
             <>
                 <section class="hero is-medium is-light has-background">
-                  <img src="" class="hero-background is-transparent"/>
-                  <div class="hero-body">
-                    <div class="container">
-                    <p class="title">
-                      {"Medium hero"}
-                    </p>
-                    <p class="subtitle">
-                      {"Medium subtitle"}
-                    </p>
-                    <div class="tags">
-                        <span class="tag is-info">{"tag"}</span>
+                    <img src="" class="hero-background is-transparent"/>
+                    <div class="hero-body">
+                        <div class="container">
+                            <p class="title">
+                                {"Medium hero"}
+                            </p>
+                            <p class="subtitle">
+                                {"Medium subtitle"}
+                            </p>
+                            <div class="tags">
+                                <span class="tag is-info">{"tag"}</span>
+                            </div>
+                        </div>
                     </div>
-                    </div>
-                  </div>
                 </section>
+                <div class="section container">
+                    <article class="media block box my-6">
+                        <div class="media-content">
+                            <div class="content">
+                                <p class="is-family-secondary">
+                                    {"{ &quote.content }"}
+                                </p>
+                            </div>
+                        </div>
+                    </article>
+                </div>
             </>
         }
     }

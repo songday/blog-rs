@@ -4,11 +4,11 @@ use bytes::Buf;
 use hyper::header::{self, HeaderMap, HeaderValue};
 use serde::Serialize;
 use warp::{
-    filters::path::Tail,
     filters::multipart::FormData,
+    filters::path::Tail,
     http::{response::Response, StatusCode},
     reply::{Json, Response as WarpResponse},
-    Rejection, Reply
+    Rejection, Reply,
 };
 
 use blog_common::{
@@ -46,13 +46,14 @@ pub async fn verify_image(token: Option<String>) -> Result<WarpResponse, Rejecti
             let headers = r.headers_mut();
             headers.extend(header);
             Ok(r)
-        },
+        }
         Err(e) => return Ok(Response::new("Wrong request token".into())),
     }
 }
 
 pub async fn get_upload_image(tail: Tail) -> Result<impl Reply, Rejection> {
-    service::image::get_upload_image(tail.as_str()).await
+    service::image::get_upload_image(tail.as_str())
+        .await
         .map(|d| {
             // 这里指定返回值，否则Rustc推到不出来类型
             let mut r: Response<hyper::Body> = Response::new(d.into());
@@ -73,21 +74,31 @@ pub async fn upload(post_id: u64, user: Option<UserInfo>, data: FormData) -> Res
         return Ok(wrap_json_err(500, Error::NotAuthed));
     }
     let upload_image = service::image::upload(post_id, data).await;
-    upload_image.map(|d| wrap_json_data(&d)).or_else(|e| Ok(wrap_json_err(500, e.0)))
+    upload_image
+        .map(|d| wrap_json_data(&d))
+        .or_else(|e| Ok(wrap_json_err(500, e.0)))
 }
 
-pub async fn save(post_id: u64, filename: String, user: Option<UserInfo>, body: impl Buf) -> Result<impl Reply, Rejection> {
+pub async fn save(
+    post_id: u64,
+    filename: String,
+    user: Option<UserInfo>,
+    body: impl Buf,
+) -> Result<impl Reply, Rejection> {
     if user.is_none() {
         return Ok(wrap_json_err(500, Error::NotAuthed));
     }
     let upload_image = service::image::save(post_id, filename, body).await;
-    upload_image.map(|d| wrap_json_data(&d)).or_else(|e| Ok(wrap_json_err(500, e.0)))
+    upload_image
+        .map(|d| wrap_json_data(&d))
+        .or_else(|e| Ok(wrap_json_err(500, e.0)))
 }
 
 // pub async fn resize_blog_image<B: AsRef<&[u8]>, T: AsRef<&str>>(b: B, type: T) {}
 
 pub async fn random_title_image(post_id: u64) -> Result<impl Reply, Rejection> {
-    crate::service::image::random_title_image(post_id).await
+    crate::service::image::random_title_image(post_id)
+        .await
         .map(|f| wrap_json_data(&f))
         .or_else(|e| Ok(wrap_json_err(500, e.0)))
 }

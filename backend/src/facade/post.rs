@@ -29,7 +29,9 @@ pub async fn new(token: Option<String>) -> Result<impl Reply, Rejection> {
     if status::check_auth(token).is_err() {
         return Ok(wrap_json_err(500, Error::NotAuthed));
     }
-    post::new_post().await.map(|id| wrap_json_data(&id))
+    post::new_post()
+        .await
+        .map(|id| wrap_json_data(&id))
         .or_else(|e| Ok(wrap_json_err(500, e.0)))
 }
 
@@ -70,7 +72,7 @@ pub async fn show(
         Ok(mut blog) => {
             blog.editable = status::check_auth(token).is_ok();
             Ok(wrap_json_data(&blog))
-        },
+        }
         Err(e) => Ok(wrap_json_err(500, e.0)),
     }
 }

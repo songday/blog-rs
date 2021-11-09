@@ -93,7 +93,9 @@ pub(crate) fn user_online(token: &str, user: UserInfo) {
     );
 }
 
-pub(crate) fn user_offline(token: &str) { ONLINE_USERS.write().remove(token); }
+pub(crate) fn user_offline(token: &str) {
+    ONLINE_USERS.write().remove(token);
+}
 
 pub fn get_verify_code(token: &str) -> Result<Vec<u8>> {
     if token.len() != 32 {

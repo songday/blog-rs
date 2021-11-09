@@ -8,7 +8,7 @@ use blog_common::{
     },
     result::Error,
 };
-use chrono::{Timelike, TimeZone, Utc};
+use chrono::{TimeZone, Timelike, Utc};
 // use chrono::offset::Utc;
 // use chrono::DateTime;
 use comrak::{markdown_to_html, ComrakOptions};
@@ -22,7 +22,11 @@ use crate::{
         tag::get_names,
         SqlParam, DATA_SOURCE,
     },
-    util::{common, result::{ErrorWrapper, Result}, snowflake},
+    util::{
+        common,
+        result::{ErrorWrapper, Result},
+        snowflake,
+    },
 };
 
 // const START_TIME: DateTime<Utc> = Utc.ymd(1970, 1, 1).and_hms(0, 1, 1);
@@ -62,8 +66,9 @@ async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
 }
 
 pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
+    println!("1");
     let row = sqlx::query("SELECT COUNT(id) FROM post")
-        .fetch_one(&DATA_SOURCE.get().unwrap().sqlite)
+        .fetch_one(super::get_sqlite())
         .await?;
     let total: i64 = row.get(0);
     // println!("total={}", total);
@@ -71,16 +76,17 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
         return Ok(PaginationData { total: 0, data: vec![] });
     }
 
+    println!("2");
     let mut offset: i64 = ((page_num - 1) * page_size) as i64;
     if offset > total {
         offset = total - page_size as i64;
     }
     let d = sqlx::query_as::<Sqlite, Post>(
-        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE title!='' ORDER BY id DESC LIMIT ?, ?",
+        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ORDER BY id DESC LIMIT ?, ?",
     )
         .bind(offset as i64)
         .bind(page_size)
-        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+        .fetch_all(super::get_sqlite())
         .await?;
     Ok(PaginationData {
         total: total as u64,
@@ -160,14 +166,18 @@ pub async fn new_post() -> Result<i64> {
 
 async fn get_post(id: i64, edit: bool) -> Result<Option<Post>> {
     let sql = if edit {
-            "SELECT id,title,'' AS markdown_content,markdown_content AS rendered_content,created_at,updated_at FROM post WHERE id = ?"
-        } else {
-            "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id = ?"
-        };
+        "SELECT id,title,'' AS markdown_content,markdown_content AS rendered_content,created_at,updated_at FROM post WHERE id = ?"
+    } else {
+        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id = ?"
+    };
     sqlx::query_as::<Sqlite, Post>(sql)
         .bind(id)
         .fetch_optional(super::get_sqlite())
-        .await.map_err(|e| {eprintln!("{:?}", e);Error::SqliteDbError.into()})
+        .await
+        .map_err(|e| {
+            eprintln!("{:?}", e);
+            Error::SqliteDbError.into()
+        })
 }
 
 pub async fn save(post_data: PostData) -> Result<PostDetail> {

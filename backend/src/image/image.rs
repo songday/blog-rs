@@ -29,22 +29,22 @@ fn err(image_error: image::error::ImageError) {
     match image_error {
         image::error::ImageError::Decoding(de) => {
             dbg!(de);
-        },
+        }
         image::error::ImageError::Encoding(ee) => {
             dbg!(ee);
-        },
+        }
         image::error::ImageError::Parameter(pe) => {
             dbg!(pe);
-        },
+        }
         image::error::ImageError::Limits(le) => {
             dbg!(le);
-        },
+        }
         image::error::ImageError::Unsupported(ue) => {
             dbg!(ue);
-        },
+        }
         image::error::ImageError::IoError(e) => {
             dbg!(e);
-        },
+        }
     };
 }
 
@@ -117,11 +117,11 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<()> {
         Err(e) => {
             dbg!(e);
             return Err(Error::UnknownFileType.into());
-        },
+        }
     };
 
     if h <= MAX_DIMENSION && w <= MAX_DIMENSION {
-        return Ok(())
+        return Ok(());
     }
 
     let dynamic_image = match image::open(filepath) {
@@ -129,7 +129,7 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<()> {
         Err(e) => {
             err(e);
             return Err(Error::UnknownFileType.into());
-        },
+        }
     };
 
     if w == h {
@@ -162,7 +162,7 @@ where
         Err(e) => {
             err(e);
             return Err(Error::UnknownFileType.into());
-        },
+        }
     };
 
     let dynamic_image = match image::load_from_memory_with_format(src_bytes.as_ref(), image_type) {
@@ -170,7 +170,7 @@ where
         Err(e) => {
             err(e);
             return Err(Error::UnknownFileType.into());
-        },
+        }
     };
 
     Ok(())

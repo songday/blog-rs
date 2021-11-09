@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use blog_common::dto::post::PostData;
 use gloo_file::callbacks::FileReader;
 use gloo_file::File;
-use web_sys::HtmlInputElement;
 use wasm_bindgen::prelude::*;
+use web_sys::HtmlInputElement;
 use weblog::*;
 use yew::events::InputEvent;
 use yew::prelude::*;
@@ -114,18 +114,18 @@ impl Component for PostCompose {
             }
             Msg::Files(post_id, files) => {
                 // for file in files.into_iter() {
-                    // let file_name = file.name();
-                    // let task = {
-                    //     let file_name = file_name.clone();
-                    //     let link = ctx.link().clone();
-                    //     gloo_file::callbacks::read_as_bytes(&file, move |res| {
-                    //         link.send_message(Msg::LoadedBytes(
-                    //             file_name,
-                    //             res.expect("failed to read file"),
-                    //         ))
-                    //     })
-                    // };
-                    // self.readers.insert(file_name, task);
+                // let file_name = file.name();
+                // let task = {
+                //     let file_name = file_name.clone();
+                //     let link = ctx.link().clone();
+                //     gloo_file::callbacks::read_as_bytes(&file, move |res| {
+                //         link.send_message(Msg::LoadedBytes(
+                //             file_name,
+                //             res.expect("failed to read file"),
+                //         ))
+                //     })
+                // };
+                // self.readers.insert(file_name, task);
                 // }
                 upload_title_image(post_id, files);
             }
@@ -148,107 +148,111 @@ impl Component for PostCompose {
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let Self { post_id, post_data, readers } = self;
+        let Self {
+            post_id,
+            post_data,
+            readers,
+        } = self;
         let post_id = *post_id;
 
         html! {
-            <>
-            <div class="container">
-                <h1 class="title is-1">{"新增博客"}</h1>
-            </div>
-            <p>{" "}</p>
-                <form class="row g-3" onsubmit={ctx.link().callback(|ev: FocusEvent| {
-                    ev.prevent_default();
-                    Msg::Ignore
-                })}>
-            <div class="container">
-                    <div class="field">
-                      <label class="label">{"题图"}</label>
+                    <>
+                    <div class="container">
+                        <h1 class="title is-1">{"新增博客"}</h1>
                     </div>
-            <nav class="level">
-              <p class="level-item has-text-centered">
-    {""}
-  </p>
-<p class="level-item has-text-centered">
-            <div class="file is-normal">
-  <label class="file-label">
-    <input class="file-input" multiple=false accept="image/*" type="file" name="title-image" onchange={ctx.link().callback(move |e: Event| {
-                            let mut result = Vec::new();
-                            let input: HtmlInputElement = e.target_unchecked_into();
+                    <p>{" "}</p>
+                        <form class="row g-3" onsubmit={ctx.link().callback(|ev: FocusEvent| {
+                            ev.prevent_default();
+                            Msg::Ignore
+                        })}>
+                    <div class="container">
+                            <div class="field">
+                              <label class="label">{"题图"}</label>
+                            </div>
+                    <nav class="level">
+                      <p class="level-item has-text-centered">
+            {""}
+          </p>
+        <p class="level-item has-text-centered">
+                    <div class="file is-normal">
+          <label class="file-label">
+            <input class="file-input" multiple=false accept="image/*" type="file" name="title-image" onchange={ctx.link().callback(move |e: Event| {
+                                    let mut result = Vec::new();
+                                    let input: HtmlInputElement = e.target_unchecked_into();
 
-                            if let Some(files) = input.files() {
-                                let files = js_sys::try_iter(&files)
-                                    .unwrap()
-                                    .unwrap()
-                                    .map(|v| web_sys::File::from(v.unwrap()))
-                                    // .map(File::from)
-                                    ;
-                                result.extend(files);
-                            }
-                            Msg::Files(post_id, result)
-                        })}/>
-    <span class="file-cta">
-      <span class="file-icon">
-        <i class="fas fa-upload"></i>
-      </span>
-      <span class="file-label">
-        {"上传图片"}
-      </span>
-    </span>
-  </label>
-</div>
-  </p>
-  <p class="level-item has-text-centered">
-    {"或"}
-  </p>
-  <p class="level-item has-text-centered">
-              <button class="button" onclick={ctx.link().callback(|_| Msg::RetrieveRandomTitleImage)}>
-    <span class="icon">
-      <i class="fas fa-download"></i>
-    </span>
-    <span>{"随机下载一张"}</span>
-  </button>
-  </p>
-            <p class="level-item has-text-centered">
-    {""}
-  </p>
-</nav>
+                                    if let Some(files) = input.files() {
+                                        let files = js_sys::try_iter(&files)
+                                            .unwrap()
+                                            .unwrap()
+                                            .map(|v| web_sys::File::from(v.unwrap()))
+                                            // .map(File::from)
+                                            ;
+                                        result.extend(files);
+                                    }
+                                    Msg::Files(post_id, result)
+                                })}/>
+            <span class="file-cta">
+              <span class="file-icon">
+                <i class="fas fa-upload"></i>
+              </span>
+              <span class="file-label">
+                {"上传图片"}
+              </span>
+            </span>
+          </label>
+        </div>
+          </p>
+          <p class="level-item has-text-centered">
+            {"或"}
+          </p>
+          <p class="level-item has-text-centered">
+                      <button class="button" onclick={ctx.link().callback(|_| Msg::RetrieveRandomTitleImage)}>
+            <span class="icon">
+              <i class="fas fa-download"></i>
+            </span>
+            <span>{"随机下载一张"}</span>
+          </button>
+          </p>
+                    <p class="level-item has-text-centered">
+            {""}
+          </p>
+        </nav>
+                            </div>
+                        <section class="hero is-medium is-light has-background">
+                          <img id="title-image" src="" class="hero-background is-transparent"/>
+                        </section>
+                    <div class="container">
+                            <div class="field">
+                              <label class="label">{"标题"}</label>
+                              <div class="control">
+                                <input class="input" type="text" placeholder="博客标题" value={self.post_data.title.clone()}
+                                                        oninput={ctx.link().callback(|e: InputEvent| {let input = e.target_unchecked_into::<HtmlInputElement>();Msg::UpdateTitle(input.value())})}/>
+                              </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">{"内容"}</label>
+                                <div id="editor"></div>
+                            </div>
+                            <div class="field">
+                              <label class="label">{"标签"}</label>
+                              <div class="control">
+                                <input class="input" type="text" placeholder="回车添加"/>
+                              </div>
+                            </div>
+                            <div class="field is-grouped">
+                              <div class="control">
+                                <button class="button is-link" onclick={ctx.link().callback(|_| Msg::PostRequest)}>{ "发布" }</button>
+                              </div>
+                              <div class="control">
+                                <button class="button is-link is-light" onclick={ctx.link().callback(|_| Msg::GoBack)}>{ "返回" }</button>
+                              </div>
+                            </div>
                     </div>
-                <section class="hero is-medium is-light has-background">
-                  <img id="title-image" src="" class="hero-background is-transparent"/>
-                </section>
-            <div class="container">
-                    <div class="field">
-                      <label class="label">{"标题"}</label>
-                      <div class="control">
-                        <input class="input" type="text" placeholder="博客标题" value={self.post_data.title.clone()}
-                                                oninput={ctx.link().callback(|e: InputEvent| {let input = e.target_unchecked_into::<HtmlInputElement>();Msg::UpdateTitle(input.value())})}/>
-                      </div>
-                    </div>
-                    <div class="field">
-                        <label class="label">{"内容"}</label>
-                        <div id="editor"></div>
-                    </div>
-                    <div class="field">
-                      <label class="label">{"标签"}</label>
-                      <div class="control">
-                        <input class="input" type="text" placeholder="回车添加"/>
-                      </div>
-                    </div>
-                    <div class="field is-grouped">
-                      <div class="control">
-                        <button class="button is-link" onclick={ctx.link().callback(|_| Msg::PostRequest)}>{ "发布" }</button>
-                      </div>
-                      <div class="control">
-                        <button class="button is-link is-light" onclick={ctx.link().callback(|_| Msg::GoBack)}>{ "返回" }</button>
-                      </div>
-                    </div>
-            </div>
-                </form>
-                <link rel="stylesheet" href="/asset/codemirror.min.css" />
-                <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
-                <script src="/asset/toastui-editor-all.min.js" onload={ctx.link().callback(|_| Msg::InitEditor)}></script>
-            </>
-        }
+                        </form>
+                        <link rel="stylesheet" href="/asset/codemirror.min.css" />
+                        <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
+                        <script src="/asset/toastui-editor-all.min.js" onload={ctx.link().callback(|_| Msg::InitEditor)}></script>
+                    </>
+                }
     }
 }
