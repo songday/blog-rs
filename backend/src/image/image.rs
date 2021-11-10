@@ -19,7 +19,7 @@ use crate::util::{result::Result, val};
 pub type ImageWidth = u32;
 pub type ImageHeight = u32;
 
-const MAX_DIMENSION: u32 = 800;
+const MAX_DIMENSION: u32 = 1000;
 
 /*
 https://stackoverflow.com/questions/35488820/how-to-create-a-rust-struct-with-an-imageimagebuffer-as-a-member
@@ -29,22 +29,22 @@ fn err(image_error: image::error::ImageError) {
     match image_error {
         image::error::ImageError::Decoding(de) => {
             dbg!(de);
-        },
+        }
         image::error::ImageError::Encoding(ee) => {
             dbg!(ee);
-        },
+        }
         image::error::ImageError::Parameter(pe) => {
             dbg!(pe);
-        },
+        }
         image::error::ImageError::Limits(le) => {
             dbg!(le);
-        },
+        }
         image::error::ImageError::Unsupported(ue) => {
             dbg!(ue);
-        },
+        }
         image::error::ImageError::IoError(e) => {
             dbg!(e);
-        },
+        }
     };
 }
 
@@ -102,7 +102,7 @@ pub fn gen_verify_image(numbers: &[u8]) -> Bytes {
     b.into_inner().freeze()
 }
 
-pub async fn resize_from_file(file: &UploadFileInfo) -> Result<String> {
+pub async fn resize_from_file(file: &UploadFileInfo) -> Result<()> {
     let image_format = match file.extension.as_str() {
         "gif" => ImageFormat::Gif,
         "jpg" | "jpeg" => ImageFormat::Jpeg,
@@ -117,20 +117,11 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<String> {
         Err(e) => {
             dbg!(e);
             return Err(Error::UnknownFileType.into());
-        },
+        }
     };
 
-    let mut dest_path = String::with_capacity(256);
-    let s = filepath.to_str().unwrap();
-    dest_path.push_str(&s[..file.new_filename_len + 1]);
-    dest_path.push_str("_thumbnail.");
-    dest_path.push_str(file.extension.as_str());
-
     if h <= MAX_DIMENSION && w <= MAX_DIMENSION {
-        return match copy(filepath, &dest_path).await {
-            Ok(_) => Ok(dest_path),
-            Err(_) => Err(Error::CreateThumbnailFailed.into()),
-        };
+        return Ok(());
     }
 
     let dynamic_image = match image::open(filepath) {
@@ -138,7 +129,7 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<String> {
         Err(e) => {
             err(e);
             return Err(Error::UnknownFileType.into());
-        },
+        }
     };
 
     if w == h {
@@ -153,12 +144,12 @@ pub async fn resize_from_file(file: &UploadFileInfo) -> Result<String> {
     }
 
     let d = dynamic_image.thumbnail_exact(w, h);
-    if let Err(e) = d.save_with_format(&dest_path, image_format) {
+    if let Err(e) = d.save_with_format(&filepath, image_format) {
         dbg!(e);
         return Err(Error::CreateThumbnailFailed.into());
     }
 
-    Ok(dest_path[val::IMAGE_ROOT_PATH_LENGTH + 1..].replace(r"\", "/"))
+    Ok(())
 }
 
 // 下面这个，如果写成：B, 'a，就会提示找不到生命周期
@@ -171,7 +162,7 @@ where
         Err(e) => {
             err(e);
             return Err(Error::UnknownFileType.into());
-        },
+        }
     };
 
     let dynamic_image = match image::load_from_memory_with_format(src_bytes.as_ref(), image_type) {
@@ -179,7 +170,7 @@ where
         Err(e) => {
             err(e);
             return Err(Error::UnknownFileType.into());
-        },
+        }
     };
 
     Ok(())

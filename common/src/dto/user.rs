@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserInfo {
     pub id: i64,
-    pub email: String,
 }
+
+impl yew::html::ImplicitClone for UserInfo {}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserInfoWrapper {

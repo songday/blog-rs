@@ -40,11 +40,11 @@ pub async fn register(params: UserParams) -> Result<impl Reply, Rejection> {
             let reply_with_header =
                 warp::reply::with_header(reply, header::SET_COOKIE.as_str(), session_id_cookie(&w.access_token));
             Ok(reply_with_header.into_response())
-        },
+        }
         Err(e) => {
             let reply = wrap_json_err(500, e.0);
             Ok(reply.into_response())
-        },
+        }
     }
 }
 
@@ -70,11 +70,11 @@ pub async fn login(token: Option<String>, params: UserParams) -> Result<WarpResp
             let reply_with_header =
                 warp::reply::with_header(reply, header::SET_COOKIE.as_str(), session_id_cookie(&w.access_token));
             Ok(reply_with_header.into_response())
-        },
+        }
         Err(e) => {
             let reply = wrap_json_err(500, e.0);
             Ok(reply.into_response())
-        },
+        }
     }
 }
 

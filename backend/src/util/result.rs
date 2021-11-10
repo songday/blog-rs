@@ -8,7 +8,9 @@ pub type Result<D> = core::result::Result<D, ErrorWrapper>;
 pub struct ErrorWrapper(pub(crate) Error);
 
 impl From<Error> for ErrorWrapper {
-    fn from(e: Error) -> Self { ErrorWrapper(e) }
+    fn from(e: Error) -> Self {
+        ErrorWrapper(e)
+    }
 }
 
 // 如果要在Yew前端展示，这里可以不用手动序列化，让Yew反序列化再展示出来就可以了
@@ -39,6 +41,13 @@ impl warp::reject::Reject for ErrorWrapper {}
 
 impl From<std::io::Error> for ErrorWrapper {
     fn from(e: std::io::Error) -> Self {
+        eprintln!("{}", e);
+        Error::ReadPostIdDataByTagFailed.into()
+    }
+}
+
+impl From<reqwest::Error> for ErrorWrapper {
+    fn from(e: reqwest::Error) -> Self {
         eprintln!("{}", e);
         Error::ReadPostIdDataByTagFailed.into()
     }

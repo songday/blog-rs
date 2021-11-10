@@ -1,5 +1,6 @@
 pub(crate) mod asset;
 pub(crate) mod image;
+pub(crate) mod index;
 pub(crate) mod management;
 pub(crate) mod post;
 pub(crate) mod tag;
@@ -27,6 +28,7 @@ use crate::util::result::Result as CommonResult;
 // lazy_static_include_str!(INDEX_PAGE_BYTES, "./src/resource/index.html");
 
 pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply, Infallible> {
+    /*
     dbg!(&err);
 
     let code;
@@ -50,6 +52,8 @@ pub async fn handle_rejection(err: Rejection) -> std::result::Result<impl Reply,
     let json = wrap_json_err(code.as_u16(), error);
 
     Ok(warp::reply::with_status(json, code))
+    */
+    Ok(warp::reply::html(index::INDEX_HTML).into_response())
 }
 
 #[inline]
@@ -87,7 +91,7 @@ fn response<D: Serialize>(result: CommonResult<D>) -> Result<impl Reply, Rejecti
                 Error::BusinessException(m) => wrap_json_err(400, Error::BusinessException(m)),
                 _ => wrap_json_err(500, e),
             }
-        },
+        }
     };
     Ok(r)
 }
@@ -98,7 +102,7 @@ fn response<D: Serialize>(result: CommonResult<D>) -> Result<impl Reply, Rejecti
 fn session_id_cookie(token: &str) -> String {
     format!(
         // "{}={}; Domain=songday.com; Secure; HttpOnly; Path=/",
-        "{}={}; HttpOnly; Path=/;",
+        "{}={}; SameSite=Lax; HttpOnly; Path=/;",
         val::SESSION_ID_HEADER_NAME,
         token,
     )

@@ -21,20 +21,20 @@ pub struct Response<D> {
 
 pub struct UploadFileInfo {
     pub origin_filename: String,
+    pub relative_path: String,
     pub filepath: PathBuf,
-    pub new_filename_len: usize,
-    pub filesize: usize,
     pub extension: String,
+    pub filesize: usize,
 }
 
 impl UploadFileInfo {
     pub fn new() -> Self {
         UploadFileInfo {
             origin_filename: String::with_capacity(128),
+            relative_path: String::with_capacity(128),
             filepath: PathBuf::with_capacity(128),
-            new_filename_len: 0,
-            filesize: 0,
             extension: String::with_capacity(16),
+            filesize: 0,
         }
     }
 }

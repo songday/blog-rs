@@ -20,10 +20,7 @@ pub struct User {
 
 impl Into<UserInfo> for &User {
     fn into(self) -> UserInfo {
-        UserInfo {
-            id: self.id,
-            email: self.email.clone(),
-        }
+        UserInfo { id: self.id }
     }
 }
 
@@ -60,7 +57,7 @@ impl Into<PostDetail> for &Post {
             content: self.rendered_content.clone(),
             tags: None,
             created_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.created_at, 0), Utc),
-            updated_at: None,
+            updated_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.updated_at.unwrap(), 0), Utc),
             editable: false,
         }
     }
@@ -77,4 +74,38 @@ pub struct TagUsage {
     pub id: i64,
     pub post_id: i64,
     pub tag_id: i64,
+}
+
+#[derive(Clone, Default, Debug, Serialize, sqlx::FromRow)]
+pub struct Settings {
+    pub admin_password: String,
+    pub name: String,
+    pub domain: String,
+    pub copyright: String,
+    pub license: String,
+    // pub settings: blog_common::dto::management::Settings,
+}
+
+// impl std::ops::Deref for Settings {
+//     type Target = blog_common::dto::management::Settings;
+//     fn deref(&self) -> &Self::Target {
+//         &self.settings
+//     }
+// }
+
+impl From<blog_common::dto::management::Settings> for Settings {
+    fn from(settings: blog_common::dto::management::Settings) -> Self {
+        let admin_password = settings.admin_password;
+        let name = settings.name;
+        let domain = settings.domain;
+        let copyright = settings.copyright;
+        let license = settings.license;
+        Self {
+            admin_password,
+            name,
+            domain,
+            copyright,
+            license,
+        }
+    }
 }

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>配置博客信息</title>
+    <link rel="stylesheet" href="/asset/bulma.min-82aac43507618108.css">
+    <link rel="stylesheet" href="/asset/fontawesome.min-834a8323ca080f62.css">
+    <link rel="stylesheet" href="/asset/regular.min-1865e217533a2c60.css">
+    <link rel="stylesheet" href="/asset/solid.min-6b9dba4e942529f.css">
+    <script type="application/javascript">
+        function showNotification() {}
+        function post() {
+            if (document.getElementById('admin_password1').value !== document.getElementById('admin_password2').value) {
+                document.getElementById('notification-box').innerHTML
+            }
+            const data = {
+                name:document.getElementById('name').value,
+                domain:document.getElementById('domain').value,
+                copyright:document.getElementById('copyright').value,
+                license:document.getElementById('license').value,
+                admin_password:document.getElementById('admin_password1').value,
+            };
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            fetch('/management/settings/update', options).then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.status === 0) {
+                        location.href = '/';
+                    } else {
+                        document.getElementById('errorMessage').value = data.error.detail;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                const $notification = $delete.parentNode;
+
+                $delete.addEventListener('click', () => {
+                    $notification.parentNode.removeChild($notification);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="container">
+    <h1 class="title">
+        博客信息配置
+    </h1>
+    <p>&nbsp;</p>
+    <div class="field">
+        <label class="label">博客名称</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="text" placeholder="给博客取一个名字" id="name" value="{{ name }}"/>
+            <span class="icon is-small is-left">
+              <i class="far fa-user"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label">域名信息</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="text" placeholder="域名" id="domain" value="{{ domain }}"/>
+            <span class="icon is-small is-left">
+              <i class="far fa-registered"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label">版权信息</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="text" placeholder="All Copyright reserved." id="copyright" value="{{ copyright }}"/>
+            <span class="icon is-small is-left">
+              <i class="far fa-registered"></i>
+            </span>
+        </div>
+    </div>
+    <div class="field">
+        <label class="label">备案信息</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="text" placeholder="ICP备案信息" id="license" value="{{ license }}"/>
+            <span class="icon is-small is-left">
+              <i class="fas fa-globe"></i>
+            </span>
+        </div>
+    </div>
+    <p>&nbsp;</p>
+    <div class="field">
+        <label class="label">管理密码</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="password" placeholder="" id="admin_password1" value=""/>
+            <span class="icon is-small is-left">
+              <i class="fas fa-lock"></i>
+            </span>
+        </div>
+        <p class="help">请最少输入1位。</p>
+        <p class="help">如果忘记了密码，请在本机登录（localhost或127.0.0.1），可直接访问设置页面修改密码。</p>
+    </div>
+    <div class="field">
+        <label class="label">请再输入一次管理密码</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="password" placeholder="" id="admin_password2" value=""/>
+            <span class="icon is-small is-left">
+              <i class="fas fa-lock"></i>
+            </span>
+        </div>
+    </div>
+    <div>
+        <button class="button is-medium" onclick="post();">更新</button>
+        <button class="button is-medium" onclick="location.href='/';">返回</button>
+    </div>
+</div>
+<div id="notification-box" class="notification is-danger">
+    <button class="delete"></button>
+    <span id="notification-msg"></span>
+</div>
+</body>
+</html>

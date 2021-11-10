@@ -43,7 +43,7 @@ pub async fn scanner() {
             let d = &mut *online_users;
             d.retain(|_, v| {
                 if current_timestamp - v.last_active_time > MAX_USER_IDLE_MILLIS {
-                    println!("Remove user {}", dbg!(&v.user.email));
+                    println!("Remove user {}", dbg!(&v.user.id));
                     false
                 } else {
                     true
@@ -93,7 +93,9 @@ pub(crate) fn user_online(token: &str, user: UserInfo) {
     );
 }
 
-pub(crate) fn user_offline(token: &str) { ONLINE_USERS.write().remove(token); }
+pub(crate) fn user_offline(token: &str) {
+    ONLINE_USERS.write().remove(token);
+}
 
 pub fn get_verify_code(token: &str) -> Result<Vec<u8>> {
     if token.len() != 32 {

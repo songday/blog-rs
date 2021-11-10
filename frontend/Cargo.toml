@@ -1,8 +1,8 @@
 [package]
 name = "blog-frontend"
-version = "0.1.0"
+version = "0.3.0"
 authors = ["Songday"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "blog_frontend"
@@ -21,18 +21,23 @@ wasm-bindgen = "0.2"
 console_error_panic_hook = { version = "0.1", optional = true }
 
 blog-common = { path = "../common" }
+gloo-file = "0.2"
 js-sys = "0.3"
 thiserror = "1.0"
 parking_lot = { version = "0.11", features = ["wasm-bindgen"]}
 lazy_static = "1.4"
+reqwasm = "0.2"
 serde = "1.0"
 serde_json = "1.0"
+wasm-bindgen-futures = "0.4"
+weblog = "0.3.0"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlDocument"] }
 wee_alloc = { version = "0.4" }
-yew = "0.17"
-yew-router = "0.14"
-#yew = {git = "https://github.com/yewstack/yew", branch = "master"}
-#yew-router = { git = "https://github.com/yewstack/yew", branch="master" }
+#yew = "0.18"
+#yew-router = "0.15"
+yew = {git = "https://github.com/yewstack/yew", branch = "master"}
+yew-router = { git = "https://github.com/yewstack/yew", branch="master" }
+yew-agent = { git = "https://github.com/yewstack/yew", branch="master" }
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

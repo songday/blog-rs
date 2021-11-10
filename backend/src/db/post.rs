@@ -1,14 +1,16 @@
 use core::time::Duration;
-use std::time::SystemTime;
+use std::{collections::HashMap, time::SystemTime};
 
 use blog_common::{
     dto::{
-        post::{NewPost, PostDetail},
+        post::{PostData, PostDetail},
         PaginationData,
     },
     result::Error,
 };
-use chrono::Timelike;
+use chrono::{TimeZone, Timelike, Utc};
+// use chrono::offset::Utc;
+// use chrono::DateTime;
 use comrak::{markdown_to_html, ComrakOptions};
 use sqlx::{Row, Sqlite};
 
@@ -20,11 +22,17 @@ use crate::{
         tag::get_names,
         SqlParam, DATA_SOURCE,
     },
-    util::{common, result::Result, snowflake},
+    util::{
+        common,
+        result::{ErrorWrapper, Result},
+        snowflake,
+    },
 };
 
+// const START_TIME: DateTime<Utc> = Utc.ymd(1970, 1, 1).and_hms(0, 1, 1);
+
 fn review_rendered_content(c: &str) -> String {
-    let r = common::HTML_TAG_REGEX.replace(c, "");
+    let r = common::HTML_TAG_REGEX.replace_all(c, "");
     let r = r.replace(r"\n", "").to_string();
     if r.len() < 200 {
         return r;
@@ -58,8 +66,9 @@ async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
 }
 
 pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
+    println!("1");
     let row = sqlx::query("SELECT COUNT(id) FROM post")
-        .fetch_one(&DATA_SOURCE.get().unwrap().sqlite)
+        .fetch_one(super::get_sqlite())
         .await?;
     let total: i64 = row.get(0);
     // println!("total={}", total);
@@ -67,6 +76,7 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
         return Ok(PaginationData { total: 0, data: vec![] });
     }
 
+    println!("2");
     let mut offset: i64 = ((page_num - 1) * page_size) as i64;
     if offset > total {
         offset = total - page_size as i64;
@@ -76,7 +86,7 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
     )
         .bind(offset as i64)
         .bind(page_size)
-        .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+        .fetch_all(super::get_sqlite())
         .await?;
     Ok(PaginationData {
         total: total as u64,
@@ -137,14 +147,50 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
     })
 }
 
-pub async fn save(new_post: NewPost) -> Result<PostDetail> {
+pub async fn new_post() -> Result<i64> {
+    let id = snowflake::gen_id() as i64;
+    let last_insert_rowid =
+        sqlx::query("INSERT INTO post(id, title, markdown_content, rendered_content, created_at)VALUES(?,'','','',?)")
+            .bind(&id)
+            .bind(chrono::offset::Utc::now().timestamp() as i64)
+            .execute(super::get_sqlite())
+            .await?
+            .last_insert_rowid();
+
+    if last_insert_rowid < 1 {
+        return Err(Error::SavePostFailed.into());
+    }
+
+    Ok(id)
+}
+
+async fn get_post(id: i64, edit: bool) -> Result<Option<Post>> {
+    let sql = if edit {
+        "SELECT id,title,'' AS markdown_content,markdown_content AS rendered_content,created_at,updated_at FROM post WHERE id = ?"
+    } else {
+        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id = ?"
+    };
+    sqlx::query_as::<Sqlite, Post>(sql)
+        .bind(id)
+        .fetch_optional(super::get_sqlite())
+        .await
+        .map_err(|e| {
+            eprintln!("{:?}", e);
+            Error::SqliteDbError.into()
+        })
+}
+
+pub async fn save(post_data: PostData) -> Result<PostDetail> {
+    let post = get_post(post_data.id, true).await?;
+    if post.is_none() {
+        return Err(Error::CannotFoundPost.into());
+    }
+
     // needs to be in a transaction
     let transaction = DATA_SOURCE.get().unwrap().sqlite.begin().await?;
 
-    let id = snowflake::gen_id();
-    // println!("id {}", id);
-    if new_post.tags.is_some() {
-        super::tag::record_usage(id, new_post.tags.as_ref().unwrap()).await?;
+    if post_data.tags.is_some() {
+        super::tag::record_usage(post_data.id, post_data.tags.as_ref().unwrap()).await?;
     }
 
     // let parser = pulldown_cmark::Parser::new(body);
@@ -152,23 +198,23 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
     // pulldown_cmark::html::push_html(&mut html_text, parser);
 
     let post_detail = PostDetail {
-        id: id as i64,
-        title: new_post.title,
-        content: markdown_to_html(&new_post.content, &ComrakOptions::default()),
-        tags: new_post.tags,
-        created_at: chrono::offset::Utc::now(),
-        updated_at: None,
+        id: post_data.id,
+        title: post_data.title,
+        content: markdown_to_html(&post_data.content, &ComrakOptions::default()),
+        tags: post_data.tags,
+        created_at: Utc.timestamp(post.unwrap().created_at, 0),
+        updated_at: chrono::offset::Utc::now(),
         editable: true,
     };
 
     // save to sqlite
     let last_insert_rowid =
-        sqlx::query("INSERT INTO post(id, title, markdown_content, rendered_content, created_at)VALUES(?,?,?,?,?)")
-            .bind(&post_detail.id)
+        sqlx::query("UPDATE post SET title=?, markdown_content=?, rendered_content=?, updated_at=? WHERE id=?")
             .bind(&post_detail.title)
-            .bind(&new_post.content)
+            .bind(&post_data.content)
             .bind(&post_detail.content)
-            .bind(post_detail.created_at.second() as i64)
+            .bind(post_detail.updated_at.timestamp() as i64)
+            .bind(&post_detail.id)
             .execute(&DATA_SOURCE.get().unwrap().sqlite)
             .await?
             .last_insert_rowid();
@@ -185,15 +231,10 @@ pub async fn save(new_post: NewPost) -> Result<PostDetail> {
     Ok(post_detail)
 }
 
-pub async fn show(id: u64) -> Result<PostDetail> {
+pub async fn show(id: u64, query_string: HashMap<String, String>) -> Result<PostDetail> {
     // let r: Option<PostDetail> = db::sled_get(&DATA_SOURCE.get().unwrap().post, id.to_le_bytes()).await?;
     let id = id as i64;
-    let r = sqlx::query_as::<Sqlite, Post>(
-        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id = ?",
-    )
-    .bind(id)
-    .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
-    .await?;
+    let r = get_post(id, query_string.contains_key("edit")).await?;
     if r.is_none() {
         Err(Error::CannotFoundPost.into())
     } else {

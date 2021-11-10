@@ -39,9 +39,9 @@ pub enum SqlParam {
     STRING(String),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct DataSource {
-    management: sled::Db,
+    // management: sled::Db,
     sqlite: SqliteConnPool,
 }
 
@@ -50,16 +50,15 @@ pub struct Id {
     id: i64,
 }
 
+pub fn get_sqlite<'a>() -> &'a SqliteConnPool {
+    &DATA_SOURCE.get().unwrap().sqlite
+}
+
 pub async fn init_datasource() {
-    let path = Path::new(".").join("data");
-    if !path.exists() {
-        if let Err(e) = create_dir(path.as_path()).await {
-            panic!(e);
-        }
-    } else if path.is_file() {
-        panic!("目录下有一个data文件，请移动到另外一个地方再重试。");
+    let path = Path::new(".").join("blog.dat");
+    if path.is_dir() {
+        panic!("当前目录下有一个：blog.dat目录，请移动到另外一个地方再重试。");
     }
-    let path = path.join("blog.dat");
     let db_file_not_exists = !path.exists();
     if db_file_not_exists {
         let file = match OpenOptions::new()
@@ -71,14 +70,14 @@ pub async fn init_datasource() {
         {
             Ok(f) => f,
             // Err(e: ErrorKind::NotFound) => None,
-            Err(e) => panic!(e),
+            Err(e) => panic!("{:?}", e),
         };
     }
     let pool_ops = PoolOptions::<Sqlite>::new()
         .min_connections(8)
         .max_connections(64)
-        .connect_timeout(Duration::from_secs(2))
-        .test_before_acquire(false);
+        .connect_timeout(Duration::from_secs(5))
+        .test_before_acquire(true);
     let conn_str = format!("sqlite://{}", path.display());
     let pool = pool_ops
         .connect(conn_str.as_str())
@@ -93,18 +92,22 @@ pub async fn init_datasource() {
         while let Some(res) = stream.next().await {
             match res {
                 Ok(r) => println!("Initialized table"),
-                Err(e) => eprintln!("err {:?}", e),
+                Err(e) => panic!("{:?}", e),
             }
         }
+        // let dml = include_str!("../resource/sql/dml.sql");
+        // if let Err(e) = sqlx::query(dml).execute(&pool).await {
+        //     panic!("{:?}", e);
+        // }
     }
 
     let datasource = DataSource {
-        management: sled::open("data/management").expect("open"),
         sqlite: pool,
+        // management: sled::open("data/management").expect("open"),
     };
 
     if let Err(e) = DATA_SOURCE.set(datasource) {
-        panic!(e);
+        panic!("{:?}", e);
     }
 
     /*
@@ -118,7 +121,7 @@ pub async fn init_datasource() {
             println!("{}", &tag.name);
             tag::put_id_name(tag.id, &tag.name);
         }),
-        Err(e) => panic!(e),
+        Err(e) => panic!("{:?}", e),
     };
     */
 }
@@ -126,7 +129,7 @@ pub async fn init_datasource() {
 pub async fn shutdown() {
     let ds = DATA_SOURCE.get().unwrap();
     ds.sqlite.close().await;
-    ds.management.flush();
+    // ds.management.flush();
 }
 
 #[inline]

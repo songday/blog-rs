@@ -2,12 +2,20 @@
 
 ## 自带服务端的博客系统
 
-当前版本：`0.2.1`
+当前版本：`0.3.0`
+
+检测数据库不存在就进去配置界面  
+本机访问不用登录  
+自动生成题图  
+tag不进入记录
+配置首页：点这里开始，或查看帮助
+
+exe状态：编辑、服务模式
 
 ## 亮点
+1. 单文件（小于 6 Mb）跨平台可执行文件
 1. 自带 HTTP 服务（暂时不支持 HTTPS）
-1. 单文件（小于 6 Mb）可执行文件
-1. 跨平台
+1. 所有嵌入资源都通过`gzip`压缩
 1. 嵌入`Markdown`编辑器
 1. 所有嵌入静态资源均通过`gzip`压缩，优化网络传输
 
@@ -16,6 +24,8 @@
 Current version: `0.2.1`
 
 ## Features
-1. Self-serve
+1. Single executable file (less than 6Mb), support `Windows`, `Linux`, `macOS`
+1. Self-hosting (port can be changed via command-line argument)
+1. All static resources were gzipped for bandwidth optimization
 1. Embed `Markdown` editor
-1. Export posts for `Hugo` ( Not Yet )
+1. Export posts for `Hugo` ( Not implemented Yet `:)` )

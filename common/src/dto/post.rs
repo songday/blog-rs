@@ -6,12 +6,12 @@
 
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
-use serde_json::ser::Formatter;
 
 // use crate::result::Error;
 
-#[derive(Clone, Deserialize, Serialize)]
-pub struct NewPost {
+#[derive(Clone, Default, Deserialize, Serialize)]
+pub struct PostData {
+    pub id: i64,
     pub title: String,
     pub content: String,
     pub tags: Option<Vec<String>>,
@@ -24,7 +24,7 @@ pub struct PostDetail {
     pub content: String,
     pub tags: Option<Vec<String>>,
     pub created_at: DateTime<Utc>,
-    pub updated_at: Option<DateTime<Utc>>,
+    pub updated_at: DateTime<Utc>,
     pub editable: bool,
 }
 
@@ -33,7 +33,7 @@ pub struct PostDetail {
 // pub struct OptionBlogDetail(pub Option<BlogDetail>);
 //
 // impl Display for OptionBlogDetail {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//     fn fmt(&self, f: &mut serde_json::ser::Formatter<'_>) -> fmt::Result {
 //         if self.0.is_none() {
 //             f.write_str("")
 //         } else {
@@ -58,14 +58,14 @@ pub struct PostDetail {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UploadImage {
-    pub path: String,
+    pub relative_path: String,
     pub original_filename: String,
 }
 
 impl UploadImage {
     pub fn new(path: String, original_filename: String) -> Self {
         UploadImage {
-            path,
+            relative_path: path,
             original_filename,
         }
     }
