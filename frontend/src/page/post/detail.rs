@@ -26,6 +26,7 @@ impl Component for PostDetail {
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
         let Self { post_id } = self;
+        let detail_url = format!("/post/show/{}", post_id);
         let post = use_state(|| Post::default());
         {
             let post = post.clone();
@@ -33,7 +34,7 @@ impl Component for PostDetail {
                 move |_| {
                     let post = post.clone();
                     wasm_bindgen_futures::spawn_local(async move {
-                        let response: Response<Post> = reqwasm::http::Request::get("/post/list/1")
+                        let response: Response<Post> = reqwasm::http::Request::get(&detail_url)
                             .send()
                             .await
                             .unwrap()
@@ -71,7 +72,7 @@ impl Component for PostDetail {
                         <div class="media-content">
                             <div class="content">
                                 <p class="is-family-secondary">
-                                    {"{ &quote.content }"}
+                                    { post. }
                                 </p>
                             </div>
                         </div>
