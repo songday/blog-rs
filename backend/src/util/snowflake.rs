@@ -11,7 +11,7 @@ const START_TIME_MILLIS: u64 = 1635736271000;
 
 pub(crate) fn gen_id() -> u64 {
     loop {
-        let current_timestamp = time::current_timestamp();
+        let current_timestamp = time::unix_epoch_sec();
         loop {
             let mut last_timestamp = LAST_TIMESTAMP.lock();
             let mut sequence = 0u8;
@@ -24,12 +24,12 @@ pub(crate) fn gen_id() -> u64 {
                 }
             } else {
                 *last_timestamp = current_timestamp;
-                let id = (current_timestamp - START_TIME_MILLIS) << 8;
-                if sequence == 0 {
-                    return id;
-                } else {
-                    return id | sequence as u64;
-                }
+            }
+            let id = (current_timestamp - START_TIME_MILLIS) << 8;
+            if sequence == 0 {
+                return id;
+            } else {
+                return id | sequence as u64;
             }
         }
     }

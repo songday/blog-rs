@@ -37,7 +37,7 @@ pub async fn scanner() {
     let mut current_timestamp = 0u64;
     loop {
         // println!("Scanning online users and verify codes");
-        current_timestamp = time::current_timestamp();
+        current_timestamp = time::unix_epoch_sec();
         {
             let mut online_users = ONLINE_USERS.write();
             let d = &mut *online_users;
@@ -77,7 +77,7 @@ pub(crate) fn check_auth(token: Option<String>) -> Result<UserInfo> {
     let mut r = ONLINE_USERS.write();
     let d = &mut *r;
     if let Some(u) = d.get_mut(&token) {
-        u.last_active_time = time::current_timestamp();
+        u.last_active_time = time::unix_epoch_sec();
         return Ok(u.user.clone());
     }
     Err(Error::NotAuthed.into())
@@ -88,7 +88,7 @@ pub(crate) fn user_online(token: &str, user: UserInfo) {
         String::from(token),
         OnlineUser {
             user: user.clone(),
-            last_active_time: time::current_timestamp(),
+            last_active_time: time::unix_epoch_sec(),
         },
     );
 }
@@ -112,7 +112,7 @@ pub fn get_verify_code(token: &str) -> Result<Vec<u8>> {
         String::from(token),
         VerifyCode {
             code: numbers.clone(),
-            last_active_time: time::current_timestamp(),
+            last_active_time: time::unix_epoch_sec(),
         },
     );
     Ok(numbers)

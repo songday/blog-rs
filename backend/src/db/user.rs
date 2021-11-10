@@ -1,7 +1,6 @@
-use chrono::prelude::*;
-use sqlx::Sqlite;
-
+use blog_common::util::time;
 use blog_common::{dto::user::UserInfo, result::Error};
+use sqlx::Sqlite;
 
 use crate::{
     db::{self, model::User, DATA_SOURCE},
@@ -21,7 +20,7 @@ pub async fn register(email: &str, password: &str) -> Result<UserInfo> {
         id: snowflake::gen_id() as i64,
         email: email.to_owned(),
         password: crypt::encrypt_password(password)?,
-        created_at: Utc::now().second() as i64,
+        created_at: time::unix_epoch_sec() as i64,
     };
 
     let r = sqlx::query("INSERT INTO user(id,email,password,created_at) VALUES(?,?,?,?)")

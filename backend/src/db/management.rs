@@ -1,5 +1,5 @@
+use blog_common::util::time;
 use blog_common::{dto::user::UserInfo, result::Error};
-use chrono::prelude::*;
 use sqlx::{Row, Sqlite};
 
 use crate::{
@@ -53,7 +53,7 @@ pub async fn update_settings(settings: Settings) -> Result<()> {
         crypt::encrypt_password(&settings.admin_password)?
     };
 
-    let now = chrono::offset::Utc::now().timestamp() as i64;
+    let now = time::unix_epoch_sec() as i64;
 
     let r = sqlx::query(
         "UPDATE settings SET name=?,domain=?,copyright=?,license=?,admin_password=?,updated_at=? WHERE id=1",

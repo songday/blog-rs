@@ -4,7 +4,6 @@
 //     str::FromStr,
 // };
 
-use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 
 // use crate::result::Error;
@@ -23,9 +22,23 @@ pub struct PostDetail {
     pub title: String,
     pub content: String,
     pub tags: Option<Vec<String>>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: u64,
+    pub updated_at: Option<u64>,
     pub editable: bool,
+}
+
+impl PostDetail {
+    pub fn default() -> Self {
+        PostDetail {
+            id: 0,
+            title: String::new(),
+            content: String::new(),
+            tags: None,
+            created_at: 0,
+            updated_at: None,
+            editable: false,
+        }
+    }
 }
 
 // #[allow(deadcode)]

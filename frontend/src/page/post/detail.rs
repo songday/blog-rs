@@ -1,3 +1,5 @@
+use blog_common::dto::post::PostDetail as Post;
+use blog_common::dto::Response;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -24,6 +26,27 @@ impl Component for PostDetail {
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
         let Self { post_id } = self;
+        let post = use_state(|| Post::default());
+        {
+            let post = post.clone();
+            use_effect_with_deps(
+                move |_| {
+                    let post = post.clone();
+                    wasm_bindgen_futures::spawn_local(async move {
+                        let response: Response<Post> = reqwasm::http::Request::get("/post/list/1")
+                            .send()
+                            .await
+                            .unwrap()
+                            .json()
+                            .await
+                            .unwrap();
+                        post.set(response.data.unwrap());
+                    });
+                    || ()
+                },
+                (),
+            );
+        }
 
         html! {
             <>

@@ -48,14 +48,14 @@ impl Component for PostList {
                 move |_| {
                     let posts = posts.clone();
                     wasm_bindgen_futures::spawn_local(async move {
-                        let fetched_posts: Vec<PostDetail> = reqwasm::http::Request::get("/post/list/1")
+                        let response: Response<Vec<PostDetail>> = reqwasm::http::Request::get("/post/list/1")
                             .send()
                             .await
                             .unwrap()
                             .json()
                             .await
                             .unwrap();
-                        posts.set(fetched_posts);
+                        posts.set(response.data.unwrap());
                     });
                     || ()
                 },

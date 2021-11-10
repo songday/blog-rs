@@ -1,6 +1,5 @@
 use core::fmt::Display;
 
-use chrono::{prelude::*, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use blog_common::dto::{post::PostDetail, user::UserInfo};
@@ -56,8 +55,8 @@ impl Into<PostDetail> for &Post {
             title: self.title.clone(),
             content: self.rendered_content.clone(),
             tags: None,
-            created_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.created_at, 0), Utc),
-            updated_at: DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(self.updated_at.unwrap(), 0), Utc),
+            created_at: self.created_at as u64,
+            updated_at: self.updated_at.map(|t| t as u64),
             editable: false,
         }
     }

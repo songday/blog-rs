@@ -7,10 +7,8 @@ use blog_common::{
         PaginationData,
     },
     result::Error,
+    util::time,
 };
-use chrono::{TimeZone, Timelike, Utc};
-// use chrono::offset::Utc;
-// use chrono::DateTime;
 use comrak::{markdown_to_html, ComrakOptions};
 use sqlx::{Row, Sqlite};
 
@@ -66,7 +64,6 @@ async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
 }
 
 pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
-    println!("1");
     let row = sqlx::query("SELECT COUNT(id) FROM post")
         .fetch_one(super::get_sqlite())
         .await?;
@@ -76,7 +73,6 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
         return Ok(PaginationData { total: 0, data: vec![] });
     }
 
-    println!("2");
     let mut offset: i64 = ((page_num - 1) * page_size) as i64;
     if offset > total {
         offset = total - page_size as i64;
@@ -107,7 +103,7 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
     let tag_name = urlencoding::decode(&tag_name)?;
     let tag = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tag WHERE name = ?")
         .bind(&tag_name)
-        .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
+        .fetch_optional(super::get_sqlite())
         .await?;
     if tag.is_none() {
         return Err(Error::TagNotFound.into());
@@ -116,7 +112,7 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
 
     let r = sqlx::query("SELECT COUNT(*) FROM tag_usage WHERE tag_id = ?")
         .bind(tag.id)
-        .fetch_one(&DATA_SOURCE.get().unwrap().sqlite)
+        .fetch_one(super::get_sqlite())
         .await?;
     let r = r.try_get::<i64, usize>(0);
     if let Err(e) = r {
@@ -139,7 +135,7 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
     .bind(tag.id)
     .bind(offset as i64)
     .bind(page_size)
-    .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+    .fetch_all(super::get_sqlite())
     .await?;
     Ok(PaginationData {
         total: total as u64,
@@ -152,7 +148,7 @@ pub async fn new_post() -> Result<i64> {
     let last_insert_rowid =
         sqlx::query("INSERT INTO post(id, title, markdown_content, rendered_content, created_at)VALUES(?,'','','',?)")
             .bind(&id)
-            .bind(chrono::offset::Utc::now().timestamp() as i64)
+            .bind(time::unix_epoch_sec() as i64)
             .execute(super::get_sqlite())
             .await?
             .last_insert_rowid();
@@ -197,13 +193,15 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
     // let mut html_text = String::new();
     // pulldown_cmark::html::push_html(&mut html_text, parser);
 
+    let post = post.unwrap();
+
     let post_detail = PostDetail {
         id: post_data.id,
         title: post_data.title,
         content: markdown_to_html(&post_data.content, &ComrakOptions::default()),
         tags: post_data.tags,
-        created_at: Utc.timestamp(post.unwrap().created_at, 0),
-        updated_at: chrono::offset::Utc::now(),
+        created_at: post.created_at as u64,
+        updated_at: post.updated_at.map(|time| time as u64),
         editable: true,
     };
 
@@ -213,7 +211,7 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
             .bind(&post_detail.title)
             .bind(&post_data.content)
             .bind(&post_detail.content)
-            .bind(post_detail.updated_at.timestamp() as i64)
+            .bind(time::unix_epoch_sec() as i64)
             .bind(&post_detail.id)
             .execute(&DATA_SOURCE.get().unwrap().sqlite)
             .await?

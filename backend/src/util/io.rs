@@ -11,9 +11,9 @@ use ahash::AHasher;
 use blog_common::{
     dto::UploadFileInfo,
     result::{Error, Result},
+    util::time,
 };
 use bytes::{Buf, BufMut, BytesMut};
-use chrono::prelude::*;
 use futures::StreamExt;
 use image::ImageFormat;
 use lazy_static::lazy_static;
@@ -60,8 +60,7 @@ pub fn gen_new_upload_filename(post_id: u64, origin_filename: &str, ext: &str) -
     filename.push_str(&id);
     filename.push('-');
 
-    let now = time::OffsetDateTime::now_utc();
-    let mill_sec = now.unix_timestamp().to_string();
+    let mill_sec = time::unix_epoch_sec().to_string();
     filename.push_str(&mill_sec);
     filename.push('-');
 

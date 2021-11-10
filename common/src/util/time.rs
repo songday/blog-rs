@@ -1,14 +1,14 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use chrono::format::strftime::StrftimeItems;
-use lazy_static::lazy_static;
+// use chrono::format::strftime::StrftimeItems;
+// use lazy_static::lazy_static;
 
-lazy_static! {
-    static ref DATETIME_FORMAT: StrftimeItems<'static> = StrftimeItems::new("%Y-%m-%d %H:%M:%S");
-}
+// lazy_static! {
+//     static ref DATETIME_FORMAT: StrftimeItems<'static> = StrftimeItems::new("%Y-%m-%d %H:%M:%S");
+// }
 
-pub fn current_timestamp() -> u64 {
+pub fn unix_epoch_sec() -> u64 {
     let now = SystemTime::now();
     let d = now.duration_since(UNIX_EPOCH).expect("Time went backwards");
-    d.as_millis() as u64
+    d.as_secs()
 }
