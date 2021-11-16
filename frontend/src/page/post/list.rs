@@ -89,9 +89,17 @@ impl Component for PostList {
                 </div>
                 <h1 class="title is-1">{ "博客/Posts" }</h1>
                 <h2 class="subtitle">{ "All of your quality writing in one place" }</h2>
-                <div class="tile is-ancestor">
-                </div>
-                <div class="tile is-ancestor">
+                <div class="columns">
+                    <div class="column">
+                        <ul class="list">
+                            { for posts.by_ref().take(posts.len() / 2 + posts.len() % 2) }
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <ul class="list">
+                            { for posts }
+                        </ul>
+                    </div>
                 </div>
                 <div class="container">
                     <nav class="pagination is-right" role="navigation" aria-label="pagination">
@@ -112,6 +120,21 @@ impl PostList {
     fn render_post(&self, post_detail: &PostDetail) -> Html {
         html! {
             <>
+                <div class="card">
+                    <div class="card-image">
+                        <figure class="image is-2by1">
+                            <img src={post.image_url.clone()} loading="lazy" />
+                        </figure>
+                    </div>
+                    <div class="card-content">
+                        <Link<Route> classes={classes!("title", "is-block")} to={Route::Post { id: post.seed }}>
+                            { &post.title }
+                        </Link<Route>>
+                        <Link<Route> classes={classes!("subtitle", "is-block")} to={Route::Author { id: post.author.seed }}>
+                            { &post.author.name }
+                        </Link<Route>>
+                    </div>
+                </div>
                 <div class="tile is-6 is-parent">
                     <div class="tile is-child">
                         <div class="card">
