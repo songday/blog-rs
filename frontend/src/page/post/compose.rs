@@ -27,7 +27,7 @@ extern "C" {
     #[wasm_bindgen(js_name = goBack)]
     fn go_back();
     #[wasm_bindgen(js_name = uploadTitleImage)]
-    fn upload_title_image(post_id: u64, files: Vec<web_sys::File>);
+    fn upload_title_image(post_id: u64, files: Vec<web_sys::File>, is_title_image: bool);
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Properties)]
@@ -47,7 +47,7 @@ pub enum Msg {
     InitEditor,
     PostRequest,
     LoadedBytes(String, Vec<u8>),
-    Files(u64, Vec<web_sys::File>),
+    Files(u64, Vec<web_sys::File>, bool),
     RetrieveRandomTitleImage,
     GoBack,
 }
@@ -112,7 +112,7 @@ impl Component for PostCompose {
                 // });
                 self.readers.remove(&file_name);
             }
-            Msg::Files(post_id, files) => {
+            Msg::Files(post_id, files, is_title_image) => {
                 // for file in files.into_iter() {
                 // let file_name = file.name();
                 // let task = {
@@ -127,7 +127,7 @@ impl Component for PostCompose {
                 // };
                 // self.readers.insert(file_name, task);
                 // }
-                upload_title_image(post_id, files);
+                upload_title_image(post_id, files, is_title_image);
             }
             Msg::InitEditor => {
                 init_editor();
@@ -189,7 +189,7 @@ impl Component for PostCompose {
                                             ;
                                         result.extend(files);
                                     }
-                                    Msg::Files(post_id, result)
+                                    Msg::Files(post_id, result, true)
                                 })}/>
             <span class="file-cta">
               <span class="file-icon">

@@ -4,6 +4,8 @@ use weblog::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
+use crate::router::Route;
+
 pub enum Msg {
     Compose,
 }
@@ -25,17 +27,18 @@ impl Component for PostList {
                     let response = reqwasm::http::Request::get("/post/new").send().await.unwrap();
                     let json: Response<u64> = response.json().await.unwrap();
                     if json.status == 0 {
-                        ctx.link().history().unwrap().push_route(crate::router::Route::ComposePost { id: json.data.unwrap() }).unwrap();
+                        ctx.link()
+                            .history()
+                            .unwrap()
+                            .push(crate::router::Route::ComposePost { id: json.data.unwrap() });
                         // yew_router::push_route(crate::router::Route::ComposePost { id: json.data.unwrap() });
                     } else {
-                        ctx.link().location().unwrap().set_href("/management");
-                        /*
+                        // ctx.link().location().unwrap().route().set_href("/management");
                         if let Some(loc) = web_sys::window().map(|window| window.location()) {
                             let _ = loc.set_href("/management");
                         } else {
                             console_log!("get location failed");
                         }
-                        */
                     }
                 });
             }
@@ -123,7 +126,7 @@ impl PostList {
                 <div class="card">
                     <div class="card-image">
                         <figure class="image is-2by1">
-                            <img src={post.image_url.clone()} loading="lazy" />
+                            <img src={post_detail.title_image.clone()} loading="lazy" />
                         </figure>
                     </div>
                     <div class="card-content">

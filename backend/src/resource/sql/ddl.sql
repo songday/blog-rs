@@ -21,6 +21,7 @@ CREATE INDEX tag_id_IDX ON tag_usage (tag_id);
 CREATE TABLE post (
 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 title TEXT(64) NOT NULL,
+title_image TEXT(1024) NOT NULL,
 markdown_content TEXT(65535) NOT NULL,
 rendered_content TEXT(65535) NOT NULL,
 created_at INTEGER NOT NULL,

@@ -109,7 +109,7 @@ pub async fn random_title_image(id: u64) -> Result<String> {
     }
     let filename = format!("{}.{}", id, file_ext);
     // let mut file = tokio::fs::File::create(Path::new(&filename)).await?;
-    let (mut file, _path_buf, relative_path) = crate::util::io::get_save_file(id, &filename).await?;
+    let (mut file, _path_buf, relative_path) = crate::util::io::get_save_file(id, &filename, file_ext).await?;
     let b = response.bytes().await?;
     tokio::io::copy_buf(&mut &b[..], &mut file).await?;
     // file.shutdown()

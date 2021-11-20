@@ -42,6 +42,7 @@ pub struct Post {
      */
     pub id: i64,
     pub title: String,
+    pub title_image: String,
     pub markdown_content: String,
     pub rendered_content: String,
     pub created_at: i64,
@@ -53,6 +54,7 @@ impl Into<PostDetail> for &Post {
         PostDetail {
             id: self.id,
             title: self.title.clone(),
+            title_image: self.title_image.clone(),
             content: self.rendered_content.clone(),
             tags: None,
             created_at: self.created_at as u64,

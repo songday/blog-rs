@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::io::Read;
 use std::{
     cmp::PartialEq,
@@ -53,10 +54,20 @@ impl From<Option<&str>> for SupportFileType {
     }
 }
 
-pub fn gen_new_upload_filename(post_id: u64, origin_filename: &str, ext: &str) -> String {
-    let mut filename = String::with_capacity(128);
-
+pub async fn get_save_file(post_id: u64, origin_filename: &str, ext: &str) -> std::io::Result<(File, PathBuf, String)> {
     let id = post_id.to_string();
+
+    // 生成子目录
+    let mut path_buf = PathBuf::with_capacity(128);
+    // path_buf.push(val::IMAGE_ROOT_PATH);
+    path_buf.push("upload");
+    path_buf.push(&id[id.len() - 1..]);
+    if !path_buf.as_path().exists() {
+        create_dir_all(path_buf.as_path()).await?;
+    }
+
+    // 新文件名
+    let mut filename = String::with_capacity(128);
     filename.push_str(&id);
     filename.push('-');
 
@@ -70,21 +81,7 @@ pub fn gen_new_upload_filename(post_id: u64, origin_filename: &str, ext: &str) -
     filename.push('.');
     filename.push_str(ext);
 
-    filename
-}
-
-pub async fn get_save_file(post_id: u64, save_filename: &str) -> std::io::Result<(File, PathBuf, String)> {
-    let id = post_id.to_string();
-
-    let mut path_buf = PathBuf::with_capacity(128);
-    // path_buf.push(val::IMAGE_ROOT_PATH);
-    path_buf.push("upload");
-    path_buf.push(&id[id.len() - 1..]);
-    if !path_buf.as_path().exists() {
-        create_dir_all(path_buf.as_path()).await?;
-    }
-
-    path_buf.push(save_filename);
+    path_buf.push(&filename);
 
     let path = dbg!(path_buf.as_path());
 
@@ -113,9 +110,7 @@ async fn get_upload_file_writer(
     upload_file_info.origin_filename.push_str(original_filename);
     upload_file_info.extension.push_str(ext);
 
-    let new_filename = gen_new_upload_filename(post_id, &original_filename, ext);
-
-    let (file, save_path_buf, relative_file_path) = get_save_file(post_id, &new_filename).await?;
+    let (file, save_path_buf, relative_file_path) = get_save_file(post_id, &original_filename, ext).await?;
     upload_file_info.filepath = save_path_buf;
     upload_file_info.relative_path = relative_file_path;
 
@@ -195,6 +190,12 @@ pub async fn save_upload_file(
     for r in parts {
         match r {
             Ok(mut p) => {
+                if p.name().eq("is-title-image") {
+                    let d = p.data().await.unwrap().unwrap();
+                    let b = d.chunk();
+                    // let d = String::from_utf8(d).unwrap();
+                    let n = i32::from_be_bytes(<[u8; 4]>::try_from(b).unwrap());
+                }
                 if writer.is_none() && p.filename().is_some() {
                     let origin_filename = dbg!(p.filename().unwrap());
                     let ext = get_ext(&origin_filename, allow_file_types)?;

@@ -78,7 +78,7 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
         offset = total - page_size as i64;
     }
     let d = sqlx::query_as::<Sqlite, Post>(
-        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ORDER BY id DESC LIMIT ?, ?",
+        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ORDER BY id DESC LIMIT ?, ?",
     )
         .bind(offset as i64)
         .bind(page_size)
@@ -130,7 +130,7 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
         offset = total - page_size as i64;
     }
     let d = sqlx::query_as::<Sqlite, Post>(
-        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
+        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
     )
     .bind(tag.id)
     .bind(offset as i64)
@@ -146,7 +146,7 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
 pub async fn new_post() -> Result<i64> {
     let id = snowflake::gen_id() as i64;
     let last_insert_rowid =
-        sqlx::query("INSERT INTO post(id, title, markdown_content, rendered_content, created_at)VALUES(?,'','','',?)")
+        sqlx::query("INSERT INTO post(id, title, title_image, markdown_content, rendered_content, created_at)VALUES(?,'','','','',?)")
             .bind(&id)
             .bind(time::unix_epoch_sec() as i64)
             .execute(super::get_sqlite())
@@ -162,9 +162,9 @@ pub async fn new_post() -> Result<i64> {
 
 async fn get_post(id: i64, edit: bool) -> Result<Option<Post>> {
     let sql = if edit {
-        "SELECT id,title,'' AS markdown_content,markdown_content AS rendered_content,created_at,updated_at FROM post WHERE id = ?"
+        "SELECT id,title,title_image,'' AS markdown_content,markdown_content AS rendered_content,created_at,updated_at FROM post WHERE id = ?"
     } else {
-        "SELECT id,title,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id = ?"
+        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id = ?"
     };
     sqlx::query_as::<Sqlite, Post>(sql)
         .bind(id)
@@ -198,6 +198,7 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
     let post_detail = PostDetail {
         id: post_data.id,
         title: post_data.title,
+        title_image: post_data.title_image,
         content: markdown_to_html(&post_data.content, &ComrakOptions::default()),
         tags: post_data.tags,
         created_at: post.created_at as u64,
@@ -206,16 +207,18 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
     };
 
     // save to sqlite
-    let last_insert_rowid =
-        sqlx::query("UPDATE post SET title=?, markdown_content=?, rendered_content=?, updated_at=? WHERE id=?")
-            .bind(&post_detail.title)
-            .bind(&post_data.content)
-            .bind(&post_detail.content)
-            .bind(time::unix_epoch_sec() as i64)
-            .bind(&post_detail.id)
-            .execute(&DATA_SOURCE.get().unwrap().sqlite)
-            .await?
-            .last_insert_rowid();
+    let last_insert_rowid = sqlx::query(
+        "UPDATE post SET title=?, title_image=?, markdown_content=?, rendered_content=?, updated_at=? WHERE id=?",
+    )
+    .bind(&post_detail.title)
+    .bind(&post_detail.title_image)
+    .bind(&post_data.content)
+    .bind(&post_detail.content)
+    .bind(time::unix_epoch_sec() as i64)
+    .bind(&post_detail.id)
+    .execute(&DATA_SOURCE.get().unwrap().sqlite)
+    .await?
+    .last_insert_rowid();
 
     if last_insert_rowid < 1 {
         // println!("last_insert_rowid {}", last_insert_rowid);

@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 pub struct PostData {
     pub id: i64,
     pub title: String,
+    pub title_image: String,
     pub content: String,
     pub tags: Option<Vec<String>>,
 }
@@ -20,6 +21,7 @@ pub struct PostData {
 pub struct PostDetail {
     pub id: i64,
     pub title: String,
+    pub title_image: String,
     pub content: String,
     pub tags: Option<Vec<String>>,
     pub created_at: u64,
@@ -32,6 +34,7 @@ impl PostDetail {
         PostDetail {
             id: 0,
             title: String::new(),
+            title_image: String::new(),
             content: String::new(),
             tags: None,
             created_at: 0,

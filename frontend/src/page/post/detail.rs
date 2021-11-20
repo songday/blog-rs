@@ -1,4 +1,4 @@
-use blog_common::dto::post::PostDetail as Post;
+use blog_common::dto::post::PostDetail as PostDetailDto;
 use blog_common::dto::Response;
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -27,14 +27,14 @@ impl Component for PostDetail {
     fn view(&self, _ctx: &Context<Self>) -> Html {
         let Self { post_id } = self;
         let detail_url = format!("/post/show/{}", post_id);
-        let post = use_state(|| Post::default());
+        let post = use_state(|| PostDetailDto::default());
         {
             let post = post.clone();
             use_effect_with_deps(
                 move |_| {
                     let post = post.clone();
                     wasm_bindgen_futures::spawn_local(async move {
-                        let response: Response<Post> = reqwasm::http::Request::get(&detail_url)
+                        let response: Response<PostDetailDto> = reqwasm::http::Request::get(&detail_url)
                             .send()
                             .await
                             .unwrap()
@@ -72,7 +72,7 @@ impl Component for PostDetail {
                         <div class="media-content">
                             <div class="content">
                                 <p class="is-family-secondary">
-                                    { post. }
+                                    { &post.conent }
                                 </p>
                             </div>
                         </div>
