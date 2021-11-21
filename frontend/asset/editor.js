@@ -121,7 +121,7 @@ export const uploadTitleImage = (postId, files, is_title_image) => {
     }
     const form_data = new FormData();
     form_data.append('file', file);
-    form_data.append('is-title-image', is_title_image?1:0);
+    form_data.append('title-image-file-name', file.name);
     fetch("/image/upload/" + postId, {
         method:"POST",
         body : form_data

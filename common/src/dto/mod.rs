@@ -19,8 +19,19 @@ pub struct Response<D> {
     pub data: Option<D>,
 }
 
+pub enum FormDataItem {
+    TEXT(TextFieldInfo),
+    FILE(UploadFileInfo),
+}
+
+pub struct TextFieldInfo {
+    pub name: String,
+    pub value: String,
+}
+
 pub struct UploadFileInfo {
-    pub origin_filename: String,
+    pub name: String,
+    pub original_filename: String,
     pub relative_path: String,
     pub filepath: PathBuf,
     pub extension: String,
@@ -30,9 +41,10 @@ pub struct UploadFileInfo {
 impl UploadFileInfo {
     pub fn new() -> Self {
         UploadFileInfo {
-            origin_filename: String::with_capacity(128),
-            relative_path: String::with_capacity(128),
-            filepath: PathBuf::with_capacity(128),
+            name: String::with_capacity(64),
+            original_filename: String::with_capacity(128),
+            relative_path: String::with_capacity(64),
+            filepath: PathBuf::with_capacity(64),
             extension: String::with_capacity(16),
             filesize: 0,
         }

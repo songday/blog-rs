@@ -5,6 +5,7 @@ use std::{
 };
 
 use blog_common::{dto::post::UploadImage, result::Error};
+use blog_common::dto::FormDataItem;
 use bytes::Buf;
 use rand::Rng;
 use tokio::io::AsyncWriteExt;
@@ -20,15 +21,33 @@ use crate::{
 };
 
 pub async fn upload(post_id: u64, data: FormData) -> Result<UploadImage> {
-    let file_info = io::save_upload_file(
+    let result = io::save_upload_file(
         post_id,
         data,
         &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
-    )
-    .await?;
-    image::resize_from_file(&file_info).await?;
-    let d = UploadImage::new(file_info.relative_path, file_info.origin_filename);
-    Ok(d)
+    ).await?;
+    let mut is_title_image = false;
+    let mut r: Option<UploadImage> = None;
+    for i in result.iter() {
+        match i {
+            FormDataItem::TEXT(t) => {
+                if t.name == "is-title-image" && t.value == "1" {
+                    is_title_image = true;
+                }
+            },
+            FormDataItem::FILE(f) => {
+                image::resize_from_file(&f).await?;
+                let relative_path = f.relative_path.to_string();
+                let original_filename = f.original_filename.to_string();
+                let i = UploadImage::new(relative_path, original_filename);
+                r = Some(i);
+            },
+        }
+    }
+    // image::resize_from_file(&file_info).await?;
+    // let d = UploadImage::new(file_info.relative_path, file_info.origin_filename);
+    if r.is_none() {}
+    Ok(r.unwrap())
 }
 
 pub async fn get_upload_image(path: &str) -> Result<Vec<u8>> {
@@ -55,10 +74,9 @@ pub async fn save(post_id: u64, filename: String, body: impl Buf) -> Result<Uplo
         filename,
         body,
         &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
-    )
-    .await?;
+    ).await?;
     image::resize_from_file(&file_info).await?;
-    let d = UploadImage::new(file_info.relative_path, file_info.origin_filename);
+    let d = UploadImage::new(file_info.relative_path, file_info.original_filename);
     Ok(d)
 }
 

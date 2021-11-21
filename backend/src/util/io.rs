@@ -7,10 +7,12 @@ use std::{
     str::FromStr,
     vec::Vec,
 };
+use std::collections::HashMap;
 
 use ahash::AHasher;
+use blog_common::dto::TextFieldInfo;
 use blog_common::{
-    dto::UploadFileInfo,
+    dto::{FormDataItem, UploadFileInfo},
     result::{Error, Result},
     util::time,
 };
@@ -107,7 +109,7 @@ async fn get_upload_file_writer(
     ext: &str,
 ) -> std::io::Result<(BufWriter<File>, UploadFileInfo)> {
     let mut upload_file_info = UploadFileInfo::new();
-    upload_file_info.origin_filename.push_str(original_filename);
+    upload_file_info.original_filename.push_str(original_filename);
     upload_file_info.extension.push_str(ext);
 
     let (file, save_path_buf, relative_file_path) = get_save_file(post_id, &original_filename, ext).await?;
@@ -172,7 +174,7 @@ pub async fn save_upload_file(
     post_id: u64,
     data: FormData,
     allow_file_types: &[SupportFileType],
-) -> Result<UploadFileInfo> {
+) -> Result<Vec<FormDataItem>> {
     // data need to be: mut data: FormData
     // https://docs.rs/futures/0.3.5/futures/stream/trait.StreamExt.html#method.next
     // loop {
@@ -184,9 +186,11 @@ pub async fn save_upload_file(
     // }
     // https://docs.rs/futures/0.3.5/futures/stream/trait.StreamExt.html#method.collect
     let parts = data.collect::<Vec<std::result::Result<Part, warp::Error>>>().await;
+    let mut form_data_result: Vec<FormDataItem> = Vec::with_capacity(parts.len());
+    let mut file_writers: HashMap<String, (BufWriter<File>, UploadFileInfo)> = HashMap::with_capacity(8);
     let mut filesize = 0usize;
-    let mut upload_info: Option<UploadFileInfo> = None;
-    let mut writer: Option<BufWriter<File>> = None;
+    // let mut upload_info: Option<UploadFileInfo> = None;
+    // let mut writer: Option<BufWriter<File>> = None;
     for r in parts {
         match r {
             Ok(mut p) => {
@@ -196,6 +200,46 @@ pub async fn save_upload_file(
                     // let d = String::from_utf8(d).unwrap();
                     let n = i32::from_be_bytes(<[u8; 4]>::try_from(b).unwrap());
                 }
+                if p.filename().is_some() {
+                    let filename = p.filename().unwrap();
+                    if !file_writers.contains_key(filename) {
+                        let ext = get_ext(filename, allow_file_types)?;
+                        match get_upload_file_writer(post_id, filename, ext).await {
+                            Ok(new_data) => {
+                                file_writers.insert(filename.to_string(), new_data);
+                            }
+                            Err(e) => {
+                                dbg!(e);
+                                return Err(Error::UploadFailed);
+                            }
+                        }
+                    }
+                    let (w, i) = file_writers.get_mut(filename).unwrap();
+                    if let Some(r) = p.data().await {
+                        match r {
+                            Ok(mut buf) => {
+                                filesize += buf.remaining();
+                                w.write_all_buf(&mut buf).await;
+                            }
+                            Err(e) => {
+                                dbg!(e);
+                                return Err(Error::UploadFailed);
+                            }
+                        };
+                    }    
+                } else {
+                    let d = p.data().await.unwrap().unwrap();
+                    let b = d.chunk();
+                    let s = String::from_utf8(b.to_vec()).unwrap();
+                    let form_data_item = FormDataItem::TEXT(
+                            TextFieldInfo {
+                                name: p.name().to_string(),
+                                value: s,
+                            }
+                        );
+                    form_data_result.push(form_data_item);
+                }
+                /*
                 if writer.is_none() && p.filename().is_some() {
                     let origin_filename = dbg!(p.filename().unwrap());
                     let ext = get_ext(&origin_filename, allow_file_types)?;
@@ -231,6 +275,7 @@ pub async fn save_upload_file(
                         }
                     };
                 }
+                */
             }
             Err(e) => {
                 dbg!(e);
@@ -243,13 +288,18 @@ pub async fn save_upload_file(
         return Err(Error::UploadFailed);
     }
 
-    writer.unwrap().shutdown().await.map_err(|e| {
-        dbg!(&e);
-        eprintln!("{:?}", e);
-        Error::UploadFailed
-    })?;
+    let mut vec: Vec<(BufWriter<File>, UploadFileInfo)> = file_writers.into_values().collect();
+    while vec.len() > 0 {
+        let mut entry = vec.swap_remove(0);
+        entry.0.shutdown().await.map_err(|e| {
+            dbg!(&e);
+            eprintln!("{:?}", e);
+            Error::UploadFailed
+        })?;
+        form_data_result.push(FormDataItem::FILE(entry.1));
+    }
 
-    Ok(upload_info.unwrap())
+    Ok(form_data_result)
 }
 
 pub async fn save_upload_stream(
