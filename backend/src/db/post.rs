@@ -146,7 +146,7 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
 pub async fn new_post() -> Result<i64> {
     let id = snowflake::gen_id() as i64;
     let last_insert_rowid =
-        sqlx::query("INSERT INTO post(id, title, title_image, markdown_content, rendered_content, created_at)VALUES(?,'','','','',?)")
+        sqlx::query("INSERT INTO post(id, title, title_image, markdown_content, rendered_content, created_at)VALUES(?,'未命名/Untitled','','','',?)")
             .bind(&id)
             .bind(time::unix_epoch_sec() as i64)
             .execute(super::get_sqlite())
@@ -158,6 +158,12 @@ pub async fn new_post() -> Result<i64> {
     }
 
     Ok(id)
+}
+
+pub async fn update_title_image(id: i64, title_image: &str) -> Result<()> {
+    sqlx::query("UPDATE post SET title_image=? WHERE id=?").bind(title_image).bind(id).execute(super::get_sqlite()).await?;
+
+    Ok(())
 }
 
 async fn get_post(id: i64, edit: bool) -> Result<Option<Post>> {
@@ -207,7 +213,7 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
     };
 
     // save to sqlite
-    let last_insert_rowid = sqlx::query(
+    sqlx::query(
         "UPDATE post SET title=?, title_image=?, markdown_content=?, rendered_content=?, updated_at=? WHERE id=?",
     )
     .bind(&post_detail.title)
@@ -217,13 +223,7 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
     .bind(time::unix_epoch_sec() as i64)
     .bind(&post_detail.id)
     .execute(&DATA_SOURCE.get().unwrap().sqlite)
-    .await?
-    .last_insert_rowid();
-
-    if last_insert_rowid < 1 {
-        // println!("last_insert_rowid {}", last_insert_rowid);
-        return Err(Error::SavePostFailed.into());
-    }
+    .await?;
 
     // 这里只关心 commit，因为 https://docs.rs/sqlx/0.5.1/sqlx/struct.Transaction.html 说到
     // If neither are called before the transaction goes out-of-scope, rollback is called. In other words, rollback is called on drop if the transaction is still in-progress.

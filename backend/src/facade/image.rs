@@ -18,7 +18,7 @@ use blog_common::{
 };
 
 use crate::{
-    db::user,
+    db::{user, post},
     facade::{session_id_cookie, wrap_json_data, wrap_json_err},
     image::image,
     service::{self, status},
@@ -76,6 +76,21 @@ pub async fn upload(post_id: u64, user: Option<UserInfo>, data: FormData) -> Res
     let upload_image = service::image::upload(post_id, data).await;
     upload_image
         .map(|d| wrap_json_data(&d))
+        .or_else(|e| Ok(wrap_json_err(500, e.0)))
+}
+
+pub async fn upload_title_image(post_id: u64, user: Option<UserInfo>, data: FormData) -> Result<impl Reply, Rejection> {
+    if user.is_none() {
+        return Ok(wrap_json_err(500, Error::NotAuthed));
+    }
+    let result = service::image::upload(post_id, data).await;
+    if let Err(e) = result {
+        return Ok(wrap_json_err(500, e.0));
+    }
+    let images = result.unwrap();
+    let image = &images[0];
+    post::update_title_image(post_id as i64, &image.relative_path).await
+        .map(|d| wrap_json_data(image))
         .or_else(|e| Ok(wrap_json_err(500, e.0)))
 }
 

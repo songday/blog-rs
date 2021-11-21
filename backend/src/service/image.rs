@@ -20,36 +20,6 @@ use crate::{
     },
 };
 
-pub async fn upload(post_id: u64, data: FormData) -> Result<UploadImage> {
-    let result = io::save_upload_file(
-        post_id,
-        data,
-        &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
-    ).await?;
-    let mut is_title_image = false;
-    let mut r: Option<UploadImage> = None;
-    for i in result.iter() {
-        match i {
-            FormDataItem::TEXT(t) => {
-                if t.name == "is-title-image" && t.value == "1" {
-                    is_title_image = true;
-                }
-            },
-            FormDataItem::FILE(f) => {
-                image::resize_from_file(&f).await?;
-                let relative_path = f.relative_path.to_string();
-                let original_filename = f.original_filename.to_string();
-                let i = UploadImage::new(relative_path, original_filename);
-                r = Some(i);
-            },
-        }
-    }
-    // image::resize_from_file(&file_info).await?;
-    // let d = UploadImage::new(file_info.relative_path, file_info.origin_filename);
-    if r.is_none() {}
-    Ok(r.unwrap())
-}
-
 pub async fn get_upload_image(path: &str) -> Result<Vec<u8>> {
     let mut path_buf = PathBuf::with_capacity(32);
     path_buf.push("upload");
@@ -64,6 +34,27 @@ pub async fn get_upload_image(path: &str) -> Result<Vec<u8>> {
             Err(Error::UploadFailed.into())
         }
     }
+}
+
+pub async fn upload(post_id: u64, data: FormData) -> Result<Vec<UploadImage>> {
+    let items = io::save_upload_file(
+        post_id,
+        data,
+        &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
+    ).await?;
+    let mut images: Vec<UploadImage> = Vec::with_capacity(items.len());
+    for i in items.iter() {
+        match i {
+            FormDataItem::FILE(f) => {
+                image::resize_from_file(&f).await?;
+                let relative_path = f.relative_path.to_string();
+                let original_filename = f.original_filename.to_string();
+                images.push(UploadImage::new(relative_path, original_filename));
+            },
+            _ => {},
+        }
+    }
+    Ok(images)
 }
 
 pub async fn save(post_id: u64, filename: String, body: impl Buf) -> Result<UploadImage> {

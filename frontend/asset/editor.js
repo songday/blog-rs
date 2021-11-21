@@ -122,7 +122,7 @@ export const uploadTitleImage = (postId, files, is_title_image) => {
     const form_data = new FormData();
     form_data.append('file', file);
     form_data.append('title-image-file-name', file.name);
-    fetch("/image/upload/" + postId, {
+    fetch("/image/upload-title-image/" + postId, {
         method:"POST",
         body : form_data
     }).then(response => response.json()).then(data => {
