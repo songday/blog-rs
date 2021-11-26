@@ -161,7 +161,11 @@ pub async fn new_post() -> Result<i64> {
 }
 
 pub async fn update_title_image(id: i64, title_image: &str) -> Result<()> {
-    sqlx::query("UPDATE post SET title_image=? WHERE id=?").bind(title_image).bind(id).execute(super::get_sqlite()).await?;
+    sqlx::query("UPDATE post SET title_image=? WHERE id=?")
+        .bind(title_image)
+        .bind(id)
+        .execute(super::get_sqlite())
+        .await?;
 
     Ok(())
 }

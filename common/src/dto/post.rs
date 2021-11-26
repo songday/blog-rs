@@ -17,7 +17,7 @@ pub struct PostData {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct PostDetail {
     pub id: i64,
     pub title: String,

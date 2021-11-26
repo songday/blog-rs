@@ -7,7 +7,7 @@ fn app() -> Html {
     html! {
         <>
             <main>
-                <Router<Route> render={Router::render(switch)} />
+                <Switch<Route> render={Switch::render(switch)} />
             </main>
             <footer class="footer">
                 <div class="content has-text-centered">

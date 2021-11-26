@@ -48,6 +48,7 @@ impl Component for PostDetail {
                 (),
             );
         }
+        let post = (*post).clone();
 
         html! {
             <>
@@ -72,7 +73,7 @@ impl Component for PostDetail {
                         <div class="media-content">
                             <div class="content">
                                 <p class="is-family-secondary">
-                                    { &post.conent }
+                                    { &post.content }
                                 </p>
                             </div>
                         </div>

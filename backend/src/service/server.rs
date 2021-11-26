@@ -1,20 +1,19 @@
-use std::{collections::HashMap, convert::Infallible, net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, convert::Infallible, net::SocketAddr};
 
 use futures::future::Future;
 use tokio::sync::oneshot::Receiver;
-use warp::{self, reject, Filter, Rejection, Server};
+use warp::{self, reject, Filter};
 
 use blog_common::{
     dto::{
         management::{AdminUser, Settings},
         post::PostData,
-        user::{UserInfo, UserParams},
+        user::UserInfo,
     },
     val,
 };
 
 use crate::{
-    db::DataSource,
     facade::{self, asset, image, management, post, tag, user},
     service::status,
     util::result::Result,
@@ -177,6 +176,14 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(auth())
         .and(warp::multipart::form().max_length(val::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))
         .and_then(image::upload);
+    let upload_title_image = warp::post()
+        .and(warp::path("image"))
+        .and(warp::path("upload-title-image"))
+        .and(warp::path::param::<u64>())
+        .and(warp::path::end())
+        .and(auth())
+        .and(warp::multipart::form().max_length(val::MAX_BLOG_UPLOAD_IMAGE_SIZE as u64))
+        .and_then(image::upload_title_image);
     let save_image = warp::post()
         .and(warp::path("image"))
         .and(warp::path("save"))
@@ -224,6 +231,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(post_save)
         .or(post_show)
         .or(upload_image)
+        .or(upload_title_image)
         .or(save_image)
         .with(cors)
         // .with(warp::service(session_id_wrapper))

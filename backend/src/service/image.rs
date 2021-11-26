@@ -4,8 +4,8 @@ use std::{
     sync::Arc,
 };
 
-use blog_common::{dto::post::UploadImage, result::Error};
 use blog_common::dto::FormDataItem;
+use blog_common::{dto::post::UploadImage, result::Error};
 use bytes::Buf;
 use rand::Rng;
 use tokio::io::AsyncWriteExt;
@@ -41,7 +41,8 @@ pub async fn upload(post_id: u64, data: FormData) -> Result<Vec<UploadImage>> {
         post_id,
         data,
         &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
-    ).await?;
+    )
+    .await?;
     let mut images: Vec<UploadImage> = Vec::with_capacity(items.len());
     for i in items.iter() {
         match i {
@@ -50,8 +51,8 @@ pub async fn upload(post_id: u64, data: FormData) -> Result<Vec<UploadImage>> {
                 let relative_path = f.relative_path.to_string();
                 let original_filename = f.original_filename.to_string();
                 images.push(UploadImage::new(relative_path, original_filename));
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
     Ok(images)
@@ -65,7 +66,8 @@ pub async fn save(post_id: u64, filename: String, body: impl Buf) -> Result<Uplo
         filename,
         body,
         &[SupportFileType::Png, SupportFileType::Jpg, SupportFileType::Gif],
-    ).await?;
+    )
+    .await?;
     image::resize_from_file(&file_info).await?;
     let d = UploadImage::new(file_info.relative_path, file_info.original_filename);
     Ok(d)

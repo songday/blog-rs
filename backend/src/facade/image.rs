@@ -18,7 +18,7 @@ use blog_common::{
 };
 
 use crate::{
-    db::{user, post},
+    db::{post, user},
     facade::{session_id_cookie, wrap_json_data, wrap_json_err},
     image::image,
     service::{self, status},
@@ -89,7 +89,8 @@ pub async fn upload_title_image(post_id: u64, user: Option<UserInfo>, data: Form
     }
     let images = result.unwrap();
     let image = &images[0];
-    post::update_title_image(post_id as i64, &image.relative_path).await
+    post::update_title_image(post_id as i64, &image.relative_path)
+        .await
         .map(|d| wrap_json_data(image))
         .or_else(|e| Ok(wrap_json_err(500, e.0)))
 }

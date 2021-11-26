@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::io::Read;
 use std::{
@@ -7,7 +8,6 @@ use std::{
     str::FromStr,
     vec::Vec,
 };
-use std::collections::HashMap;
 
 use ahash::AHasher;
 use blog_common::dto::TextFieldInfo;
@@ -226,17 +226,15 @@ pub async fn save_upload_file(
                                 return Err(Error::UploadFailed);
                             }
                         };
-                    }    
+                    }
                 } else {
                     let d = p.data().await.unwrap().unwrap();
                     let b = d.chunk();
                     let s = String::from_utf8(b.to_vec()).unwrap();
-                    let form_data_item = FormDataItem::TEXT(
-                            TextFieldInfo {
-                                name: p.name().to_string(),
-                                value: s,
-                            }
-                        );
+                    let form_data_item = FormDataItem::TEXT(TextFieldInfo {
+                        name: p.name().to_string(),
+                        value: s,
+                    });
                     form_data_result.push(form_data_item);
                 }
                 /*
