@@ -105,7 +105,7 @@ export function randomTitleImage(post_id) {
         });
 }
 
-export const uploadTitleImage = (postId, files, is_title_image) => {
+export const uploadTitleImage = (postId, files) => {
     const file = files[0];
     // check file type
     if (!['image/jpeg', 'image/png'].includes(file.type)) {

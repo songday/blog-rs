@@ -8,43 +8,23 @@ use yew_router::prelude::*;
 
 use crate::router::Route;
 
-#[derive(Properties, PartialEq)]
-struct PostsListProps {
-    posts: Vec<PostDetail>,
-}
-
-#[function_component(PostsList)]
-fn posts_list(PostsListProps { posts }: &PostsListProps) -> Html {
-    posts.iter().map(|post| html! {
-        <li class="list-item mb-5">
-            <div class="card">
-                <div class="card-image">
-                    <figure class="image is-2by1">
-                        <img alt="This post's image" src={post.title_image.clone()} loading="lazy" />
-                    </figure>
-                </div>
-                <div class="card-content">
-                    <Link<Route> classes={classes!("title", "is-block")} to={Route::ShowPost { id: post.id as u64 }}>
-                        { &post.title }
-                    </Link<Route>>
-                </div>
-            </div>
-        </li>
-    }).collect()
-}
-
 pub enum Msg {
     Compose,
+    Retrieve,
 }
 
-pub struct PostList;
+pub struct PostList {
+    posts: Vec<PostDetail>,
+}
 
 impl Component for PostList {
     type Message = Msg;
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
-        Self
+        Self {
+            posts: vec![],
+        }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -67,39 +47,41 @@ impl Component for PostList {
                     }
                 });
             }
+            Msg::Retrieve => {
+                let posts = use_state(|| vec![]);
+                {
+                    let posts = posts.clone();
+                    use_effect_with_deps(
+                        move |_| {
+                            let posts = posts.clone();
+                            wasm_bindgen_futures::spawn_local(async move {
+                                let response: Response<Vec<PostDetail>> = reqwasm::http::Request::get("/post/list/1")
+                                    .send()
+                                    .await
+                                    .unwrap()
+                                    .json()
+                                    .await
+                                    .unwrap();
+                                posts.set(response.data.unwrap());
+                            });
+                            || ()
+                        },
+                        (),
+                    );
+                }
+                self.posts = (*posts).clone();        
+            }
         }
         false
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         // let page = self.current_page();
-        let posts = use_state(|| vec![]);
-        {
-            let posts = posts.clone();
-            use_effect_with_deps(
-                move |_| {
-                    let posts = posts.clone();
-                    wasm_bindgen_futures::spawn_local(async move {
-                        let response: Response<Vec<PostDetail>> = reqwasm::http::Request::get("/post/list/1")
-                            .send()
-                            .await
-                            .unwrap()
-                            .json()
-                            .await
-                            .unwrap();
-                        posts.set(response.data.unwrap());
-                    });
-                    || ()
-                },
-                (),
-            );
-        }
-        let posts = (*posts).clone();
-        let row_num = posts.len() / 2 + 1;
-        let mut left_column_data: Vec<PostDetail> = Vec::with_capacity(row_num);
-        let mut right_column_data: Vec<PostDetail> = Vec::with_capacity(row_num);
+        let row_num = self.posts.len() / 2 + 1;
+        let mut left_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
+        let mut right_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
         let mut is_odd = true;
-        for post in posts.into_iter() {
+        for post in self.posts.iter() {
             if is_odd {
                 left_column_data.push(post);
                 is_odd = false;
@@ -134,12 +116,12 @@ impl Component for PostList {
                 <div class="columns">
                     <div class="column">
                         <ul class="list">
-                            <PostsList posts={left_column_data} />
+                            { self.view_posts(left_column_data) }
                         </ul>
                     </div>
                     <div class="column">
                         <ul class="list">
-                        <PostsList posts={right_column_data} />
+                            { self.view_posts(right_column_data) }
                         </ul>
                     </div>
                 </div>
@@ -159,45 +141,22 @@ impl Component for PostList {
 }
 
 impl PostList {
-    fn render_post(&self, post_detail: &PostDetail) -> Html {
-        html! {
-            <>
+    fn view_posts(&self, posts: Vec<&PostDetail>) -> Html {
+        posts.iter().map(|&post| html! {
+            <li class="list-item mb-5">
                 <div class="card">
                     <div class="card-image">
                         <figure class="image is-2by1">
-                            <img src={post_detail.title_image.clone()} loading="lazy" />
+                            <img alt="This post's image" src={post.title_image.clone()} loading="lazy" />
                         </figure>
                     </div>
                     <div class="card-content">
-                        <Link<Route> classes={classes!("title", "is-block")} to={Route::ShowPost { id: post_detail.id as u64 }}>
-                            { &post_detail.title }
+                        <Link<Route> classes={classes!("title", "is-block")} to={Route::ShowPost { id: post.id as u64 }}>
+                            { &post.title }
                         </Link<Route>>
                     </div>
                 </div>
-                <div class="tile is-6 is-parent">
-                    <div class="tile is-child">
-                        <div class="card">
-                            <div class="card-image">
-                                <figure class="image is-2by1">
-                                    <img src=""/>
-                                </figure>
-                            </div>
-                            <div class="card-content">
-                                <div class="content">
-                                    <h1 class="title">{ &post_detail.title }</h1>
-                                    { &post_detail.content }
-                                    <br/>
-                                    {"#css #responsive"}
-                                    <br/>
-                                    <time datetime="2016-1-1">{"11:09 PM - 1 Jan 2016"}</time>
-                                    <br/>
-                                    <a>{"查看/Detail"}</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </>
-        }
+            </li>
+        }).collect()
     }
 }

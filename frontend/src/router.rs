@@ -12,7 +12,7 @@ pub enum Route {
     #[at("/")]
     ListPosts,
     #[not_found]
-    #[at("/#/404")]
+    #[at("/404")]
     NotFound,
 }
 

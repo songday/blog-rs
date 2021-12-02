@@ -5,7 +5,7 @@ use yew_router::prelude::*;
 #[function_component(App)]
 fn app() -> Html {
     html! {
-        <>
+        <BrowserRouter>
             <main>
                 <Switch<Route> render={Switch::render(switch)} />
             </main>
@@ -19,7 +19,7 @@ fn app() -> Html {
                     <a href="https://unsplash.com">{ "Unsplash" }</a>
                 </div>
             </footer>
-        </>
+        </BrowserRouter>
     }
 }
 

@@ -105,8 +105,7 @@ export function randomTitleImage(post_id) {
         });
 }
 
-export const uploadTitleImage = (postId, files) => {
-    console.log('进来了');
+export const uploadTitleImage = (postId, files, is_title_image) => {
     const file = files[0];
     // check file type
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
@@ -114,17 +113,16 @@ export const uploadTitleImage = (postId, files) => {
         // document.getElementsByName('sample_image')[0].value = '';
         return;
     }
-    console.log('进来了1' + file.size);
-    // check file size (< 2MB)
+    // check file size
     if (file.size > 2 * 1024 * 1024) {
         // document.getElementById('uploaded_image').innerHTML = '<div class="alert alert-danger">File must be less than 2 MB</div>';
         // document.getElementsByName('sample_image')[0].value = '';
         return;
     }
-    console.log('进来了2');
     const form_data = new FormData();
-    form_data.append('title-image', file);
-    fetch("/image/upload/" + postId, {
+    form_data.append('file', file);
+    form_data.append('title-image-file-name', file.name);
+    fetch("/image/upload-title-image/" + postId, {
         method:"POST",
         body : form_data
     }).then(response => response.json()).then(data => {

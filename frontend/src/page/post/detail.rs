@@ -1,7 +1,50 @@
+use std::rc::Rc;
+
 use blog_common::dto::post::PostDetail as PostDetailDto;
 use blog_common::dto::Response;
 use yew::prelude::*;
 use yew_router::prelude::*;
+
+#[derive(Clone, Debug, PartialEq, Properties)]
+pub struct ShowDetailProps {
+    pub post: Rc<PostDetailDto>,
+}
+
+#[function_component(ShowDetail)]
+fn app(ShowDetailProps { post } : &ShowDetailProps) -> Html {
+    let title_image = post.title_image.to_string();
+    html! {
+        <>
+            <section class="hero is-medium is-light has-background">
+                <img src={ title_image } class="hero-background is-transparent"/>
+                <div class="hero-body">
+                    <div class="container">
+                        <p class="title">
+                            { &post.title }
+                        </p>
+                        <p class="subtitle">
+                            {"Medium subtitle"}
+                        </p>
+                        <div class="tags">
+                            <span class="tag is-info">{"tag"}</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <div class="section container">
+                <article class="media block box my-6">
+                    <div class="media-content">
+                        <div class="content">
+                            <p class="is-family-secondary">
+                                { &post.content }
+                            </p>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </>
+    }
+}
 
 #[derive(Clone, Debug, Eq, PartialEq, Properties)]
 pub struct Props {
@@ -49,36 +92,11 @@ impl Component for PostDetail {
             );
         }
         let post = (*post).clone();
+        let post = Rc::new(post);
 
         html! {
             <>
-                <section class="hero is-medium is-light has-background">
-                    <img src="" class="hero-background is-transparent"/>
-                    <div class="hero-body">
-                        <div class="container">
-                            <p class="title">
-                                {"Medium hero"}
-                            </p>
-                            <p class="subtitle">
-                                {"Medium subtitle"}
-                            </p>
-                            <div class="tags">
-                                <span class="tag is-info">{"tag"}</span>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-                <div class="section container">
-                    <article class="media block box my-6">
-                        <div class="media-content">
-                            <div class="content">
-                                <p class="is-family-secondary">
-                                    { &post.content }
-                                </p>
-                            </div>
-                        </div>
-                    </article>
-                </div>
+                <ShowDetail post={post.clone()} />
             </>
         }
     }
