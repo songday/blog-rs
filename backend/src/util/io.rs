@@ -56,7 +56,7 @@ impl From<Option<&str>> for SupportFileType {
     }
 }
 
-pub async fn get_save_file(post_id: u64, origin_filename: &str, ext: &str) -> std::io::Result<(File, PathBuf, String)> {
+pub async fn get_save_file(post_id: u64, origin_filename: &str, ext: &str, rename: bool) -> std::io::Result<(File, PathBuf, String)> {
     let id = post_id.to_string();
 
     // 生成子目录
@@ -68,22 +68,26 @@ pub async fn get_save_file(post_id: u64, origin_filename: &str, ext: &str) -> st
         create_dir_all(path_buf.as_path()).await?;
     }
 
-    // 新文件名
-    let mut filename = String::with_capacity(128);
-    filename.push_str(&id);
-    filename.push('-');
+    if rename {
+        // 新文件名
+        let mut filename = String::with_capacity(128);
+        filename.push_str(&id);
+        filename.push('-');
 
-    let mill_sec = time::unix_epoch_sec().to_string();
-    filename.push_str(&mill_sec);
-    filename.push('-');
+        let mill_sec = time::unix_epoch_sec().to_string();
+        filename.push_str(&mill_sec);
+        filename.push('-');
 
-    let mut hasher = AHasher::default();
-    hasher.write(origin_filename.as_bytes());
-    filename.push_str(hasher.finish().to_string().as_str());
-    filename.push('.');
-    filename.push_str(ext);
+        let mut hasher = AHasher::default();
+        hasher.write(origin_filename.as_bytes());
+        filename.push_str(hasher.finish().to_string().as_str());
+        filename.push('.');
+        filename.push_str(ext);
 
-    path_buf.push(&filename);
+        path_buf.push(&filename);
+    } else {
+        path_buf.push(origin_filename);
+    }
 
     let path = dbg!(path_buf.as_path());
 
@@ -112,7 +116,7 @@ async fn get_upload_file_writer(
     upload_file_info.original_filename.push_str(original_filename);
     upload_file_info.extension.push_str(ext);
 
-    let (file, save_path_buf, relative_file_path) = get_save_file(post_id, &original_filename, ext).await?;
+    let (file, save_path_buf, relative_file_path) = get_save_file(post_id, &original_filename, ext, true).await?;
     upload_file_info.filepath = save_path_buf;
     upload_file_info.relative_path = relative_file_path;
 

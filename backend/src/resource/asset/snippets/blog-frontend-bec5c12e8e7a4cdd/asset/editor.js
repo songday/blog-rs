@@ -91,13 +91,15 @@ export function goBack() {
     location.href = '/';
 }
 
-export function randomTitleImage(post_id) {
+export function randomTitleImage(post_id, callback) {
     fetch('/tool/random-title-image/' + post_id)
         .then(response => response.json())
         .then(data => {
             console.log(data);
             if (data.status === 0) {
-                document.getElementById('title-image').setAttribute("src", "/"+data.data+"?_rnd="+Math.random());
+                const image = "/"+data.data;
+                document.getElementById('title-image').setAttribute("src", image+"?_rnd="+Math.random());
+                callback(image);
             }
         })
         .catch(err => {
@@ -105,7 +107,7 @@ export function randomTitleImage(post_id) {
         });
 }
 
-export const uploadTitleImage = (postId, files, is_title_image) => {
+export const uploadTitleImage = (postId, files, callback) => {
     const file = files[0];
     // check file type
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
@@ -130,7 +132,9 @@ export const uploadTitleImage = (postId, files, is_title_image) => {
         // document.getElementsByName('sample_image')[0].value = '';
         console.log(data);
         if (data.status === 0) {
-            document.getElementById('title-image').setAttribute("src", "/"+data.data.relative_path+"?_rnd="+Math.random());
+            const image = "/"+data.data.relative_path;
+            document.getElementById('title-image').setAttribute("src", image+"?_rnd="+Math.random());
+            callback(image);
         }
     });
 }

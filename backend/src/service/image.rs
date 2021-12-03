@@ -79,7 +79,7 @@ pub async fn save(post_id: u64, filename: String, body: impl Buf) -> Result<Uplo
 pub async fn random_title_image(id: u64) -> Result<String> {
     let url = {
         let mut rng = rand::thread_rng();
-        if rng.gen_range(1..=100) > 70 {
+        if rng.gen_range(1..=100) > 75 {
             // https://source.unsplash.com/random/1000x500?keywords.join(",")&sig=cache_buster
             "https://source.unsplash.com/random/1000x500"
         } else {
@@ -120,7 +120,7 @@ pub async fn random_title_image(id: u64) -> Result<String> {
     }
     let filename = format!("{}.{}", id, file_ext);
     // let mut file = tokio::fs::File::create(Path::new(&filename)).await?;
-    let (mut file, _path_buf, relative_path) = crate::util::io::get_save_file(id, &filename, file_ext).await?;
+    let (mut file, _path_buf, relative_path) = crate::util::io::get_save_file(id, &filename, file_ext, false).await?;
     let b = response.bytes().await?;
     tokio::io::copy_buf(&mut &b[..], &mut file).await?;
     // file.shutdown()
