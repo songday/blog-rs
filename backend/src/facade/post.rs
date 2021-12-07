@@ -54,9 +54,11 @@ pub async fn list_by_tag(tag: String, page_num: u8) -> Result<impl Reply, Reject
 }
 
 pub async fn save(user: Option<UserInfo>, post: PostData) -> Result<impl Reply, Rejection> {
+    println!("1");
     if user.is_none() {
         return Ok(wrap_json_err(500, Error::NotAuthed));
     }
+    println!("2");
     match post::save(post).await {
         Ok(blog) => Ok(wrap_json_data(&blog)),
         Err(e) => Ok(wrap_json_err(500, e.0)),

@@ -27,7 +27,7 @@ extern "C" {
     #[wasm_bindgen(js_name = goBack)]
     fn go_back();
     #[wasm_bindgen(js_name = uploadTitleImage)]
-    fn upload_title_image(post_id: u64, files: Vec<web_sys::File>, payload_callback: JsValue);
+    fn upload_title_image(post_id: i64, files: Vec<web_sys::File>, payload_callback: JsValue);
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Properties)]
@@ -45,9 +45,9 @@ pub enum Msg {
   Ignore,
   UpdateTitle(String),
   InitEditor,
-  UpdatePost(u64),
+  UpdatePost,
   LoadedBytes(String, Vec<u8>),
-  Files(u64, Vec<web_sys::File>),
+  Files(i64, Vec<web_sys::File>),
   RetrieveRandomTitleImage,
   GoBack,
   PayloadCallback(String),
@@ -58,11 +58,13 @@ impl Component for PostCompose {
   type Message = Msg;
   type Properties = Props;
 
-  fn create(_ctx: &Context<Self>) -> Self {
-      Self {
+  fn create(ctx: &Context<Self>) -> Self {
+      let mut p = Self {
           post_data: PostData::default(),
           readers: HashMap::default(),
-      }
+      };
+      p.post_data.id =  ctx.props().post_id as i64;
+      p
   }
 
   fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -108,14 +110,15 @@ impl Component for PostCompose {
         // },
         Msg::Ignore => {}
         Msg::UpdateTitle(s) => self.post_data.title = s,
-        Msg::UpdatePost(post_id) => {
+        Msg::UpdatePost => {
             self.post_data.content = get_content();
             console_log!(&self.post_data.content);
             let history = ctx.link().history().unwrap();
-            self.post_data.id = post_id as i64;
             let payload = serde_json::to_string(&self.post_data).unwrap();
+            let post_id = self.post_data.id as u64;
             wasm_bindgen_futures::spawn_local(async move {
               let _response: Response<PostDetail> = reqwasm::http::Request::post("/post/save")
+                  .header("Content-Type", "application/json")    
                   .body(payload)
                   .send()
                   .await
@@ -215,7 +218,7 @@ impl Component for PostCompose {
           post_data,
           readers,
       } = self;
-      let post_id = post_data.id as u64;
+      let post_id = post_data.id;
 
       html! {
         <>
@@ -293,7 +296,7 @@ impl Component for PostCompose {
           </div>
           <div class="field is-grouped">
             <div class="control">
-              <button class="button is-link" onclick={ctx.link().callback(move |_| Msg::UpdatePost(post_id))}>{ "更新/Update" }</button>
+              <button class="button is-link" onclick={ctx.link().callback(move |_| Msg::UpdatePost)}>{ "更新/Update" }</button>
             </div>
             <div class="control">
               <button class="button is-link is-light" onclick={ctx.link().callback(|_| Msg::GoBack)}>{ "返回/GoBack" }</button>

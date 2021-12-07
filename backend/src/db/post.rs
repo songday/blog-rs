@@ -187,14 +187,18 @@ async fn get_post(id: i64, edit: bool) -> Result<Option<Post>> {
 }
 
 pub async fn save(post_data: PostData) -> Result<PostDetail> {
+    println!("3");
     let post = get_post(post_data.id, true).await?;
+    println!("4");
     if post.is_none() {
         return Err(Error::CannotFoundPost.into());
     }
 
     // needs to be in a transaction
+    println!("5");
     let transaction = DATA_SOURCE.get().unwrap().sqlite.begin().await?;
 
+    println!("6");
     if post_data.tags.is_some() {
         super::tag::record_usage(post_data.id, post_data.tags.as_ref().unwrap()).await?;
     }
@@ -203,6 +207,7 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
     // let mut html_text = String::new();
     // pulldown_cmark::html::push_html(&mut html_text, parser);
 
+    println!("7");
     let post = post.unwrap();
 
     let post_detail = PostDetail {
@@ -228,10 +233,12 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
     .bind(&post_detail.id)
     .execute(&DATA_SOURCE.get().unwrap().sqlite)
     .await?;
+    println!("8");
 
     // 这里只关心 commit，因为 https://docs.rs/sqlx/0.5.1/sqlx/struct.Transaction.html 说到
     // If neither are called before the transaction goes out-of-scope, rollback is called. In other words, rollback is called on drop if the transaction is still in-progress.
     transaction.commit().await?;
+    println!("9");
 
     Ok(post_detail)
 }
