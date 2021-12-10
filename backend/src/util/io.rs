@@ -56,7 +56,12 @@ impl From<Option<&str>> for SupportFileType {
     }
 }
 
-pub async fn get_save_file(post_id: u64, origin_filename: &str, ext: &str, rename: bool) -> std::io::Result<(File, PathBuf, String)> {
+pub async fn get_save_file(
+    post_id: u64,
+    origin_filename: &str,
+    ext: &str,
+    rename: bool,
+) -> std::io::Result<(File, PathBuf, String)> {
     let id = post_id.to_string();
 
     // 生成子目录

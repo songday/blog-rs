@@ -22,9 +22,7 @@ impl Component for PostList {
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
-        Self {
-            posts: vec![],
-        }
+        Self { posts: vec![] }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -69,7 +67,7 @@ impl Component for PostList {
                         (),
                     );
                 }
-                self.posts = (*posts).clone();        
+                self.posts = (*posts).clone();
             }
         }
         false
