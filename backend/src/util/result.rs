@@ -103,8 +103,8 @@ impl From<sqlx::Error> for ErrorWrapper {
 //     }
 // }
 
-impl From<urlencoding::FromUrlEncodingError> for ErrorWrapper {
-    fn from(e: urlencoding::FromUrlEncodingError) -> Self {
+impl From<std::string::FromUtf8Error> for ErrorWrapper {
+    fn from(e: std::string::FromUtf8Error) -> Self {
         eprintln!("{:?}", e);
         ErrorWrapper(Error::BadRequest)
     }

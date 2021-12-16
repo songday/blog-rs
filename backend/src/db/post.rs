@@ -101,8 +101,9 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
 
 pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
     let tag_name = urlencoding::decode(&tag_name)?;
+    let s = tag_name.as_ref();
     let tag = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tag WHERE name = ?")
-        .bind(&tag_name)
+        .bind(s)
         .fetch_optional(super::get_sqlite())
         .await?;
     if tag.is_none() {

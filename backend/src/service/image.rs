@@ -60,6 +60,7 @@ pub async fn upload(post_id: u64, data: FormData) -> Result<Vec<UploadImage>> {
 
 pub async fn save(post_id: u64, filename: String, body: impl Buf) -> Result<UploadImage> {
     let filename = urlencoding::decode(&filename)?;
+    let filename = filename.into_owned();
 
     let file_info = io::save_upload_stream(
         post_id,
