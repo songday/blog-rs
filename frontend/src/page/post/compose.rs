@@ -127,7 +127,7 @@ fn update_post(
           </div>
           <div class="field">
             <label class="label">{"内容/Content"}</label>
-            <div id="editor"></div>
+            <div id="editor">{&post_detail.content}</div>
           </div>
           <div class="field">
             <label class="label">{"标签/Labels"}</label>
@@ -233,7 +233,7 @@ impl Component for PostCompose {
             Msg::UpdatePost => {
                 self.post_data.content = get_content();
                 console_log!(&self.post_data.content);
-                let history = ctx.link().history().unwrap();
+                let navigator = ctx.link().navigator().unwrap();
                 let payload = serde_json::to_string(&self.post_data).unwrap();
                 let post_id = self.post_data.id as u64;
                 wasm_bindgen_futures::spawn_local(async move {
@@ -246,7 +246,7 @@ impl Component for PostCompose {
                         .json()
                         .await
                         .unwrap();
-                    history.push(crate::router::Route::ShowPost { id: post_id });
+                        navigator.push(crate::router::Route::ShowPost { id: post_id });
                 });
 
                 // self.blog_params.tags = Some(get_selected_tags().iter().map(|e| e.as_string().unwrap()).collect());
@@ -364,91 +364,6 @@ impl Component for PostCompose {
         html! {
           <>
             <UpdatePost onsubmit={onsubmit} onchange={onchange} onclick={onclick} oninput={oninput} onupdate={onupdate} goback={goback} onload={onload} post_id={post_id as u64} />
-            <div class="container">
-              <h1 class="title is-1">{"编辑博客/Editing post"}</h1>
-            </div>
-            <p>{" "}</p>
-            <form class="row g-3" onsubmit={ctx.link().callback(|ev: FocusEvent| {
-              ev.prevent_default();
-              Msg::Ignore
-            })}>
-              <div class="container">
-                <div class="field">
-                  <label class="label">{"题图/Image"}</label>
-                </div>
-                <nav class="level">
-                <p class="level-item has-text-centered">
-                  {""}
-                </p>
-                <p class="level-item has-text-centered">
-                  <div class="file is-normal">
-                    <label class="file-label">
-                      <input class="file-input" multiple=false accept="image/*" type="file" name="title-image" onchange={ctx.link().callback(move |e: Event| {
-                                      let mut result = Vec::new();
-                                      let input: HtmlInputElement = e.target_unchecked_into();
-
-                                      if let Some(files) = input.files() {
-                                          let files = js_sys::try_iter(&files)
-                                              .unwrap()
-                                              .unwrap()
-                                              .map(|v| web_sys::File::from(v.unwrap()))
-                                              // .map(File::from)
-                                              ;
-                                          result.extend(files);
-                                      }
-                                      Msg::Files(post_id, result)
-                                  })}/>
-                      <span class="file-cta">
-                        <span class="file-icon"><i class="fas fa-upload"></i></span>
-                        <span class="file-label">{"上传图片/Upload"}</span>
-                      </span>
-                    </label>
-                  </div>
-                </p>
-                <p class="level-item has-text-centered">{"或/Or"}</p>
-                <p class="level-item has-text-centered">
-                  <button class="button" onclick={ctx.link().callback(|_| Msg::RetrieveRandomTitleImage)}>
-                    <span class="icon"><i class="fas fa-download"></i></span>
-                    <span>{"下载一张/Download"}</span>
-                  </button>
-                </p>
-                <p class="level-item has-text-centered">{""}</p>
-              </nav>
-            </div>
-            <section class="hero is-medium is-light has-background">
-              <img id="title-image" src={post_data.title_image.clone()} class="hero-background is-transparent"/>
-            </section>
-            <div class="container">
-              <div class="field">
-                <label class="label">{"标题/Title"}</label>
-                <div class="control">
-                  <input class="input" type="text" value={self.post_data.title.clone()}
-                      oninput={ctx.link().callback(|e: InputEvent| {let input = e.target_unchecked_into::<HtmlInputElement>();Msg::UpdateTitle(input.value())})}/>
-                </div>
-              </div>
-              <div class="field">
-                <label class="label">{"内容/Content"}</label>
-                <div id="editor"></div>
-              </div>
-              <div class="field">
-                <label class="label">{"标签/Labels"}</label>
-                  <div class="control">
-                    <input class="input" type="text" placeholder="回车添加/Press 'Enter' to add"/>
-                  </div>
-              </div>
-              <div class="field is-grouped">
-                <div class="control">
-                  <button class="button is-link" onclick={ctx.link().callback(move |_| Msg::UpdatePost)}>{ "更新/Update" }</button>
-                </div>
-                <div class="control">
-                  <button class="button is-link is-light" onclick={ctx.link().callback(|_| Msg::GoBack)}>{ "返回/GoBack" }</button>
-                </div>
-                </div>
-              </div>
-            </form>
-            <link rel="stylesheet" href="/asset/codemirror.min.css" />
-            <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
-            <script src="/asset/toastui-editor-all.min.js" onload={ctx.link().callback(|_| Msg::InitEditor)}></script>
           </>
         }
     }

@@ -25,7 +25,7 @@ pub fn encrypt_password(password: &str) -> Result<String> {
 }
 
 fn encrypt_password_salt(salt: &[u8], password: &[u8]) -> Result<String> {
-    let p = argon2::Params::new(2, 10240, 2, None)?;
+    let p = argon2::Params::new(10240, 2, 2, None)?;
     let a = Argon2::new(argon2::Algorithm::Argon2id, argon2::Version::V0x13, p);
     let mut result = vec![0u8; 1024];
     a.hash_password_into(password, &salt, &mut result)?;

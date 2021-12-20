@@ -28,12 +28,12 @@ impl Component for PostList {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Compose => {
-                let history = ctx.link().history().unwrap();
+                let navigator = ctx.link().navigator().unwrap();
                 wasm_bindgen_futures::spawn_local(async move {
                     let response = reqwasm::http::Request::get("/post/new").send().await.unwrap();
                     let json: Response<u64> = response.json().await.unwrap();
                     if json.status == 0 {
-                        history.push(crate::router::Route::ComposePost { id: json.data.unwrap() });
+                        navigator.push(crate::router::Route::ComposePost { id: json.data.unwrap() });
                         // yew_router::push_route(crate::router::Route::ComposePost { id: json.data.unwrap() });
                     } else {
                         // ctx.link().location().unwrap().route().set_href("/management");
