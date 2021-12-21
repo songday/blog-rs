@@ -42,14 +42,14 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
     let title_image = post.title_image.to_string();
     html! {
         <>
-            <section class="hero is-medium is-light has-background">
+            <section class="hero is-large is-light has-background">
                 <img src={ title_image } class="hero-background is-transparent"/>
                 <div class="hero-body">
                     <div class="container">
-                        <p class="title">
+                        <p class="title is-1">
                             { &post.title }
                         </p>
-                        <p class="subtitle">
+                        <p class="subtitle is-3">
                             {"Medium subtitle"}
                         </p>
                         <div class="tags">

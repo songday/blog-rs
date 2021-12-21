@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 // use crate::result::Error;
 
-#[derive(Clone, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct PostData {
     pub id: i64,
     pub title: String,
