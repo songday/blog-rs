@@ -24,7 +24,7 @@ extern "C" {
     #[wasm_bindgen(js_name = getSelectedTags)]
     fn get_selected_tags() -> Vec<wasm_bindgen::JsValue>;
     #[wasm_bindgen(js_name = randomTitleImage)]
-    fn random_title_image(id: u64, payload_callback: JsValue);
+    fn random_title_image(event: MouseEvent, id: u64, payload_callback: JsValue);
     #[wasm_bindgen(js_name = goBack)]
     fn go_back();
     #[wasm_bindgen(js_name = uploadTitleImage)]
@@ -87,6 +87,7 @@ fn update_post(
         );
     }
     let post_detail = (*post_detail).clone();
+    console_log!("post_detail.id=", post_detail.id);
     if post_detail.id < 1 {
       go_sign_in.emit(0);
       return html!{};
@@ -189,8 +190,8 @@ pub enum Msg {
     InitEditor,
     UpdatePost,
     LoadedBytes(String, Vec<u8>),
-    Files(u64, Vec<web_sys::File>),
-    RetrieveRandomTitleImage,
+    Files(Vec<web_sys::File>),
+    RetrieveRandomTitleImage(MouseEvent),
     GoBack,
     GoSignIn,
     PayloadCallback(String),
@@ -315,7 +316,7 @@ impl Component for PostCompose {
                 // });
                 self.readers.remove(&file_name);
             }
-            Msg::Files(post_id, files) => {
+            Msg::Files(files) => {
                 // for file in files.into_iter() {
                 // let file_name = file.name();
                 // let task = {
@@ -332,24 +333,25 @@ impl Component for PostCompose {
                 // }
                 let callback = ctx.link().callback(Msg::PayloadCallback);
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
-                upload_title_image(post_id, files, js_callback);
+                upload_title_image(self.post_id, files, js_callback);
             }
             Msg::InitEditor => {
                 init_editor();
                 return false;
             }
-            Msg::RetrieveRandomTitleImage => {
+            Msg::RetrieveRandomTitleImage(event) => {
                 let callback = ctx.link().callback(Msg::PayloadCallback);
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
-                random_title_image(self.post_id, js_callback);
+                random_title_image(event, self.post_id, js_callback);
             }
             Msg::GoBack => {
                 go_back();
             }
             Msg::GoSignIn => {
               let any_route = AnyRoute::new(String::from("/management"));
+              let continue_url = crate::router::Route::ComposePost{id:self.post_id}.to_path();
               let query = HashMap::from([
-                (".continue", ""),
+                (".continue", continue_url.as_str()),
               ]);
               let navigator = ctx.link().navigator().unwrap();
               navigator.push_with_query(any_route, query);
@@ -391,9 +393,9 @@ impl Component for PostCompose {
               ;
                 result.extend(files);
             }
-            Msg::Files(post_id, result)
+            Msg::Files(result)
         });
-        let onclick = ctx.link().callback(|_: MouseEvent| Msg::RetrieveRandomTitleImage);
+        let onclick = ctx.link().callback(|e: MouseEvent| Msg::RetrieveRandomTitleImage(e));
         let oninput = ctx.link().callback(|e: InputEvent| {
             let input = e.target_unchecked_into::<HtmlInputElement>();
             Msg::UpdateTitle(input.value())
