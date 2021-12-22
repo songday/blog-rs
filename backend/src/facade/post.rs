@@ -68,7 +68,12 @@ pub async fn show(
     id: u64,
     query_string: HashMap<String, String>,
 ) -> Result<impl Reply, Rejection> {
-    let editable = status::check_auth(token).is_ok() && query_string.contains_key("edit");
+    let auth_result = status::check_auth(token);
+    let edit = query_string.contains_key("edit");
+    if edit && auth_result.is_err() {
+        return Ok(wrap_json_err(500, auth_result.unwrap_err().0));
+    }
+    let editable = auth_result.is_ok() && edit;
     match post::show(id, editable).await {
         Ok(mut blog) => {
             blog.editable = editable;

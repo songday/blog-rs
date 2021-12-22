@@ -8,6 +8,7 @@ use web_sys::HtmlInputElement;
 use weblog::*;
 use yew::events::InputEvent;
 use yew::prelude::*;
+use yew_router::{AnyRoute, self};
 use yew_router::prelude::*;
 
 #[wasm_bindgen(module = "/asset/editor.js")]
@@ -42,6 +43,7 @@ pub struct UpdatePostProps {
     post_id: u64,
     title_onchange: Callback<String>,
     title_image_onchange: Callback<String>,
+    go_sign_in: Callback<i32>,
 }
 
 #[function_component(UpdatePost)]
@@ -57,6 +59,7 @@ fn update_post(
         post_id,
         title_onchange,
         title_image_onchange,
+        go_sign_in,
     }: &UpdatePostProps,
 ) -> Html {
     let detail_url = format!("/post/show/{}?edit=true", post_id);
@@ -74,7 +77,9 @@ fn update_post(
                         .json()
                         .await
                         .unwrap();
-                    post_detail.set(response.data.unwrap());
+                    if response.status == 0 {
+                      post_detail.set(response.data.unwrap());
+                    }
                 });
                 || ()
             },
@@ -82,6 +87,10 @@ fn update_post(
         );
     }
     let post_detail = (*post_detail).clone();
+    if post_detail.id < 1 {
+      go_sign_in.emit(0);
+      return html!{};
+    }
     title_onchange.emit(post_detail.title.clone());
     if post_detail.title_image.len() > 0 {
         title_image_onchange.emit(post_detail.title_image.clone());
@@ -183,6 +192,7 @@ pub enum Msg {
     Files(u64, Vec<web_sys::File>),
     RetrieveRandomTitleImage,
     GoBack,
+    GoSignIn,
     PayloadCallback(String),
 }
 
@@ -336,6 +346,14 @@ impl Component for PostCompose {
             Msg::GoBack => {
                 go_back();
             }
+            Msg::GoSignIn => {
+              let any_route = AnyRoute::new(String::from("/management"));
+              let query = HashMap::from([
+                (".continue", ""),
+              ]);
+              let navigator = ctx.link().navigator().unwrap();
+              navigator.push_with_query(any_route, query);
+            }
         }
         false
     }
@@ -354,6 +372,7 @@ impl Component for PostCompose {
 
         let title_onchange = ctx.link().callback(move |title: String| Msg::UpdateTitle(title));
         let title_image_onchange = ctx.link().callback(move |s: String| Msg::PayloadCallback(s));
+        let go_sign_in = ctx.link().callback(|_: i32| Msg::GoSignIn);
 
         let onsubmit = ctx.link().callback(|ev: FocusEvent| {
             ev.prevent_default();
@@ -385,7 +404,9 @@ impl Component for PostCompose {
 
         html! {
           <>
-            <UpdatePost onsubmit={onsubmit} onchange={onchange} onclick={onclick} oninput={oninput} onupdate={onupdate} goback={goback} onload={onload} post_id={post_id as u64} title_onchange={title_onchange.clone()} title_image_onchange={title_image_onchange.clone()} />
+            <UpdatePost onsubmit={onsubmit} onchange={onchange} onclick={onclick} oninput={oninput} onupdate={onupdate}
+            goback={goback} onload={onload} post_id={post_id as u64} title_onchange={title_onchange.clone()}
+            title_image_onchange={title_image_onchange.clone()} go_sign_in={go_sign_in.clone()} />
           </>
         }
     }
