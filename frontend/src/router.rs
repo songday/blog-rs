@@ -23,10 +23,10 @@ fn not_found() -> Html {
             <div class="hero-body">
                 <div class="container">
                     <h1 class="title">
-                        { "Page not found" }
+                        { "找不到请求的页面/Page not found" }
                     </h1>
                     <h2 class="subtitle">
-                        { "Page page does not seem to exist" }
+                        { "找不到请求的页面/Page page does not seem to exist." }
                     </h2>
                 </div>
             </div>

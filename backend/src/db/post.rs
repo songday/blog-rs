@@ -194,7 +194,7 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
     }
 
     // needs to be in a transaction
-    let transaction = DATA_SOURCE.get().unwrap().sqlite.begin().await?;
+    let transaction = super::get_sqlite().begin().await?;
 
     if post_data.tags.is_some() {
         super::tag::record_usage(post_data.id, post_data.tags.as_ref().unwrap()).await?;

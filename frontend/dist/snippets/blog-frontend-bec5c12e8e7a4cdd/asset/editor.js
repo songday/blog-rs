@@ -93,6 +93,10 @@ export function goBack() {
 
 export function randomTitleImage(event, post_id, callback) {
     const source = event.target || event.srcElement;
+    console.log(source);
+    // source.disabled = true;
+    const content = source.innerHtml;
+    source.innerHtml = '';
     const classes = source.className;
     source.className += ' is-loading';
     fetch('/tool/random-title-image/' + post_id)
@@ -104,7 +108,9 @@ export function randomTitleImage(event, post_id, callback) {
                 document.getElementById('title-image').setAttribute("src", image+"?_rnd="+Math.random());
                 callback(image);
             }
+            source.innerHtml = content;
             source.className = classes;
+            source.enabled = true;
         })
         .catch(err => {
             console.log(err);

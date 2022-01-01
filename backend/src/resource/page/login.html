@@ -25,7 +25,19 @@
                     console.log(data);
                     if (data.status === 0 && data.data === true) {
                         document.cookie = 'X-SONGDAY-USER-AUTHED=true; SameSite=Lax; Path=/;';
-                        location.href = '/management';
+                        let gotoUrl = '/management';
+                        if (location.search) {
+                            const s = '.redirect_url=';
+                            let p = location.search.indexOf(s);
+                            if (p > -1) {
+                                gotoUrl = location.search.substring(p + s.length);
+                                p = gotoUrl.indexOf('&');
+                                if (p > -1)
+                                    gotoUrl = gotoUrl.substring(0, p);
+                                gotoUrl = decodeURIComponent(gotoUrl);
+                            }
+                        }
+                        location.href = gotoUrl;
                     } else {
                         document.getElementById('errorMessage').value = data.error.detail;
                         document.getElementById('errorMessage').style.display = 'block';

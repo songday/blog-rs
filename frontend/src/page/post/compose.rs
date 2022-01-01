@@ -8,8 +8,10 @@ use web_sys::HtmlInputElement;
 use weblog::*;
 use yew::events::InputEvent;
 use yew::prelude::*;
-use yew_router::{AnyRoute, self};
 use yew_router::prelude::*;
+use yew_router::{self, AnyRoute};
+
+use crate::component::Unauthorized;
 
 #[wasm_bindgen(module = "/asset/editor.js")]
 extern "C" {
@@ -43,7 +45,7 @@ pub struct UpdatePostProps {
     post_id: u64,
     title_onchange: Callback<String>,
     title_image_onchange: Callback<String>,
-    go_sign_in: Callback<i32>,
+    redirect_url: String,
 }
 
 #[function_component(UpdatePost)]
@@ -59,11 +61,11 @@ fn update_post(
         post_id,
         title_onchange,
         title_image_onchange,
-        go_sign_in,
+        redirect_url,
     }: &UpdatePostProps,
 ) -> Html {
     let detail_url = format!("/post/show/{}?edit=true", post_id);
-    let post_detail = use_state(|| PostDetail::default());
+    let post_detail = use_state(|| None::<PostDetail>);
     {
         let post_detail = post_detail.clone();
         use_effect_with_deps(
@@ -78,7 +80,9 @@ fn update_post(
                         .await
                         .unwrap();
                     if response.status == 0 {
-                      post_detail.set(response.data.unwrap());
+                        post_detail.set(Some(response.data.unwrap()));
+                    } else {
+                        post_detail.set(Some(PostDetail::default()));
                     }
                 });
                 || ()
@@ -86,11 +90,14 @@ fn update_post(
             (),
         );
     }
-    let post_detail = (*post_detail).clone();
-    console_log!("post_detail.id=", post_detail.id);
+    if post_detail.is_none() {
+        return html! {};
+    }
+    let post_detail = (*post_detail).clone().unwrap();
     if post_detail.id < 1 {
-      go_sign_in.emit(0);
-      return html!{};
+        return html! {
+          <Unauthorized />
+        };
     }
     title_onchange.emit(post_detail.title.clone());
     if post_detail.title_image.len() > 0 {
@@ -276,7 +283,7 @@ impl Component for PostCompose {
                         .json()
                         .await
                         .unwrap();
-                        navigator.push(crate::router::Route::ShowPost { id: post_id });
+                    navigator.push(crate::router::Route::ShowPost { id: post_id });
                 });
 
                 // self.blog_params.tags = Some(get_selected_tags().iter().map(|e| e.as_string().unwrap()).collect());
@@ -348,13 +355,11 @@ impl Component for PostCompose {
                 go_back();
             }
             Msg::GoSignIn => {
-              let any_route = AnyRoute::new(String::from("/management"));
-              let continue_url = crate::router::Route::ComposePost{id:self.post_id}.to_path();
-              let query = HashMap::from([
-                (".continue", continue_url.as_str()),
-              ]);
-              let navigator = ctx.link().navigator().unwrap();
-              navigator.push_with_query(any_route, query);
+                let any_route = AnyRoute::new(String::from("/401"));
+                let continue_url = crate::router::Route::ComposePost { id: self.post_id }.to_path();
+                let query = HashMap::from([(".continue", continue_url.as_str())]);
+                let navigator = ctx.link().navigator().unwrap();
+                navigator.push_with_query(any_route, query);
             }
         }
         false
@@ -374,7 +379,6 @@ impl Component for PostCompose {
 
         let title_onchange = ctx.link().callback(move |title: String| Msg::UpdateTitle(title));
         let title_image_onchange = ctx.link().callback(move |s: String| Msg::PayloadCallback(s));
-        let go_sign_in = ctx.link().callback(|_: i32| Msg::GoSignIn);
 
         let onsubmit = ctx.link().callback(|ev: FocusEvent| {
             ev.prevent_default();
@@ -404,11 +408,14 @@ impl Component for PostCompose {
         let goback = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
         let onload = ctx.link().callback(|_: Event| Msg::InitEditor);
 
+        let loc = ctx.link().location().unwrap();
+        let redirect_url = String::from(loc.path());
+
         html! {
           <>
             <UpdatePost onsubmit={onsubmit} onchange={onchange} onclick={onclick} oninput={oninput} onupdate={onupdate}
             goback={goback} onload={onload} post_id={post_id as u64} title_onchange={title_onchange.clone()}
-            title_image_onchange={title_image_onchange.clone()} go_sign_in={go_sign_in.clone()} />
+            title_image_onchange={title_image_onchange.clone()} redirect_url={redirect_url} />
           </>
         }
     }
