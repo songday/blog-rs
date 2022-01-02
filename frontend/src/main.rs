@@ -18,6 +18,9 @@ fn app() -> Html {
                     { " and images from " }
                     <a href="https://unsplash.com">{ "Unsplash" }</a>
                 </div>
+                <div class="content has-text-centered">
+                    { "Made by Songday" }
+                </div>
             </footer>
         </BrowserRouter>
     }

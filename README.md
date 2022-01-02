@@ -1,5 +1,7 @@
 # blog-rs
 
+![BlogListPage](screenshot1.png)
+
 ## 自带服务端的博客系统
 
 当前版本：`0.3.0`
