@@ -35,12 +35,8 @@ pub async fn new(token: Option<String>) -> Result<impl Reply, Rejection> {
         .or_else(|e| Ok(wrap_json_err(500, e.0)))
 }
 
-pub async fn list(mut page_num: u8) -> Result<impl Reply, Rejection> {
-    if page_num < 1 {
-        page_num = 1;
-    }
-
-    match post::list(page_num, 10).await {
+pub async fn list(pagination_type: String, post_id: u64) -> Result<impl Reply, Rejection> {
+    match post::list(pagination_type.as_str(), post_id).await {
         Ok(list) => Ok(wrap_json_data(&list)),
         Err(e) => Ok(wrap_json_err(500, e.0)),
     }

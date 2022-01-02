@@ -1,7 +1,7 @@
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::page::post::{PostCompose, PostDetail, PostList};
+use crate::page::post::{PostCompose, PostDetail, PostsList};
 
 #[derive(Routable, PartialEq, Clone, Debug)]
 pub enum Route {
@@ -40,7 +40,7 @@ pub fn switch(routes: &Route) -> Html {
             html! { <PostDetail post_id={*id} /> }
         }
         Route::ListPosts => {
-            html! { <PostList /> }
+            html! { <PostsList /> }
         }
         Route::ComposePost { id } => {
             html! { <PostCompose post_id={*id} /> }

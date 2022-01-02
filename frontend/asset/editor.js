@@ -92,9 +92,11 @@ export function goBack() {
 }
 
 export function randomTitleImage(event, post_id, callback) {
-    const source = event.target || event.srcElement;
+    let source = event.target || event.srcElement;
+    while (source.tagName != 'BUTTON' && source.parentNode)
+        source = source.parentNode;
     console.log(source);
-    // source.disabled = true;
+    source.disabled = true;
     const content = source.innerHtml;
     source.innerHtml = '';
     const classes = source.className;
@@ -110,15 +112,17 @@ export function randomTitleImage(event, post_id, callback) {
             }
             source.innerHtml = content;
             source.className = classes;
-            source.enabled = true;
+            source.disabled = false;
         })
         .catch(err => {
             console.log(err);
+            source.innerHtml = content;
             source.className = classes;
+            source.disabled = false;
         });
 }
 
-export const uploadTitleImage = (postId, files, callback) => {
+export const uploadTitleImage = (event, postId, files, callback) => {
     const file = files[0];
     // check file type
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
@@ -135,6 +139,15 @@ export const uploadTitleImage = (postId, files, callback) => {
     const form_data = new FormData();
     form_data.append('file', file);
     form_data.append('title-image-file-name', file.name);
+    let source = event.target || event.srcElement;
+    while (source.tagName != 'BUTTON' && source.parentNode)
+        source = source.parentNode;
+    console.log(source);
+    source.disabled = true;
+    const content = source.innerHtml;
+    source.innerHtml = '';
+    const classes = source.className;
+    source.className += ' is-loading';
     fetch("/image/upload-title-image/" + postId, {
         method:"POST",
         body : form_data
@@ -147,5 +160,15 @@ export const uploadTitleImage = (postId, files, callback) => {
             document.getElementById('title-image').setAttribute("src", image+"?_rnd="+Math.random());
             callback(image);
         }
+        source.innerHtml = content;
+        source.className = classes;
+        source.disabled = false;
+    })
+    .catch(err => {
+        console.log(err);
+        source.innerHtml = content;
+        source.className = classes;
+        source.disabled = false;
     });
+
 }

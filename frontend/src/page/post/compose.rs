@@ -30,7 +30,7 @@ extern "C" {
     #[wasm_bindgen(js_name = goBack)]
     fn go_back();
     #[wasm_bindgen(js_name = uploadTitleImage)]
-    fn upload_title_image(post_id: u64, files: Vec<web_sys::File>, payload_callback: JsValue);
+    fn upload_title_image(event: Event, post_id: u64, files: Vec<web_sys::File>, payload_callback: JsValue);
 }
 
 #[derive(Clone, Debug, PartialEq, Properties)]
@@ -45,7 +45,6 @@ pub struct UpdatePostProps {
     post_id: u64,
     title_onchange: Callback<String>,
     title_image_onchange: Callback<String>,
-    redirect_url: String,
 }
 
 #[function_component(UpdatePost)]
@@ -61,7 +60,6 @@ fn update_post(
         post_id,
         title_onchange,
         title_image_onchange,
-        redirect_url,
     }: &UpdatePostProps,
 ) -> Html {
     let detail_url = format!("/post/show/{}?edit=true", post_id);
@@ -197,7 +195,7 @@ pub enum Msg {
     InitEditor,
     UpdatePost,
     LoadedBytes(String, Vec<u8>),
-    Files(Vec<web_sys::File>),
+    Files(Event, Vec<web_sys::File>),
     RetrieveRandomTitleImage(MouseEvent),
     GoBack,
     GoSignIn,
@@ -323,7 +321,7 @@ impl Component for PostCompose {
                 // });
                 self.readers.remove(&file_name);
             }
-            Msg::Files(files) => {
+            Msg::Files(event, files) => {
                 // for file in files.into_iter() {
                 // let file_name = file.name();
                 // let task = {
@@ -340,7 +338,7 @@ impl Component for PostCompose {
                 // }
                 let callback = ctx.link().callback(Msg::PayloadCallback);
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
-                upload_title_image(self.post_id, files, js_callback);
+                upload_title_image(event, self.post_id, files, js_callback);
             }
             Msg::InitEditor => {
                 init_editor();
@@ -397,7 +395,7 @@ impl Component for PostCompose {
               ;
                 result.extend(files);
             }
-            Msg::Files(result)
+            Msg::Files(e, result)
         });
         let onclick = ctx.link().callback(|e: MouseEvent| Msg::RetrieveRandomTitleImage(e));
         let oninput = ctx.link().callback(|e: InputEvent| {
@@ -408,14 +406,11 @@ impl Component for PostCompose {
         let goback = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
         let onload = ctx.link().callback(|_: Event| Msg::InitEditor);
 
-        let loc = ctx.link().location().unwrap();
-        let redirect_url = String::from(loc.path());
-
         html! {
           <>
             <UpdatePost onsubmit={onsubmit} onchange={onchange} onclick={onclick} oninput={oninput} onupdate={onupdate}
             goback={goback} onload={onload} post_id={post_id as u64} title_onchange={title_onchange.clone()}
-            title_image_onchange={title_image_onchange.clone()} redirect_url={redirect_url} />
+            title_image_onchange={title_image_onchange.clone()} />
           </>
         }
     }

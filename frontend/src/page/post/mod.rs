@@ -4,4 +4,4 @@ mod list;
 
 pub use compose::PostCompose;
 pub use detail::PostDetail;
-pub use list::PostList;
+pub use list::PostsList;

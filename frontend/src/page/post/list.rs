@@ -1,28 +1,159 @@
 use std::vec::Vec;
 
 use blog_common::dto::post::PostDetail;
-use blog_common::dto::Response;
+use blog_common::dto::{PaginationData, Response};
 use weblog::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
 use crate::router::Route;
 
+fn view_posts(posts: Vec<&PostDetail>) -> Html {
+    posts.iter().map(|&post| html! {
+        <li class="list-item mb-5">
+            <div class="card">
+                <div class="card-image">
+                    <figure class="image is-2by1">
+                        <img alt="This post's image" src={post.title_image.clone()} loading="lazy" />
+                    </figure>
+                </div>
+                <div class="card-content">
+                    <Link<Route> classes={classes!("title", "is-block")} to={Route::ShowPost { id: post.id as u64 }}>
+                        { &post.title }
+                    </Link<Route>>
+                </div>
+            </div>
+        </li>
+    }).collect()
+}
+
+#[derive(PartialEq, Properties)]
+pub struct PostsListComponentProps {
+    max_id: u64,
+    top_id: u64,
+    bottom_id: u64,
+    pagination_type: PaginationType,
+    set_max_id_callback: Callback<u64>,
+    set_pagination_id_callback: Callback<(u64, u64)>,
+}
+
+#[function_component(PostsListComponent)]
+fn posts_list(
+    PostsListComponentProps {
+        max_id,
+        top_id,
+        bottom_id,
+        pagination_type,
+        set_max_id_callback,
+        set_pagination_id_callback,
+    }: &PostsListComponentProps,
+) -> Html {
+    let posts = use_state(|| vec![]);
+    {
+        let posts = posts.clone();
+        let mut uri = String::with_capacity(16);
+        uri.push_str("/post/list/");
+        match pagination_type {
+            PaginationType::PREV => {
+                uri.push_str("prev/");
+                uri.push_str(top_id.to_string().as_str());
+            }
+            PaginationType::NEXT => {
+                uri.push_str("next/");
+                uri.push_str(bottom_id.to_string().as_str());
+            }
+        }
+        use_effect_with_deps(
+            move |_| {
+                let posts = posts.clone();
+                wasm_bindgen_futures::spawn_local(async move {
+                    let response: Response<PaginationData<Vec<PostDetail>>> = reqwasm::http::Request::get(uri.as_str())
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap();
+                    posts.set(response.data.unwrap().data);
+                });
+                || ()
+            },
+            (),
+        );
+    }
+    let posts = (*posts).clone();
+    let len = posts.len();
+    if len == 0 {
+        return html! {};
+    }
+    let max_id = *max_id;
+    let top_id = posts[0].id as u64;
+    if max_id == 0 || max_id < top_id {
+        set_max_id_callback.emit(top_id);
+    }
+    set_pagination_id_callback.emit((top_id, posts[len - 1].id as u64));
+    let row_num = len / 2 + 1;
+    let mut left_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
+    let mut right_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
+    let mut is_odd = true;
+    for post in posts.iter() {
+        if is_odd {
+            left_column_data.push(post);
+            is_odd = false;
+        } else {
+            right_column_data.push(post);
+            is_odd = true;
+        }
+    }
+    html! {
+        <>
+            <div class="columns">
+                <div class="column">
+                    <ul class="list">
+                        { view_posts(left_column_data) }
+                    </ul>
+                </div>
+                <div class="column">
+                    <ul class="list">
+                        { view_posts(right_column_data) }
+                    </ul>
+                </div>
+            </div>
+        </>
+    }
+}
+
+#[derive(Clone, PartialEq)]
+pub enum PaginationType {
+    PREV,
+    NEXT,
+}
+
 pub enum Msg {
     Compose,
-    Retrieve,
+    SetMaxId(u64),
+    SetPaginationId(u64, u64),
+    Pagination(PaginationType),
 }
 
-pub struct PostList {
-    posts: Vec<PostDetail>,
+pub struct PostsList {
+    max_id: u64,
+    top_id: u64,
+    bottom_id: u64,
+    pagination_type: PaginationType,
 }
 
-impl Component for PostList {
+impl Component for PostsList {
     type Message = Msg;
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
-        Self { posts: vec![] }
+        Self {
+            max_id: 0,
+            top_id: 0,
+            bottom_id: 0,
+            pagination_type: PaginationType::NEXT,
+        }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -45,62 +176,40 @@ impl Component for PostList {
                     }
                 });
             }
-            Msg::Retrieve => {
-                let posts = use_state(|| vec![]);
-                {
-                    let posts = posts.clone();
-                    use_effect_with_deps(
-                        move |_| {
-                            let posts = posts.clone();
-                            wasm_bindgen_futures::spawn_local(async move {
-                                let response: Response<Vec<PostDetail>> = reqwasm::http::Request::get("/post/list/1")
-                                    .send()
-                                    .await
-                                    .unwrap()
-                                    .json()
-                                    .await
-                                    .unwrap();
-                                posts.set(response.data.unwrap());
-                            });
-                            || ()
-                        },
-                        (),
-                    );
-                }
-                self.posts = (*posts).clone();
+            Msg::Pagination(pagination_type) => {
+                self.pagination_type = pagination_type;
+                return true;
+            }
+            Msg::SetMaxId(max_id) => {
+                self.max_id = max_id;
+            }
+            Msg::SetPaginationId(top_id, bottom_id) => {
+                self.top_id = top_id;
+                self.bottom_id = bottom_id;
             }
         }
         false
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        // let page = self.current_page();
-        let row_num = self.posts.len() / 2 + 1;
-        let mut left_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
-        let mut right_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
-        let mut is_odd = true;
-        for post in self.posts.iter() {
-            if is_odd {
-                left_column_data.push(post);
-                is_odd = false;
-            } else {
-                right_column_data.push(post);
-                is_odd = true;
-            }
-        }
+        let Self {
+            max_id,
+            top_id,
+            bottom_id,
+            pagination_type,
+        } = self;
+
+        let set_max_id_callback = ctx.link().callback(move |max_id| Msg::SetMaxId(max_id));
+        let set_pagination_id_callback = ctx
+            .link()
+            .callback(move |(top_id, bottom_id)| Msg::SetPaginationId(top_id, bottom_id));
+        let prev = ctx.link().callback(|_| Msg::Pagination(PaginationType::PREV));
+        let next = ctx.link().callback(|_| Msg::Pagination(PaginationType::NEXT));
+
         html! {
             <>
                 <div class="columns">
                     <div class="column is-right">
-                    {"My Blog"}
-                    </div>
-                    <div class="column">
-                    {""}
-                    </div>
-                    <div class="column">
-                    {""}
-                    </div>
-                    <div class="column">
                         <button class="button" onclick={ctx.link().callback(|_| Msg::Compose)}>
                             <span class="icon">
                                 <i class="fab fa-github"></i>
@@ -111,50 +220,18 @@ impl Component for PostList {
                 </div>
                 <h1 class="title is-1">{ "博客/Posts" }</h1>
                 <h2 class="subtitle">{ "All of your quality writing in one place" }</h2>
-                <div class="columns">
-                    <div class="column">
-                        <ul class="list">
-                            { self.view_posts(left_column_data) }
-                        </ul>
-                    </div>
-                    <div class="column">
-                        <ul class="list">
-                            { self.view_posts(right_column_data) }
-                        </ul>
-                    </div>
-                </div>
+                <PostsListComponent max_id={*max_id} top_id={*top_id} bottom_id={*bottom_id} pagination_type={pagination_type.clone()} set_max_id_callback={set_max_id_callback.clone()} set_pagination_id_callback={set_pagination_id_callback.clone()} />
                 <div class="container">
                     <nav class="pagination is-right" role="navigation" aria-label="pagination">
-                        <a class="pagination-previous">
+                        <a class="pagination-previous" onclick={prev}>
                             {"上一页/Previous"}
                         </a>
-                        <a class="pagination-next">
+                        <a class="pagination-next" onclick={next}>
                             {"下一页/Next page"}
                         </a>
                     </nav>
                 </div>
             </>
         }
-    }
-}
-
-impl PostList {
-    fn view_posts(&self, posts: Vec<&PostDetail>) -> Html {
-        posts.iter().map(|&post| html! {
-            <li class="list-item mb-5">
-                <div class="card">
-                    <div class="card-image">
-                        <figure class="image is-2by1">
-                            <img alt="This post's image" src={post.title_image.clone()} loading="lazy" />
-                        </figure>
-                    </div>
-                    <div class="card-content">
-                        <Link<Route> classes={classes!("title", "is-block")} to={Route::ShowPost { id: post.id as u64 }}>
-                            { &post.title }
-                        </Link<Route>>
-                    </div>
-                </div>
-            </li>
-        }).collect()
     }
 }

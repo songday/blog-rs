@@ -39,6 +39,9 @@ fn review_rendered_content(c: &str) -> String {
 }
 
 async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
+    if posts.is_empty() {
+        return Ok(vec![]);
+    }
     let post_ids: Vec<i64> = posts.iter().map(|p| p.id).collect();
     let tags_map = tag::get_tags_by_post_ids(post_ids).await?;
     let post_detail_list = posts
@@ -63,7 +66,7 @@ async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
     Ok(post_detail_list)
 }
 
-pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
+pub async fn list(pagination_type: &str, post_id: u64) -> Result<PaginationData<Vec<PostDetail>>> {
     let row = sqlx::query("SELECT COUNT(id) FROM post")
         .fetch_one(super::get_sqlite())
         .await?;
@@ -73,15 +76,23 @@ pub async fn list(page_num: u8, page_size: u8) -> Result<PaginationData<Vec<Post
         return Ok(PaginationData { total: 0, data: vec![] });
     }
 
-    let mut offset: i64 = ((page_num - 1) * page_size) as i64;
-    if offset > total {
-        offset = total - page_size as i64;
+    let mut sql = String::with_capacity(256);
+    sql.push_str(
+        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ",
+    );
+    if post_id > 0 {
+        if pagination_type == "prev" {
+            sql.push_str("WHERE id>");
+            sql.push_str(post_id.to_string().as_str());
+        } else if pagination_type == "next" {
+            sql.push_str("WHERE id<");
+            sql.push_str(post_id.to_string().as_str());
+        }
     }
-    let d = sqlx::query_as::<Sqlite, Post>(
-        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ORDER BY id DESC LIMIT ?, ?",
-    )
-        .bind(offset as i64)
-        .bind(page_size)
+    sql.push_str(" ORDER BY id DESC LIMIT 10");
+    println!("sql={}", &sql);
+
+    let d = sqlx::query_as::<Sqlite, Post>(&sql)
         .fetch_all(super::get_sqlite())
         .await?;
     Ok(PaginationData {
