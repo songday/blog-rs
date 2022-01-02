@@ -15,3 +15,4 @@ wasm-pack.log
 .idea
 backend/data
 *.iml
+backend/upload

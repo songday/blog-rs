@@ -90,7 +90,6 @@ pub async fn list(pagination_type: &str, post_id: u64) -> Result<PaginationData<
         }
     }
     sql.push_str(" ORDER BY id DESC LIMIT 10");
-    println!("sql={}", &sql);
 
     let d = sqlx::query_as::<Sqlite, Post>(&sql)
         .fetch_all(super::get_sqlite())

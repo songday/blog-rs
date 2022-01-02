@@ -212,7 +212,7 @@ impl Component for PostsList {
                     <div class="column is-right">
                         <button class="button" onclick={ctx.link().callback(|_| Msg::Compose)}>
                             <span class="icon">
-                                <i class="fab fa-github"></i>
+                                <i class="far fa-edit"></i>
                             </span>
                             <span>{"写博客/Compose"}</span>
                         </button>
