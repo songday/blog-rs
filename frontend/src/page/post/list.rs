@@ -209,7 +209,11 @@ impl Component for PostsList {
         html! {
             <>
                 <div class="columns">
-                    <div class="column is-right">
+                    <div class="column is-10">
+                        <h1 class="title is-1">{ "博客/Posts" }</h1>
+                        <h2 class="subtitle">{ "All of your quality writing in one place" }</h2>
+                    </div>
+                    <div class="column" style="text-align:right">
                         <button class="button" onclick={ctx.link().callback(|_| Msg::Compose)}>
                             <span class="icon">
                                 <i class="far fa-edit"></i>
@@ -218,8 +222,6 @@ impl Component for PostsList {
                         </button>
                     </div>
                 </div>
-                <h1 class="title is-1">{ "博客/Posts" }</h1>
-                <h2 class="subtitle">{ "All of your quality writing in one place" }</h2>
                 <PostsListComponent max_id={*max_id} top_id={*top_id} bottom_id={*bottom_id} pagination_type={pagination_type.clone()} set_max_id_callback={set_max_id_callback.clone()} set_pagination_id_callback={set_pagination_id_callback.clone()} />
                 <div class="container">
                     <nav class="pagination is-right" role="navigation" aria-label="pagination">
