@@ -66,7 +66,7 @@ async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
     Ok(post_detail_list)
 }
 
-pub async fn list(pagination_type: &str, post_id: u64) -> Result<PaginationData<Vec<PostDetail>>> {
+pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
     let row = sqlx::query("SELECT COUNT(id) FROM post")
         .fetch_one(super::get_sqlite())
         .await?;
@@ -89,9 +89,10 @@ pub async fn list(pagination_type: &str, post_id: u64) -> Result<PaginationData<
             sql.push_str(post_id.to_string().as_str());
         }
     }
-    sql.push_str(" ORDER BY id DESC LIMIT 10");
+    sql.push_str(" ORDER BY id DESC LIMIT ?");
 
     let d = sqlx::query_as::<Sqlite, Post>(&sql)
+        .bind(page_size)
         .fetch_all(super::get_sqlite())
         .await?;
     Ok(PaginationData {

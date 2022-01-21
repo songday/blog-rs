@@ -2,6 +2,7 @@ use std::vec::Vec;
 
 use blog_common::dto::post::PostDetail;
 use blog_common::dto::{PaginationData, Response};
+use blog_common::val;
 use weblog::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -123,6 +124,32 @@ fn posts_list(
     }
 }
 
+
+#[derive(PartialEq, Properties)]
+pub struct PaginationComponentProps {
+    max_id: u64,
+    top_id: u64,
+    prev: Callback<MouseEvent>,
+    next: Callback<MouseEvent>,
+}
+
+#[function_component(PaginationButtons)]
+fn pagination_buttons(PaginationComponentProps{max_id, top_id, prev, next}: &PaginationComponentProps) -> Html {
+    let prev_disabled = if max_id > top_id {""} else {"disabled"};
+    html!{
+        <div class="container">
+            <nav class="pagination is-right" role="navigation" aria-label="pagination">
+                <a class="pagination-previous" {prev_disabled} onclick={prev}>
+                    {"上一页/Previous"}
+                </a>
+                <a class="pagination-next" onclick={next}>
+                    {"下一页/Next page"}
+                </a>
+            </nav>
+        </div>
+    }
+}
+
 #[derive(Clone, PartialEq)]
 pub enum PaginationType {
     PREV,
@@ -225,12 +252,7 @@ impl Component for PostsList {
                 <PostsListComponent max_id={*max_id} top_id={*top_id} bottom_id={*bottom_id} pagination_type={pagination_type.clone()} set_max_id_callback={set_max_id_callback.clone()} set_pagination_id_callback={set_pagination_id_callback.clone()} />
                 <div class="container">
                     <nav class="pagination is-right" role="navigation" aria-label="pagination">
-                        <a class="pagination-previous" onclick={prev}>
-                            {"上一页/Previous"}
-                        </a>
-                        <a class="pagination-next" onclick={next}>
-                            {"下一页/Next page"}
-                        </a>
+                        <PaginationButtons max_id={*max_id} top_id={*top_id} prev={prev} next={next}/>
                     </nav>
                 </div>
             </>

@@ -36,7 +36,7 @@ pub async fn new(token: Option<String>) -> Result<impl Reply, Rejection> {
 }
 
 pub async fn list(pagination_type: String, post_id: u64) -> Result<impl Reply, Rejection> {
-    match post::list(pagination_type.as_str(), post_id).await {
+    match post::list(pagination_type.as_str(), post_id, val::POSTS_PAGE_SIZE).await {
         Ok(list) => Ok(wrap_json_data(&list)),
         Err(e) => Ok(wrap_json_err(500, e.0)),
     }
