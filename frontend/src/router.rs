@@ -10,7 +10,7 @@ pub enum Route {
     #[at("/posts/compose/:id")]
     ComposePost { id: u64 },
     #[at("/")]
-    ListPosts,
+    ListPosts,// { pagination_type: String, id: u64 }
     #[not_found]
     #[at("/404")]
     NotFound,

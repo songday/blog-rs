@@ -40,6 +40,7 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
     }
     let post = (*post_detail).clone();
     let title_image = post.title_image.to_string();
+    gloo::utils::document().set_title(&post.title);
     html! {
         <>
             <section class="hero is-large is-light has-background">

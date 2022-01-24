@@ -90,6 +90,7 @@ pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<
         }
     }
     sql.push_str(" ORDER BY id DESC LIMIT ?");
+    println!("sql={}", sql);
 
     let d = sqlx::query_as::<Sqlite, Post>(&sql)
         .bind(page_size)

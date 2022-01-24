@@ -49,6 +49,7 @@ fn posts_list(
         set_pagination_id_callback,
     }: &PostsListComponentProps,
 ) -> Html {
+    console_log!("pagination_type=", format!("{:?}",pagination_type), ",top_id=",top_id.to_string(), ",bottom_id=",bottom_id.to_string());
     let posts = use_state(|| vec![]);
     {
         let posts = posts.clone();
@@ -64,9 +65,11 @@ fn posts_list(
                 uri.push_str(bottom_id.to_string().as_str());
             }
         }
-        use_effect_with_deps(
-            move |_| {
+        console_log!("uri=", &uri);
+        use_effect(
+            move || {
                 let posts = posts.clone();
+                console_log!("request uri");
                 wasm_bindgen_futures::spawn_local(async move {
                     let response: Response<PaginationData<Vec<PostDetail>>> = reqwasm::http::Request::get(uri.as_str())
                         .send()
@@ -78,8 +81,7 @@ fn posts_list(
                     posts.set(response.data.unwrap().data);
                 });
                 || ()
-            },
-            (),
+            }
         );
     }
     let posts = (*posts).clone();
@@ -150,7 +152,7 @@ fn pagination_buttons(PaginationComponentProps{max_id, top_id, prev, next}: &Pag
     }
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum PaginationType {
     PREV,
     NEXT,
@@ -232,6 +234,8 @@ impl Component for PostsList {
             .callback(move |(top_id, bottom_id)| Msg::SetPaginationId(top_id, bottom_id));
         let prev = ctx.link().callback(|_| Msg::Pagination(PaginationType::PREV));
         let next = ctx.link().callback(|_| Msg::Pagination(PaginationType::NEXT));
+
+        gloo::utils::document().set_title("博客/Blog");
 
         html! {
             <>
