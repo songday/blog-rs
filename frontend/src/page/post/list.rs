@@ -1,3 +1,4 @@
+use std::rc::Rc;
 use std::vec::Vec;
 
 use blog_common::dto::post::PostDetail;
@@ -30,44 +31,36 @@ fn view_posts(posts: Vec<&PostDetail>) -> Html {
 
 #[derive(PartialEq, Properties)]
 pub struct PostsListComponentProps {
-    max_id: u64,
-    top_id: u64,
-    bottom_id: u64,
-    pagination_type: PaginationType,
-    set_max_id_callback: Callback<u64>,
-    set_pagination_id_callback: Callback<(u64, u64)>,
+    max_id: i64,
+    set_max_id_callback: Callback<i64>,
 }
 
 #[function_component(PostsListComponent)]
 fn posts_list(
     PostsListComponentProps {
         max_id,
-        top_id,
-        bottom_id,
-        pagination_type,
         set_max_id_callback,
-        set_pagination_id_callback,
     }: &PostsListComponentProps,
 ) -> Html {
-    console_log!("pagination_type=", format!("{:?}",pagination_type), ",top_id=",top_id.to_string(), ",bottom_id=",bottom_id.to_string());
-    let posts = use_state(|| vec![]);
+    let pagination_state = use_reducer(PaginationState::default);
+    let posts: UseStateHandle<Vec<PostDetail>> = use_state(|| Vec::with_capacity(0));
     {
         let posts = posts.clone();
-        let mut uri = String::with_capacity(16);
+        let mut uri = String::with_capacity(32);
         uri.push_str("/post/list/");
-        match pagination_type {
-            PaginationType::PREV => {
+        match pagination_state.pagination_type {
+            PaginationType::PREV(id) => {
                 uri.push_str("prev/");
-                uri.push_str(top_id.to_string().as_str());
-            }
-            PaginationType::NEXT => {
+                uri.push_str(id.to_string().as_str());
+            },
+            PaginationType::NEXT(id) => {
                 uri.push_str("next/");
-                uri.push_str(bottom_id.to_string().as_str());
-            }
+                uri.push_str(id.to_string().as_str());
+            },
         }
         console_log!("uri=", &uri);
-        use_effect(
-            move || {
+        use_effect_with_deps(
+            move |_pagination_state| {
                 let posts = posts.clone();
                 console_log!("request uri");
                 wasm_bindgen_futures::spawn_local(async move {
@@ -81,7 +74,8 @@ fn posts_list(
                     posts.set(response.data.unwrap().data);
                 });
                 || ()
-            }
+            },
+            pagination_state.clone(),
         );
     }
     let posts = (*posts).clone();
@@ -89,12 +83,12 @@ fn posts_list(
     if len == 0 {
         return html! {};
     }
-    let max_id = *max_id;
-    let top_id = posts[0].id as u64;
+    let top_id = posts[0].id;
+    let bottom_id = posts[len - 1].id;
+    let max_id = pagination_state.max_post_id;
     if max_id == 0 || max_id < top_id {
-        set_max_id_callback.emit(top_id);
+        set_max_id_callback.emit(max_id);
     }
-    set_pagination_id_callback.emit((top_id, posts[len - 1].id as u64));
     let row_num = len / 2 + 1;
     let mut left_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
     let mut right_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
@@ -108,6 +102,20 @@ fn posts_list(
             is_odd = true;
         }
     }
+    let prev_disabled = if max_id < top_id { true } else { false };
+    let next_disabled = if posts.len() < val::POSTS_PAGE_SIZE as usize {
+        true
+    } else {
+        false
+    };
+    let prev = {
+        let pagination_state = pagination_state.clone();
+        Callback::from(move |_| pagination_state.dispatch(PaginationType::PREV(top_id)))
+    };
+    let next = {
+        let pagination_state = pagination_state.clone();
+        Callback::from(move |_| pagination_state.dispatch(PaginationType::NEXT(bottom_id)))
+    };
     html! {
         <>
             <div class="columns">
@@ -122,54 +130,71 @@ fn posts_list(
                     </ul>
                 </div>
             </div>
+            <div class="container">
+                <nav class="pagination is-right" role="navigation" aria-label="pagination">
+                    <a class="pagination-previous" disabled={prev_disabled} onclick={prev}>
+                        {"上一页/Previous"}
+                    </a>
+                    <a class="pagination-next" disabled={next_disabled} onclick={next}>
+                        {"下一页/Next page"}
+                    </a>
+                </nav>
+            </div>
         </>
     }
 }
 
-
-#[derive(PartialEq, Properties)]
-pub struct PaginationComponentProps {
-    max_id: u64,
-    top_id: u64,
-    prev: Callback<MouseEvent>,
-    next: Callback<MouseEvent>,
+#[derive(PartialEq)]
+struct PaginationState {
+    max_post_id: i64,
+    pagination_type: PaginationType,
 }
 
-#[function_component(PaginationButtons)]
-fn pagination_buttons(PaginationComponentProps{max_id, top_id, prev, next}: &PaginationComponentProps) -> Html {
-    let prev_disabled = if max_id > top_id {""} else {"disabled"};
-    html!{
-        <div class="container">
-            <nav class="pagination is-right" role="navigation" aria-label="pagination">
-                <a class="pagination-previous" {prev_disabled} onclick={prev}>
-                    {"上一页/Previous"}
-                </a>
-                <a class="pagination-next" onclick={next}>
-                    {"下一页/Next page"}
-                </a>
-            </nav>
-        </div>
+impl Default for PaginationState {
+    fn default() -> Self {
+        Self {
+            max_post_id: 0,
+            pagination_type: PaginationType::NEXT(0),
+        }
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+impl Reducible for PaginationState {
+    type Action = PaginationType;
+
+    fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
+        let new_max_post_id = match action {
+            PaginationType::NEXT(top_id) => {
+                if self.max_post_id < top_id {
+                    top_id
+                } else {
+                    self.max_post_id
+                }
+            },
+            _ => self.max_post_id,
+        };
+
+        Self {
+            max_post_id: new_max_post_id,
+            pagination_type: action,
+        }
+        .into()
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PaginationType {
-    PREV,
-    NEXT,
+    PREV(i64),
+    NEXT(i64),
 }
 
 pub enum Msg {
     Compose,
-    SetMaxId(u64),
-    SetPaginationId(u64, u64),
-    Pagination(PaginationType),
+    SetMaxId(i64),
 }
 
 pub struct PostsList {
-    max_id: u64,
-    top_id: u64,
-    bottom_id: u64,
-    pagination_type: PaginationType,
+    max_id: i64,
 }
 
 impl Component for PostsList {
@@ -177,12 +202,7 @@ impl Component for PostsList {
     type Properties = ();
 
     fn create(_ctx: &Context<Self>) -> Self {
-        Self {
-            max_id: 0,
-            top_id: 0,
-            bottom_id: 0,
-            pagination_type: PaginationType::NEXT,
-        }
+        Self { max_id: 0 }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
@@ -204,36 +224,18 @@ impl Component for PostsList {
                         }
                     }
                 });
-            }
-            Msg::Pagination(pagination_type) => {
-                self.pagination_type = pagination_type;
-                return true;
-            }
+            },
             Msg::SetMaxId(max_id) => {
                 self.max_id = max_id;
-            }
-            Msg::SetPaginationId(top_id, bottom_id) => {
-                self.top_id = top_id;
-                self.bottom_id = bottom_id;
-            }
+            },
         }
         false
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let Self {
-            max_id,
-            top_id,
-            bottom_id,
-            pagination_type,
-        } = self;
+        let Self { max_id } = self;
 
-        let set_max_id_callback = ctx.link().callback(move |max_id| Msg::SetMaxId(max_id));
-        let set_pagination_id_callback = ctx
-            .link()
-            .callback(move |(top_id, bottom_id)| Msg::SetPaginationId(top_id, bottom_id));
-        let prev = ctx.link().callback(|_| Msg::Pagination(PaginationType::PREV));
-        let next = ctx.link().callback(|_| Msg::Pagination(PaginationType::NEXT));
+        let set_max_id_callback = ctx.link().callback(move |new_max_id| Msg::SetMaxId(new_max_id));
 
         gloo::utils::document().set_title("博客/Blog");
 
@@ -253,12 +255,7 @@ impl Component for PostsList {
                         </button>
                     </div>
                 </div>
-                <PostsListComponent max_id={*max_id} top_id={*top_id} bottom_id={*bottom_id} pagination_type={pagination_type.clone()} set_max_id_callback={set_max_id_callback.clone()} set_pagination_id_callback={set_pagination_id_callback.clone()} />
-                <div class="container">
-                    <nav class="pagination is-right" role="navigation" aria-label="pagination">
-                        <PaginationButtons max_id={*max_id} top_id={*top_id} prev={prev} next={next}/>
-                    </nav>
-                </div>
+                <PostsListComponent max_id={*max_id} set_max_id_callback={set_max_id_callback.clone()} />
             </>
         }
     }

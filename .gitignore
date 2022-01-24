@@ -16,3 +16,4 @@ wasm-pack.log
 backend/data
 *.iml
 backend/upload
+blog.dat*

@@ -80,22 +80,33 @@ pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<
     sql.push_str(
         "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ",
     );
+    let mut order_by_asc = false;
     if post_id > 0 {
         if pagination_type == "prev" {
             sql.push_str("WHERE id>");
             sql.push_str(post_id.to_string().as_str());
+            order_by_asc = true;
         } else if pagination_type == "next" {
             sql.push_str("WHERE id<");
             sql.push_str(post_id.to_string().as_str());
         }
     }
-    sql.push_str(" ORDER BY id DESC LIMIT ?");
+    sql.push_str(" ORDER BY id ");
+    if order_by_asc {
+        sql.push_str("ASC");
+    } else {
+        sql.push_str("DESC");
+    }
+    sql.push_str(" LIMIT ?");
     println!("sql={}", sql);
 
-    let d = sqlx::query_as::<Sqlite, Post>(&sql)
+    let mut d = sqlx::query_as::<Sqlite, Post>(&sql)
         .bind(page_size)
         .fetch_all(super::get_sqlite())
         .await?;
+    if order_by_asc {
+        d.reverse();
+    }
     Ok(PaginationData {
         total: total as u64,
         data: to_detail_list(d).await?,

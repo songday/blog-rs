@@ -74,7 +74,7 @@ pub async fn show(
         Ok(mut blog) => {
             blog.editable = editable;
             Ok(wrap_json_data(&blog))
-        }
+        },
         Err(e) => Ok(wrap_json_err(500, e.0)),
     }
 }

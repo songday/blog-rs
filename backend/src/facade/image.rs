@@ -46,7 +46,7 @@ pub async fn verify_image(token: Option<String>) -> Result<WarpResponse, Rejecti
             let headers = r.headers_mut();
             headers.extend(header);
             Ok(r)
-        }
+        },
         Err(e) => return Ok(Response::new("Wrong request token".into())),
     }
 }

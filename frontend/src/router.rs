@@ -10,7 +10,7 @@ pub enum Route {
     #[at("/posts/compose/:id")]
     ComposePost { id: u64 },
     #[at("/")]
-    ListPosts,// { pagination_type: String, id: u64 }
+    ListPosts, // { pagination_type: String, id: u64 }
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -38,15 +38,15 @@ pub fn switch(routes: &Route) -> Html {
     match routes {
         Route::ShowPost { id } => {
             html! { <PostDetail post_id={*id} /> }
-        }
+        },
         Route::ListPosts => {
             html! { <PostsList /> }
-        }
+        },
         Route::ComposePost { id } => {
             html! { <PostCompose post_id={*id} /> }
-        }
+        },
         _ => {
             html! { <NotFound /> }
-        }
+        },
     }
 }

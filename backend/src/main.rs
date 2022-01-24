@@ -20,13 +20,13 @@ fn main() -> result::Result<()> {
             Ok(()) => {
                 println!("Shutting down web server...");
                 match tx.send(()) {
-                    Ok(()) => {}
+                    Ok(()) => {},
                     Err(_) => println!("the receiver dropped"),
                 }
-            }
+            },
             Err(e) => {
                 eprintln!("{}", e);
-            }
+            },
         }
     });
 

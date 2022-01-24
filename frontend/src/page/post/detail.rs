@@ -107,7 +107,7 @@ impl Component for PostDetail {
             Msg::DisplayDetail(post_id) => {
                 weblog::console_log!("load post ", post_id);
                 return true;
-            }
+            },
         }
     }
 

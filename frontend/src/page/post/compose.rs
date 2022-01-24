@@ -252,12 +252,12 @@ impl Component for PostCompose {
             */
             Msg::PayloadCallback(s) => {
                 self.title_image = s;
-            }
+            },
             // Msg::SelectTag(tag) => {
             //     select_tag(tag);
             //     return false;
             // },
-            Msg::Ignore => {}
+            Msg::Ignore => {},
             Msg::UpdateTitle(s) => self.title = s,
             Msg::UpdatePost => {
                 let post_data = PostData {
@@ -291,7 +291,7 @@ impl Component for PostCompose {
                 //     self.response.clone(),
                 // );
                 // self.fetch_task = Some(fetch_task);
-            }
+            },
             // Msg::Response(Ok::<PostDetail, _>(blog)) => {
             //     self.fetch_task = None;
             //     self.router_agent.send(ChangeRoute(AppRoute::PostShow(blog.id).into()));
@@ -320,7 +320,7 @@ impl Component for PostCompose {
                 //     let response = reqwasm::http::Request::post("").body(&data.as_slice()).send().await.unwrap();
                 // });
                 self.readers.remove(&file_name);
-            }
+            },
             Msg::Files(event, files) => {
                 // for file in files.into_iter() {
                 // let file_name = file.name();
@@ -339,26 +339,26 @@ impl Component for PostCompose {
                 let callback = ctx.link().callback(Msg::PayloadCallback);
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
                 upload_title_image(event, self.post_id, files, js_callback);
-            }
+            },
             Msg::InitEditor => {
                 init_editor();
                 return false;
-            }
+            },
             Msg::RetrieveRandomTitleImage(event) => {
                 let callback = ctx.link().callback(Msg::PayloadCallback);
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
                 random_title_image(event, self.post_id, js_callback);
-            }
+            },
             Msg::GoBack => {
                 go_back();
-            }
+            },
             Msg::GoSignIn => {
                 let any_route = AnyRoute::new(String::from("/401"));
                 let continue_url = crate::router::Route::ComposePost { id: self.post_id }.to_path();
                 let query = HashMap::from([(".continue", continue_url.as_str())]);
                 let navigator = ctx.link().navigator().unwrap();
                 navigator.push_with_query(any_route, query);
-            }
+            },
         }
         false
     }

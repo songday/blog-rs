@@ -173,7 +173,7 @@ async fn write_bytes(writer: &mut BufWriter<File>, b: &[u8]) -> Result<usize> {
             Err(e) => {
                 dbg!(e);
                 return Err(Error::UploadFailed);
-            }
+            },
         };
     }
     return Ok(cnt);
@@ -216,11 +216,11 @@ pub async fn save_upload_file(
                         match get_upload_file_writer(post_id, filename, ext).await {
                             Ok(new_data) => {
                                 file_writers.insert(filename.to_string(), new_data);
-                            }
+                            },
                             Err(e) => {
                                 dbg!(e);
                                 return Err(Error::UploadFailed);
-                            }
+                            },
                         }
                     }
                     let (w, i) = file_writers.get_mut(filename).unwrap();
@@ -229,11 +229,11 @@ pub async fn save_upload_file(
                             Ok(mut buf) => {
                                 filesize += buf.remaining();
                                 w.write_all_buf(&mut buf).await;
-                            }
+                            },
                             Err(e) => {
                                 dbg!(e);
                                 return Err(Error::UploadFailed);
-                            }
+                            },
                         };
                     }
                 } else {
@@ -283,11 +283,11 @@ pub async fn save_upload_file(
                     };
                 }
                 */
-            }
+            },
             Err(e) => {
                 dbg!(e);
                 return Err(Error::UploadFailed);
-            }
+            },
         };
     }
 
@@ -323,11 +323,11 @@ pub async fn save_upload_stream(
         Ok((w, p)) => {
             upload_info = Some(p);
             w
-        }
+        },
         Err(e) => {
             dbg!(e);
             return Err(Error::UploadFailed);
-        }
+        },
     };
 
     let mut upload_info = upload_info.unwrap();

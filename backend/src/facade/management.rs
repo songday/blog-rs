@@ -36,7 +36,7 @@ pub async fn index(token: Option<String>) -> Result<impl Reply, Rejection> {
             Err(e) => {
                 println!("Parsing error(s): {}", e);
                 ::std::process::exit(1);
-            }
+            },
         };
         Ok(Response::new(r.into()))
         // Ok(warp::reply::html(&r))

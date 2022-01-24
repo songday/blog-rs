@@ -32,7 +32,7 @@ pub async fn get_upload_image(path: &str) -> Result<Vec<u8>> {
         Err(e) => {
             eprintln!("{:?}", e);
             Err(Error::UploadFailed.into())
-        }
+        },
     }
 }
 
@@ -51,8 +51,8 @@ pub async fn upload(post_id: u64, data: FormData) -> Result<Vec<UploadImage>> {
                 let relative_path = f.relative_path.to_string();
                 let original_filename = f.original_filename.to_string();
                 images.push(UploadImage::new(relative_path, original_filename));
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
     Ok(images)
@@ -111,9 +111,9 @@ pub async fn random_title_image(id: u64) -> Result<String> {
                     Err(e) => {
                         eprintln!("{:?}", e);
                         ""
-                    }
+                    },
                 }
-            }
+            },
             None => "",
         });
     if file_ext.is_empty() {

@@ -91,7 +91,7 @@ fn response<D: Serialize>(result: CommonResult<D>) -> Result<impl Reply, Rejecti
                 Error::BusinessException(m) => wrap_json_err(400, Error::BusinessException(m)),
                 _ => wrap_json_err(500, e),
             }
-        }
+        },
     };
     Ok(r)
 }
