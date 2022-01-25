@@ -1,13 +1,11 @@
-use std::rc::Rc;
-
 use blog_common::dto::post::PostDetail as PostDetailDto;
 use blog_common::dto::Response;
+use time::format_description;
+use time::OffsetDateTime;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-pub enum Msg {
-    DisplayDetail(u64),
-}
+use crate::router::Route;
 
 #[derive(Clone, Debug, PartialEq, Properties)]
 pub struct ShowDetailProps {
@@ -20,26 +18,26 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
     let post_detail = use_state(|| PostDetailDto::default());
     {
         let post_detail = post_detail.clone();
-        use_effect_with_deps(
-            move |_| {
-                let post_detail = post_detail.clone();
-                wasm_bindgen_futures::spawn_local(async move {
-                    let response: Response<PostDetailDto> = reqwasm::http::Request::get(&detail_url)
-                        .send()
-                        .await
-                        .unwrap()
-                        .json()
-                        .await
-                        .unwrap();
-                    post_detail.set(response.data.unwrap());
-                });
-                || ()
-            },
-            (),
-        );
+        use_effect(move || {
+            let post_detail = post_detail.clone();
+            wasm_bindgen_futures::spawn_local(async move {
+                let response: Response<PostDetailDto> = reqwasm::http::Request::get(&detail_url)
+                    .send()
+                    .await
+                    .unwrap()
+                    .json()
+                    .await
+                    .unwrap();
+                post_detail.set(response.data.unwrap());
+            });
+            || ()
+        });
     }
     let post = (*post_detail).clone();
     let title_image = post.title_image.to_string();
+    let datetime = OffsetDateTime::from_unix_timestamp(post.created_at as i64).unwrap();
+    let format = format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
+    let post_time = datetime.format(&format).expect("Failed to format the date");
     gloo::utils::document().set_title(&post.title);
     html! {
         <>
@@ -51,7 +49,7 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
                             { &post.title }
                         </p>
                         <p class="subtitle is-3">
-                            {"Medium subtitle"}
+                            { &post_time }
                         </p>
                         <div class="tags">
                             <span class="tag is-info">{"tag"}</span>
@@ -84,7 +82,7 @@ pub struct PostDetail {
 }
 
 impl Component for PostDetail {
-    type Message = Msg;
+    type Message = ();
     type Properties = Props;
 
     fn create(ctx: &Context<Self>) -> Self {
@@ -102,20 +100,44 @@ impl Component for PostDetail {
         changed
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            Msg::DisplayDetail(post_id) => {
-                weblog::console_log!("load post ", post_id);
-                return true;
-            },
-        }
-    }
-
     fn view(&self, _ctx: &Context<Self>) -> Html {
         let Self { post_id } = self;
         html! {
             <>
+                <script type="application/javascript">
+                {"
+                document.addEventListener('DOMContentLoaded', () => {
+                    (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                        const $notification = $delete.parentNode;                    
+                        $delete.addEventListener('click', () => {
+                        $notification.parentNode.removeChild($notification);
+                        });
+                    });
+                });
+                function delete(id) {
+                    if (confirm('是否删除'))
+                        location.href = '/post/delete/"}{post_id}{"';
+                }
+                "}
+                </script>
                 <ShowDetail post_id={*post_id} />
+                <div class="container">
+                    <div class="buttons are-small">
+                        <Link<Route> classes={classes!("button")} to={Route::ComposePost { id: *post_id }}>
+                            { "编辑/Edit" }
+                        </Link<Route>>
+                        <button class="button is-danger is-outlined">{"删除/Delete"}</button>
+                    </div>
+                </div>
+                <div class="notification is-danger">
+                    <button class="delete"></button>
+                    { "删除后，数据将不能回复" }<br/>
+                    { "Data cannot be recovered" }<br/>
+                    <div class="buttons">
+                        <button class="button is-danger is-outlined">{"删除/Delete"}</button>
+                        <button class="button is-success">{"放弃/Cancel"}</button>
+                    </div>
+                </div>
             </>
         }
     }

@@ -13,7 +13,7 @@ use serde::Serialize;
 use sqlx::ColumnIndex;
 use warp::{
     filters::multipart::FormData,
-    http::{response::Response, StatusCode},
+    http::{response::Response, StatusCode, Uri},
     reply::{Json, Response as WarpResponse},
     Rejection, Reply,
 };
@@ -51,7 +51,7 @@ pub async fn list_by_tag(tag: String, page_num: u8) -> Result<impl Reply, Reject
 
 pub async fn save(user: Option<UserInfo>, post: PostData) -> Result<impl Reply, Rejection> {
     if user.is_none() {
-        return Ok(wrap_json_err(500, Error::NotAuthed));
+        return Ok(wrap_json_err(403, Error::NotAuthed));
     }
     match post::save(post).await {
         Ok(blog) => Ok(wrap_json_data(&blog)),
@@ -77,4 +77,14 @@ pub async fn show(
         },
         Err(e) => Ok(wrap_json_err(500, e.0)),
     }
+}
+
+pub async fn delete(id: u64, user: Option<UserInfo>) -> Result<impl Reply, Rejection> {
+    if user.is_some() {
+        // post::delete(id).await.map(|_| wrap_json_data("Deleted")).map_err(|e| wrap_json_err(500, e.0))
+        if let Err(e) = post::delete(id).await {
+            eprintln!("{:?}", e);
+        }
+    }
+    Ok(warp::redirect::found(Uri::from_static("/")))
 }

@@ -276,3 +276,11 @@ pub async fn show(id: u64, editable: bool) -> Result<PostDetail> {
         Ok(post_detail)
     }
 }
+
+pub async fn delete(id: u64) -> Result<()> {
+    let r = sqlx::query("DELETE FROM post WHERE id=?")
+        .bind(id as i64)
+        .execute(super::get_sqlite())
+        .await?;
+    Ok(())
+}

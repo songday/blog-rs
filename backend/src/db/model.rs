@@ -80,10 +80,6 @@ pub struct TagUsage {
 #[derive(Clone, Default, Debug, Serialize, sqlx::FromRow)]
 pub struct Settings {
     pub admin_password: String,
-    pub name: String,
-    pub domain: String,
-    pub copyright: String,
-    pub license: String,
     // pub settings: blog_common::dto::management::Settings,
 }
 
@@ -97,16 +93,6 @@ pub struct Settings {
 impl From<blog_common::dto::management::Settings> for Settings {
     fn from(settings: blog_common::dto::management::Settings) -> Self {
         let admin_password = settings.admin_password;
-        let name = settings.name;
-        let domain = settings.domain;
-        let copyright = settings.copyright;
-        let license = settings.license;
-        Self {
-            admin_password,
-            name,
-            domain,
-            copyright,
-            license,
-        }
+        Self { admin_password }
     }
 }

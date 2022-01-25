@@ -32,10 +32,10 @@ deleted_at INTEGER
 
 CREATE TABLE settings (
 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-name TEXT(128) NOT NULL,
-domain TEXT(1024) NOT NULL,
-copyright TEXT(128) NOT NULL,
-license TEXT(64) NOT NULL,
+-- name TEXT(128) NOT NULL,
+-- domain TEXT(1024) NOT NULL,
+-- copyright TEXT(128) NOT NULL,
+-- license TEXT(64) NOT NULL,
 admin_password TEXT(1024) NOT NULL,
 created_at INTEGER NOT NULL,
 updated_at INTEGER

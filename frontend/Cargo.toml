@@ -31,6 +31,7 @@ reqwasm = "0.3"
 urlencoding = "2"
 serde = "1.0"
 serde_json = "1.0"
+time = { version = "0.3", features = ["formatting", "parsing"] }
 wasm-bindgen-futures = "0.4"
 weblog = "0.3.0"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlDocument"] }

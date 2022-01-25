@@ -55,27 +55,19 @@ pub async fn update_settings(settings: Settings) -> Result<()> {
 
     let now = time::unix_epoch_sec() as i64;
 
-    let r = sqlx::query(
-        "UPDATE settings SET name=?,domain=?,copyright=?,license=?,admin_password=?,updated_at=? WHERE id=1",
-    )
-    .bind(&settings.name)
-    .bind(&settings.domain)
-    .bind(&settings.copyright)
-    .bind(&settings.license)
-    .bind(&encrypted_password)
-    .bind(now)
-    .execute(db::get_sqlite())
-    .await?;
+    let r = sqlx::query("UPDATE settings SET admin_password=?,updated_at=? WHERE id=1")
+        .bind(&encrypted_password)
+        .bind(now)
+        .execute(db::get_sqlite())
+        .await?;
 
     if r.rows_affected() < 1 {
-        sqlx::query("INSERT INTO settings(id,name,domain,copyright,license,admin_password,created_at,updated_at)VALUES(1,?,?,?,?,?,?,?)")
-            .bind(&settings.name)
-            .bind(&settings.domain)
-            .bind(&settings.copyright)
-            .bind(&settings.license)
+        sqlx::query("INSERT INTO settings(id,admin_password,created_at,updated_at)VALUES(1,?,?,?)")
             .bind(&encrypted_password)
             .bind(now)
-            .bind(now).execute(db::get_sqlite()).await?;
+            .bind(now)
+            .execute(db::get_sqlite())
+            .await?;
     }
     Ok(())
 }

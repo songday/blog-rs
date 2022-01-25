@@ -42,6 +42,7 @@ fn posts_list(
         set_max_id_callback,
     }: &PostsListComponentProps,
 ) -> Html {
+    console_log!("pass in max_id=", max_id.to_string());
     let pagination_state = use_reducer(PaginationState::default);
     let posts: UseStateHandle<Vec<PostDetail>> = use_state(|| Vec::with_capacity(0));
     {
@@ -87,7 +88,7 @@ fn posts_list(
     let bottom_id = posts[len - 1].id;
     let max_id = pagination_state.max_post_id;
     if max_id == 0 || max_id < top_id {
-        set_max_id_callback.emit(max_id);
+        set_max_id_callback.emit(top_id);
     }
     let row_num = len / 2 + 1;
     let mut left_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
@@ -103,7 +104,7 @@ fn posts_list(
         }
     }
     let prev_disabled = if max_id < top_id { true } else { false };
-    let next_disabled = if posts.len() < val::POSTS_PAGE_SIZE as usize {
+    let next_disabled = if len < val::POSTS_PAGE_SIZE as usize {
         true
     } else {
         false
@@ -226,6 +227,7 @@ impl Component for PostsList {
                 });
             },
             Msg::SetMaxId(max_id) => {
+                console_log!("SetMaxId=", max_id);
                 self.max_id = max_id;
             },
         }

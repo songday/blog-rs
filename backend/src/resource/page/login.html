@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>管理登录</title>
+    <title>管理登录/Management sign in</title>
     <link rel="stylesheet" href="/asset/bulma.min-82aac43507618108.css">
     <link rel="stylesheet" href="/asset/fontawesome.min-5e9e696c59c57e83.css">
     <link rel="stylesheet" href="/asset/solid.min-70c2e5caa950974d.css">
@@ -52,21 +52,21 @@
 <body>
 <div class="container">
     <h1 class="title">
-        管理员登录
+        管理登录/Management sign in
     </h1>
     <p>&nbsp;</p>
     <div class="field">
-        <label class="label">管理密码</label>
+        <label class="label">密码/Password</label>
         <div class="control is-medium has-icons-left has-icons-right">
             <input class="input" type="password" placeholder="" id="admin_password" value=""/>
             <span class="icon is-small is-left">
               <i class="fas fa-lock"></i>
             </span>
         </div>
-        <p class="help">如果忘记了密码，请在本机登录（localhost或127.0.0.1），可直接访问设置页面修改密码。</p>
+        <p class="help">忘记密码/Forgot password</p>
     </div>
     <div class="field">
-        <label class="label">验证码</label>
+        <label class="label">验证码/Captcha</label>
         <div class="control is-medium has-icons-left has-icons-right">
             <input class="input" type="text" placeholder="" id="captcha" value=""/>
             <span class="icon is-small is-left">
@@ -77,10 +77,10 @@
     </div>
     <div class="field is-grouped">
         <div class="control">
-            <button class="button is-link" onclick="login();">登录</button>
+            <button class="button is-link" onclick="login();">登录/Sign in</button>
         </div>
         <div class="control">
-            <button class="button is-link is-light" onclick="location.href='/';">返回</button>
+            <button class="button is-link is-light" onclick="location.href='/';">返回/Back</button>
         </div>
     </div>
 </div>

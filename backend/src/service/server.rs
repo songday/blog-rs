@@ -161,6 +161,13 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(auth())
         .and(warp::body::json::<PostData>())
         .and_then(post::save);
+    let post_delete = warp::get()
+        .and(warp::path("post"))
+        .and(warp::path("delete"))
+        .and(warp::path::param::<u64>())
+        .and(warp::path::end())
+        .and(auth())
+        .and_then(post::delete);
     let post_show = warp::get()
         .and(warp::path("post"))
         .and(warp::path("show"))
@@ -230,6 +237,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(post_list_by_tag)
         .or(post_new)
         .or(post_save)
+        .or(post_delete)
         .or(post_show)
         .or(upload_image)
         .or(upload_title_image)

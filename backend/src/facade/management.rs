@@ -17,7 +17,6 @@ use crate::{
     service::status,
     util::common,
 };
-use blog_common::dto::management::SiteData;
 
 pub const SETTINGS_HTML: &'static str = include_str!("../resource/page/settings.html");
 const LOGIN_HTML: &'static str = include_str!("../resource/page/login.html");
@@ -26,10 +25,10 @@ pub async fn index(token: Option<String>) -> Result<impl Reply, Rejection> {
     if status::check_auth(token).is_ok() {
         let settings = management::settings().await?;
         let mut context = tera::Context::new();
-        context.insert("name", &settings.name);
-        context.insert("domain", &settings.domain);
-        context.insert("copyright", &settings.copyright);
-        context.insert("license", &settings.license);
+        context.insert("name", "");
+        context.insert("domain", "");
+        context.insert("copyright", "");
+        context.insert("license", "");
         let mut tera = tera::Tera::default();
         let r = match tera.render_str(SETTINGS_HTML, &context) {
             Ok(s) => s,
