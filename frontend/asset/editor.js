@@ -93,7 +93,7 @@ export function goBack() {
 
 export function randomTitleImage(event, post_id, callback) {
     let source = event.target || event.srcElement;
-    while (source.tagName != 'BUTTON' && source.parentNode)
+    while (source.tagName !== 'BUTTON' && source.parentNode)
         source = source.parentNode;
     console.log(source);
     source.disabled = true;

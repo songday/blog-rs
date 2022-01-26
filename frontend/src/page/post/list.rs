@@ -16,7 +16,9 @@ fn view_posts(posts: Vec<&PostDetail>) -> Html {
             <div class="card">
                 <div class="card-image">
                     <figure class="image is-2by1">
-                        <img alt="This post's image" src={post.title_image.clone()} loading="lazy" />
+                        <Link<Route> to={Route::ShowPost { id: post.id as u64 }}>
+                            <img alt={ post.title.clone() } src={post.title_image.clone()} loading="lazy" />
+                        </Link<Route>>
                     </figure>
                 </div>
                 <div class="card-content">

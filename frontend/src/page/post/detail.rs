@@ -2,10 +2,19 @@ use blog_common::dto::post::PostDetail as PostDetailDto;
 use blog_common::dto::Response;
 use time::format_description;
 use time::OffsetDateTime;
+use wasm_bindgen::prelude::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
 use crate::router::Route;
+
+#[wasm_bindgen(module = "/asset/show.js")]
+extern "C" {
+    #[wasm_bindgen(js_name = showNotificationBox)]
+    fn show_notification_box();
+    #[wasm_bindgen(js_name = hideNotificationBox)]
+    fn hide_notification_box(event: MouseEvent);
+}
 
 #[derive(Clone, Debug, PartialEq, Properties)]
 pub struct ShowDetailProps {
@@ -100,42 +109,31 @@ impl Component for PostDetail {
         changed
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         let Self { post_id } = self;
+        let mut delete_post_uri = String::with_capacity(32);
+        delete_post_uri.push_str("/post/delete/");
+        delete_post_uri.push_str(post_id.to_string().as_str());
+
+        let show_notification_callback = Callback::from(|_: MouseEvent| show_notification_box());
+        let hide_notification_callback = Callback::from(|e: MouseEvent| hide_notification_box(e));
         html! {
             <>
-                <script type="application/javascript">
-                {"
-                document.addEventListener('DOMContentLoaded', () => {
-                    (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
-                        const $notification = $delete.parentNode;                    
-                        $delete.addEventListener('click', () => {
-                        $notification.parentNode.removeChild($notification);
-                        });
-                    });
-                });
-                function delete(id) {
-                    if (confirm('是否删除'))
-                        location.href = '/post/delete/"}{post_id}{"';
-                }
-                "}
-                </script>
                 <ShowDetail post_id={*post_id} />
                 <div class="container">
                     <div class="buttons are-small">
                         <Link<Route> classes={classes!("button")} to={Route::ComposePost { id: *post_id }}>
                             { "编辑/Edit" }
                         </Link<Route>>
-                        <button class="button is-danger is-outlined">{"删除/Delete"}</button>
+                        <button class="button is-danger is-outlined" onclick={show_notification_callback}>{"删除/Delete"}</button>
                     </div>
-                </div>
-                <div class="notification is-danger">
-                    <button class="delete"></button>
-                    { "删除后，数据将不能回复" }<br/>
-                    { "Data cannot be recovered" }<br/>
-                    <div class="buttons">
-                        <button class="button is-danger is-outlined">{"删除/Delete"}</button>
-                        <button class="button is-success">{"放弃/Cancel"}</button>
+                    <div id="notification" class="notification is-danger is-light" style="display:none;width:435px">
+                        <button class="delete" onclick={hide_notification_callback.clone()}></button>
+                        { "删除后，数据将不能恢复/Data cannot be recovered" }<br/>
+                        <div class="buttons">
+                            <a class="button is-danger is-outlined" href={delete_post_uri}>{"删除/Delete"}</a>
+                            <button class="button is-success" onclick={hide_notification_callback}>{"放弃/Cancel"}</button>
+                        </div>
                     </div>
                 </div>
             </>
