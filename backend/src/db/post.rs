@@ -66,20 +66,7 @@ async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
     Ok(post_detail_list)
 }
 
-pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
-    let row = sqlx::query("SELECT COUNT(id) FROM post")
-        .fetch_one(super::get_sqlite())
-        .await?;
-    let total: i64 = row.get(0);
-    // println!("total={}", total);
-    if total < 1 {
-        return Ok(PaginationData { total: 0, data: vec![] });
-    }
-
-    let mut sql = String::with_capacity(256);
-    sql.push_str(
-        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ",
-    );
+fn append_pagination_sql(mut sql: String, pagination_type: &str, post_id: u64) {
     let mut order_by_asc = false;
     if post_id > 0 {
         if pagination_type == "prev" {
@@ -98,6 +85,23 @@ pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<
         sql.push_str("DESC");
     }
     sql.push_str(" LIMIT ?");
+}
+
+pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
+    let row = sqlx::query("SELECT COUNT(id) FROM post")
+        .fetch_one(super::get_sqlite())
+        .await?;
+    let total: i64 = row.get(0);
+    // println!("total={}", total);
+    if total < 1 {
+        return Ok(PaginationData { total: 0, data: vec![] });
+    }
+
+    let mut sql = String::with_capacity(256);
+    sql.push_str(
+        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ",
+    );
+    append_pagination_sql(sql, pagination_type, post_id);
     println!("sql={}", sql);
 
     let mut d = sqlx::query_as::<Sqlite, Post>(&sql)
@@ -122,7 +126,7 @@ pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<
     */
 }
 
-pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
+pub async fn list_by_tag(tag_name: String, pagination_type: &str, post_id: u64, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
     let tag_name = urlencoding::decode(&tag_name)?;
     let s = tag_name.as_ref();
     let tag = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tag WHERE name = ?")
@@ -149,15 +153,16 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
         return Ok(PaginationData { total: 0, data: vec![] });
     }
 
-    let mut offset: i64 = ((page_num - 1) * page_size) as i64;
-    if offset > total {
-        offset = total - page_size as i64;
-    }
+    let mut sql = String::with_capacity(256);
+    sql.push_str("SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ");
+    append_pagination_sql(sql, pagination_type, post_id);
+    sql.push_str(")");
+    println!("sql={}", sql);
     let d = sqlx::query_as::<Sqlite, Post>(
-        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
+        // "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
+        &sql
     )
     .bind(tag.id)
-    .bind(offset as i64)
     .bind(page_size)
     .fetch_all(super::get_sqlite())
     .await?;
@@ -170,8 +175,9 @@ pub async fn list_by_tag(tag_name: String, page_num: u8, page_size: u8) -> Resul
 pub async fn new_post() -> Result<i64> {
     let id = snowflake::gen_id() as i64;
     let last_insert_rowid =
-        sqlx::query("INSERT INTO post(id, title, title_image, markdown_content, rendered_content, created_at)VALUES(?,'未命名/Untitled','','','',?)")
+        sqlx::query("INSERT INTO post(id, title, title_image, markdown_content, rendered_content, created_at)VALUES(?,?,'','','',?)")
             .bind(&id)
+            .bind(val::DEFAULT_POST_TITLE)
             .bind(time::unix_epoch_sec() as i64)
             .execute(super::get_sqlite())
             .await?
@@ -240,11 +246,17 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
         editable: true,
     };
 
+    let post_title = if post_detail.title.is_empty() {
+        val::DEFAULT_POST_TITLE
+    } else {
+        &post_detail.title
+    };
+
     // save to sqlite
     sqlx::query(
         "UPDATE post SET title=?, title_image=?, markdown_content=?, rendered_content=?, updated_at=? WHERE id=?",
     )
-    .bind(&post_detail.title)
+    .bind(post_title)
     .bind(&post_detail.title_image)
     .bind(&post_data.content)
     .bind(&post_detail.content)

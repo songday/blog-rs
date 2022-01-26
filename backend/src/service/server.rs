@@ -145,7 +145,8 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path("post"))
         .and(warp::path("tag"))
         .and(warp::path::param::<String>())
-        .and(warp::path::param::<u8>())
+        .and(warp::path::param::<String>())
+        .and(warp::path::param::<u64>())
         .and(warp::path::end())
         .and_then(post::list_by_tag);
     let post_new = warp::get()

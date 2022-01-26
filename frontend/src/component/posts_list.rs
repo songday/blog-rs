@@ -33,15 +33,13 @@ fn view_posts(posts: Vec<&PostDetail>) -> Html {
 
 #[derive(PartialEq, Properties)]
 pub struct PostsListComponentProps {
-    max_id: i64,
-    set_max_id_callback: Callback<i64>,
+    request_uri: String,
 }
 
 #[function_component(PostsListComponent)]
-fn posts_list(
+pub fn posts_list(
     PostsListComponentProps {
-        max_id,
-        set_max_id_callback,
+        request_uri,
     }: &PostsListComponentProps,
 ) -> Html {
     console_log!("pass in max_id=", max_id.to_string());
@@ -50,7 +48,7 @@ fn posts_list(
     {
         let posts = posts.clone();
         let mut uri = String::with_capacity(32);
-        uri.push_str("/post/list/");
+        uri.push_str(request_uri);
         match pagination_state.pagination_type {
             PaginationType::PREV(id) => {
                 uri.push_str("prev/");
@@ -189,70 +187,4 @@ impl Reducible for PaginationState {
 pub enum PaginationType {
     PREV(i64),
     NEXT(i64),
-}
-
-pub enum Msg {
-    Compose,
-    SetMaxId(i64),
-}
-
-pub struct PostsList {
-    max_id: i64,
-}
-
-impl Component for PostsList {
-    type Message = Msg;
-    type Properties = ();
-
-    fn create(_ctx: &Context<Self>) -> Self {
-        Self { max_id: 0 }
-    }
-
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            Msg::Compose => {
-                let navigator = ctx.link().navigator().unwrap();
-                wasm_bindgen_futures::spawn_local(async move {
-                    let response = reqwasm::http::Request::get("/post/new").send().await.unwrap();
-                    let json: Response<u64> = response.json().await.unwrap();
-                    if json.status == 0 {
-                        navigator.push(crate::router::Route::ComposePost { id: json.data.unwrap() });
-                        // yew_router::push_route(crate::router::Route::ComposePost { id: json.data.unwrap() });
-                    } else {
-                        // ctx.link().location().unwrap().route().set_href("/management");
-                        if let Some(loc) = web_sys::window().map(|window| window.location()) {
-                            let _ = loc.set_href("/management");
-                        } else {
-                            console_log!("get location failed");
-                        }
-                    }
-                });
-            },
-            Msg::SetMaxId(max_id) => {
-                console_log!("SetMaxId=", max_id);
-                self.max_id = max_id;
-            },
-        }
-        false
-    }
-
-    fn view(&self, ctx: &Context<Self>) -> Html {
-        let Self { max_id } = self;
-
-        let set_max_id_callback = ctx.link().callback(move |new_max_id| Msg::SetMaxId(new_max_id));
-
-        gloo::utils::document().set_title("博客/Blog");
-
-        html! {
-            <>
-                <div class="columns">
-                    <div class="column is-10">
-                        <h1 class="title is-1">{ "博客/Posts" }</h1>
-                        <h2 class="subtitle">{ "All of your quality writing in one place" }</h2>
-                    </div>
-                </div>
-                <PostsListComponent max_id={*max_id} set_max_id_callback={set_max_id_callback.clone()} />
-            </>
-        }
-    }
 }
