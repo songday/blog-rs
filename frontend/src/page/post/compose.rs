@@ -28,7 +28,7 @@ extern "C" {
     #[wasm_bindgen(js_name = randomTitleImage)]
     fn random_title_image(event: MouseEvent, id: u64, payload_callback: JsValue);
     #[wasm_bindgen(js_name = goBack)]
-    fn go_back();
+    fn go_back(event: MouseEvent);
     #[wasm_bindgen(js_name = uploadTitleImage)]
     fn upload_title_image(event: Event, post_id: u64, files: Vec<web_sys::File>, payload_callback: JsValue);
 }
@@ -40,7 +40,7 @@ pub struct UpdatePostProps {
     onclick: Callback<MouseEvent>,
     oninput: Callback<InputEvent>,
     onupdate: Callback<MouseEvent>,
-    goback: Callback<MouseEvent>,
+    // goback: Callback<MouseEvent>,
     onload: Callback<Event>,
     post_id: u64,
     title_onchange: Callback<String>,
@@ -55,7 +55,7 @@ fn update_post(
         onclick,
         oninput,
         onupdate,
-        goback,
+        // goback,
         onload,
         post_id,
         title_onchange,
@@ -101,6 +101,7 @@ fn update_post(
     if post_detail.title_image.len() > 0 {
         title_image_onchange.emit(post_detail.title_image.clone());
     }
+    // let onkeyup_callback = Callback::from(|e: web_sys::KeyboardEvent| )
     html! {
       <>
         <div class="container">
@@ -156,15 +157,17 @@ fn update_post(
           <div class="field">
             <label class="label">{"标签/Labels"}</label>
               <div class="control">
-                <input class="input" type="text" placeholder="回车添加/Press 'Enter' to add"/>
+                <input id="tagInput" class="input" type="text" placeholder="回车添加/Press 'Enter' to add" onkeyup={input_tag}/>
               </div>
+              <br/>
+              <div id="tags" class="tags"></div>
           </div>
           <div class="field is-grouped">
             <div class="control">
               <button class="button is-link" onclick={onupdate}>{ "更新/Update" }</button>
             </div>
             <div class="control">
-              <button class="button is-link is-light" onclick={goback}>{ "返回/GoBack" }</button>
+              <button class="button is-link is-light" onclick={go_back}>{ "返回/GoBack" }</button>
             </div>
             </div>
           </div>
@@ -197,7 +200,7 @@ pub enum Msg {
     LoadedBytes(String, Vec<u8>),
     Files(Event, Vec<web_sys::File>),
     RetrieveRandomTitleImage(MouseEvent),
-    GoBack,
+    // GoBack,
     GoSignIn,
     PayloadCallback(String),
 }
@@ -260,12 +263,18 @@ impl Component for PostCompose {
             Msg::Ignore => {},
             Msg::UpdateTitle(s) => self.title = s,
             Msg::UpdatePost => {
+                let selected_tags = get_selected_tags();
+                let tags = if selected_tags.is_empty() {
+                    None
+                } else {
+                    Some(selected_tags.iter().map(|v| v.as_string().unwrap()).collect())
+                };
                 let post_data = PostData {
                     id: self.post_id as i64,
                     title: self.title.clone(),
                     title_image: self.title_image.clone(),
                     content: get_content(),
-                    tags: None,
+                    tags: tags,
                 };
                 console_log!(&post_data.content);
                 let navigator = ctx.link().navigator().unwrap();
@@ -349,9 +358,9 @@ impl Component for PostCompose {
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
                 random_title_image(event, self.post_id, js_callback);
             },
-            Msg::GoBack => {
-                go_back();
-            },
+            // Msg::GoBack => {
+            //     go_back();
+            // },
             Msg::GoSignIn => {
                 let any_route = AnyRoute::new(String::from("/401"));
                 let continue_url = crate::router::Route::ComposePost { id: self.post_id }.to_path();
@@ -403,13 +412,14 @@ impl Component for PostCompose {
             Msg::UpdateTitle(input.value())
         });
         let onupdate = ctx.link().callback(|_: MouseEvent| Msg::UpdatePost);
-        let goback = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
+        // let goback = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
         let onload = ctx.link().callback(|_: Event| Msg::InitEditor);
+        // let onkeyup = ctx.link().callback(|e: web_sys::KeyboardEvent| Msg::InitEditor);
 
         html! {
           <>
             <UpdatePost onsubmit={onsubmit} onchange={onchange} onclick={onclick} oninput={oninput} onupdate={onupdate}
-            goback={goback} onload={onload} post_id={post_id as u64} title_onchange={title_onchange.clone()}
+            onload={onload} post_id={post_id as u64} title_onchange={title_onchange.clone()}
             title_image_onchange={title_image_onchange.clone()} />
           </>
         }

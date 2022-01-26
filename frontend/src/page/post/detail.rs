@@ -16,6 +16,19 @@ extern "C" {
     fn hide_notification_box(event: MouseEvent);
 }
 
+fn show_tags(post: &mut PostDetailDto) -> Html {
+    if post.tags.is_none() {
+        return html!{};
+    }
+    let tags = std::mem::replace(&mut post.tags, None);
+    let tags = tags.unwrap().iter().map(|t| html!{<span class="tag is-info">{t}</span>}).collect::<Html>();
+    html! {
+        <div class="tags">
+            {tags}
+        </div>
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Properties)]
 pub struct ShowDetailProps {
     pub post_id: u64,
@@ -27,7 +40,7 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
     let post_detail = use_state(|| PostDetailDto::default());
     {
         let post_detail = post_detail.clone();
-        use_effect(move || {
+        use_effect_with_deps(move |_| {
             let post_detail = post_detail.clone();
             wasm_bindgen_futures::spawn_local(async move {
                 let response: Response<PostDetailDto> = reqwasm::http::Request::get(&detail_url)
@@ -40,9 +53,9 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
                 post_detail.set(response.data.unwrap());
             });
             || ()
-        });
+        }, ());
     }
-    let post = (*post_detail).clone();
+    let mut post = (*post_detail).clone();
     let title_image = post.title_image.to_string();
     let datetime = OffsetDateTime::from_unix_timestamp(post.created_at as i64).unwrap();
     let format = format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
@@ -60,9 +73,7 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
                         <p class="subtitle is-3">
                             { &post_time }
                         </p>
-                        <div class="tags">
-                            <span class="tag is-info">{"tag"}</span>
-                        </div>
+                        {show_tags(&mut post)}
                     </div>
                 </div>
             </section>
@@ -109,7 +120,8 @@ impl Component for PostDetail {
         changed
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
+        weblog::console_log!("show_detail");
         let Self { post_id } = self;
         let mut delete_post_uri = String::with_capacity(32);
         delete_post_uri.push_str("/post/delete/");

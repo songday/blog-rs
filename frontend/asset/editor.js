@@ -29,8 +29,8 @@ function initTagElements() {
     if (tagInput && allTagsBox)
         return;
     tagInput = document.getElementById('tagInput');
-    tagInput.addEventListener('keyup', inputTag, false);
-    allTagsBox = document.getElementById('tagsBox');
+    // tagInput.addEventListener('keyup', inputTag, false);
+    allTagsBox = document.getElementById('tags');
 }
 
 export function inputTag(event) {
@@ -56,20 +56,18 @@ function addTag(val) {
         return;
     initTagElements();
     const tag = document.createElement('span');
-    tag.className = "me-3 border-end border-3";
+    tag.className = "tag is-primary is-medium";
+    tag.innerHTML = val;
 
-    const tagText = document.createTextNode(val);
-    tag.appendChild(tagText);
-
-    const btn = document.createElement('i');
-    btn.addEventListener('click', function () {
+    const a = document.createElement('button');
+    a.className = "delete is-small";
+    a.addEventListener('click', function () {
         allTagsBox.removeChild(tag);
     })
-    btn.className = 'bi bi-trash';
-    tag.appendChild(btn);
+    tag.appendChild(a);
+    allTagsBox.appendChild(tag);
 
     // allTagsBox.insertBefore(tag, tagInput);
-    allTagsBox.appendChild(tag);
 }
 
 export function getSelectedTags() {
@@ -87,7 +85,7 @@ export function clearSelectedTags() {
     }
 }
 
-export function goBack() {
+export function goBack(e) {
     location.href = '/';
 }
 
