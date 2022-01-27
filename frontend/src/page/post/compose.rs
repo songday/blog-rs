@@ -21,8 +21,8 @@ extern "C" {
     fn get_content() -> String;
     #[wasm_bindgen(js_name = inputTag)]
     fn input_tag(event: web_sys::KeyboardEvent);
-    #[wasm_bindgen(js_name = selectTag)]
-    fn select_tag(tag: String);
+    #[wasm_bindgen(js_name = selectTags)]
+    fn select_tags(tags: Vec<String>);
     #[wasm_bindgen(js_name = getSelectedTags)]
     fn get_selected_tags() -> Vec<wasm_bindgen::JsValue>;
     #[wasm_bindgen(js_name = randomTitleImage)]
@@ -101,6 +101,14 @@ fn update_post(
     if post_detail.title_image.len() > 0 {
         title_image_onchange.emit(post_detail.title_image.clone());
     }
+    let tags = if post_detail.tags.is_none() {
+        html!{}
+    } else {
+        select_tags(post_detail.tags.unwrap());
+        post_detail.tags.unwrap().iter().map(|t| html!{
+            <span classes={"tag", "is-primary", "is-medium"}>{t}<button classes={"delete", "is-small"}></button></span>
+        }).collect::<Html>()
+    };
     // let onkeyup_callback = Callback::from(|e: web_sys::KeyboardEvent| )
     html! {
       <>
@@ -157,10 +165,10 @@ fn update_post(
           <div class="field">
             <label class="label">{"标签/Labels"}</label>
               <div class="control">
-                <input id="tagInput" class="input" type="text" placeholder="回车添加/Press 'Enter' to add" onkeyup={input_tag}/>
+                <input maxlength="10" id="tagInput" class="input" type="text" placeholder="回车添加/Press 'Enter' to add" onkeyup={input_tag}/>
               </div>
               <br/>
-              <div id="tags" class="tags"></div>
+              <div id="tags" class="tags">{tags}</div>
           </div>
           <div class="field is-grouped">
             <div class="control">
@@ -256,10 +264,6 @@ impl Component for PostCompose {
             Msg::PayloadCallback(s) => {
                 self.title_image = s;
             },
-            // Msg::SelectTag(tag) => {
-            //     select_tag(tag);
-            //     return false;
-            // },
             Msg::Ignore => {},
             Msg::UpdateTitle(s) => self.title = s,
             Msg::UpdatePost => {

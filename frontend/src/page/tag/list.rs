@@ -1,9 +1,9 @@
-use std::rc::Rc;
 use std::vec::Vec;
 
 use blog_common::dto::post::PostDetail;
 use blog_common::dto::{PaginationData, Response};
 use blog_common::val;
+use rand::{thread_rng, Rng};
 use weblog::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -41,16 +41,24 @@ fn tags_list() -> Html {
     if len == 0 {
         return html! {};
     }
+    let mut rng = rand::thread_rng();
+    let mut classes = String::with_capacity(32);
     let tags = tags
         .iter()
         .map(|t| {
+            let mut roll: usize = rng.gen_range(0..3);
+            classes.push_str("tag is-light");
+            classes.push_str(val::TAG_SIZES[roll]);
+            roll = rng.gen_range(0..10);
+            classes.push_str(val::TAG_COLORS[roll]);
             html! {
-                <span class="tag">
+                <span class={classes!(classes)}>
                     <Link<Route> to={Route::ListPostsByTag { tag_name: String::from(t) }}>
                         { t }
                     </Link<Route>>
                 </span>
             }
+            classes.clear();
         })
         .collect::<Html>();
     html! {

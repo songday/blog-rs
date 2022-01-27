@@ -27,11 +27,12 @@ js-sys = "0.3"
 thiserror = "1.0"
 parking_lot = { version = "0.11", features = ["wasm-bindgen"]}
 lazy_static = "1.4"
+rand = "0.8"
 reqwasm = "0.3"
-urlencoding = "2"
 serde = "1.0"
 serde_json = "1.0"
 time = { version = "0.3", features = ["formatting", "parsing"] }
+urlencoding = "2"
 wasm-bindgen-futures = "0.4"
 weblog = "0.3.0"
 web-sys = { version = "0.3", features = ["Window", "Document", "HtmlDocument"] }
