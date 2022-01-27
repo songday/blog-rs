@@ -1,31 +1,16 @@
-use blog_frontend::router::{switch, Route};
-use yew::prelude::*;
+use blog_frontend::app::App;
+use yew::{html, prelude::*, Html};
 use yew_router::prelude::*;
 
-#[function_component(App)]
+#[function_component(Main)]
 fn app() -> Html {
     html! {
         <BrowserRouter>
-            <main>
-                <Switch<Route> render={Switch::render(switch)} />
-            </main>
-            <footer class="footer">
-                <div class="content has-text-centered">
-                    { "Powered by " }
-                    <a href="https://yew.rs">{ "Yew" }</a>
-                    { " using " }
-                    <a href="https://bulma.io">{ "Bulma" }</a>
-                    { " and images from " }
-                    <a href="https://unsplash.com">{ "Unsplash" }</a>
-                </div>
-                <div class="content has-text-centered">
-                    { "Made by Songday" }
-                </div>
-            </footer>
+            <App />
         </BrowserRouter>
     }
 }
 
 fn main() {
-    yew::start_app::<App>();
+    yew::start_app::<Main>();
 }

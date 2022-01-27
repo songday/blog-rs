@@ -250,14 +250,6 @@ impl Component for PostsList {
                         <h1 class="title is-1">{ "博客/Posts" }</h1>
                         <h2 class="subtitle">{ "All of your quality writing in one place" }</h2>
                     </div>
-                    <div class="column" style="text-align:right">
-                        <button class="button" onclick={ctx.link().callback(|_| Msg::Compose)}>
-                            <span class="icon">
-                                <i class="far fa-edit"></i>
-                            </span>
-                            <span>{"写博客/Compose"}</span>
-                        </button>
-                    </div>
                 </div>
                 <PostsListComponent max_id={*max_id} set_max_id_callback={set_max_id_callback.clone()} />
             </>
