@@ -8,6 +8,7 @@ use blog_common::{
     },
     result::Error,
     util::time,
+    val,
 };
 use comrak::{markdown_to_html, ComrakOptions};
 use sqlx::{Row, Sqlite};
@@ -66,7 +67,7 @@ async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
     Ok(post_detail_list)
 }
 
-fn append_pagination_sql(mut sql: String, pagination_type: &str, post_id: u64) {
+fn append_pagination_sql(sql: &mut String, pagination_type: &str, post_id: u64) -> bool {
     let mut order_by_asc = false;
     if post_id > 0 {
         if pagination_type == "prev" {
@@ -85,6 +86,7 @@ fn append_pagination_sql(mut sql: String, pagination_type: &str, post_id: u64) {
         sql.push_str("DESC");
     }
     sql.push_str(" LIMIT ?");
+    order_by_asc
 }
 
 pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
@@ -101,7 +103,7 @@ pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<
     sql.push_str(
         "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ",
     );
-    append_pagination_sql(sql, pagination_type, post_id);
+    let order_by_asc = append_pagination_sql(&mut sql, pagination_type, post_id);
     println!("sql={}", sql);
 
     let mut d = sqlx::query_as::<Sqlite, Post>(&sql)
@@ -126,7 +128,12 @@ pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<
     */
 }
 
-pub async fn list_by_tag(tag_name: String, pagination_type: &str, post_id: u64, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
+pub async fn list_by_tag(
+    tag_name: String,
+    pagination_type: &str,
+    post_id: u64,
+    page_size: u8,
+) -> Result<PaginationData<Vec<PostDetail>>> {
     let tag_name = urlencoding::decode(&tag_name)?;
     let s = tag_name.as_ref();
     let tag = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tag WHERE name = ?")
@@ -155,17 +162,20 @@ pub async fn list_by_tag(tag_name: String, pagination_type: &str, post_id: u64, 
 
     let mut sql = String::with_capacity(256);
     sql.push_str("SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ");
-    append_pagination_sql(sql, pagination_type, post_id);
+    let order_by_asc = append_pagination_sql(&mut sql, pagination_type, post_id);
     sql.push_str(")");
     println!("sql={}", sql);
-    let d = sqlx::query_as::<Sqlite, Post>(
+    let mut d = sqlx::query_as::<Sqlite, Post>(
         // "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
-        &sql
+        &sql,
     )
     .bind(tag.id)
     .bind(page_size)
     .fetch_all(super::get_sqlite())
     .await?;
+    if order_by_asc {
+        d.reverse();
+    }
     Ok(PaginationData {
         total: total as u64,
         data: to_detail_list(d).await?,

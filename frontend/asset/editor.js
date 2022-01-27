@@ -72,6 +72,8 @@ function addTag(val) {
 
 export function getSelectedTags() {
     const tags = [];
+    if (!allTagsBox)
+        return tags;
     for (let i = 0; i < allTagsBox.childNodes.length; i++) {
         if (allTagsBox.childNodes[i].tagName === 'SPAN')
             tags.push(allTagsBox.childNodes[i].firstChild.nodeValue);

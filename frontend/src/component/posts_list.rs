@@ -33,16 +33,11 @@ fn view_posts(posts: Vec<&PostDetail>) -> Html {
 
 #[derive(PartialEq, Properties)]
 pub struct PostsListComponentProps {
-    request_uri: String,
+    pub request_uri: String,
 }
 
 #[function_component(PostsListComponent)]
-pub fn posts_list(
-    PostsListComponentProps {
-        request_uri,
-    }: &PostsListComponentProps,
-) -> Html {
-    console_log!("pass in max_id=", max_id.to_string());
+pub fn posts_list(PostsListComponentProps { request_uri }: &PostsListComponentProps) -> Html {
     let pagination_state = use_reducer(PaginationState::default);
     let posts: UseStateHandle<Vec<PostDetail>> = use_state(|| Vec::with_capacity(0));
     {
@@ -87,9 +82,6 @@ pub fn posts_list(
     let top_id = posts[0].id;
     let bottom_id = posts[len - 1].id;
     let max_id = pagination_state.max_post_id;
-    if max_id == 0 || max_id < top_id {
-        set_max_id_callback.emit(top_id);
-    }
     let row_num = len / 2 + 1;
     let mut left_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
     let mut right_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);

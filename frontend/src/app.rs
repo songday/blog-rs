@@ -46,11 +46,11 @@ impl Component for App {
         html! {
             // https://cn.bing.com/search?form=MOZLBR&pc=MOZI&q=free+blog+logo
             // https://www.designevo.com/logo-maker/
-            <BrowserRouter>
+            <>
                 <nav class="navbar" role="navigation" aria-label="main navigation">
                   <div class="navbar-brand">
-                    <a class="navbar-item" href="https://bulma.io">
-                      <img src="https://bulma.io/images/bulma-logo.png" width="112" height="28">
+                    <a class="navbar-item" href="/">
+                      <img src="/asset/logo.png" width="115" height="32"/>
                     </a>
 
                     <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="moreNavs">
@@ -62,32 +62,31 @@ impl Component for App {
 
                   <div id="moreNavs" class="navbar-menu">
                     <div class="navbar-start">
-                      <a class="navbar-item">
-                        博客/Home
-                      </a>
-
-                      <a class="navbar-item">
-                        标签/Tags
-                      </a>
+                        <Link<Route> classes={"navbar-item"} to={Route::ListPosts}>
+                            {"博客/Home"}
+                        </Link<Route>>
+                        <Link<Route> classes={"navbar-item"} to={Route::Tags}>
+                            {"标签/Tags"}
+                        </Link<Route>>
 
                       <div class="navbar-item has-dropdown is-hoverable">
                         <a class="navbar-link">
-                          其它/More
+                          {"其它/More"}
                         </a>
 
                         <div class="navbar-dropdown">
-                          <a class="navbar-item">
-                            管理/Management
+                          <a class="navbar-item" href="/management">
+                            {"管理/Management"}
                           </a>
                           <a class="navbar-item">
-                            关于/About
+                            {"关于/About"}
                           </a>
                           <a class="navbar-item">
-                            联系/Contact
+                            {"联系/Contact"}
                           </a>
-                          <hr class="navbar-divider">
-                          <a class="navbar-item">
-                            项目地址/Project
+                          <hr class="navbar-divider"/>
+                          <a class="navbar-item" href="https://github.com/songday/blog-rs">
+                            {"项目地址/Project"}
                           </a>
                         </div>
                       </div>
@@ -116,13 +115,15 @@ impl Component for App {
                         { " using " }
                         <a href="https://bulma.io">{ "Bulma" }</a>
                         { " and images from " }
-                        <a href="https://unsplash.com">{ "Unsplash" }</a> and <a href="https://picsum.photos">{ "Picsum" }</a>
+                        <a href="https://unsplash.com">{ "Unsplash" }</a>{" & "}<a href="https://picsum.photos">{ "Picsum" }</a>
+                        {" Icons created by "}
+                        <a href="https://www.flaticon.com/free-icons/blog">{"Freepik - Flaticon"}</a>
                     </div>
                     <div class="content has-text-centered">
                         { "Made by Songday with Love" }
                     </div>
                 </footer>
-            </BrowserRouter>
+            </>
         }
     }
 }

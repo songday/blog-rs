@@ -18,10 +18,14 @@ extern "C" {
 
 fn show_tags(post: &mut PostDetailDto) -> Html {
     if post.tags.is_none() {
-        return html!{};
+        return html! {};
     }
     let tags = std::mem::replace(&mut post.tags, None);
-    let tags = tags.unwrap().iter().map(|t| html!{<span class="tag is-info">{t}</span>}).collect::<Html>();
+    let tags = tags
+        .unwrap()
+        .iter()
+        .map(|t| html! {<span class="tag is-info">{t}</span>})
+        .collect::<Html>();
     html! {
         <div class="tags">
             {tags}
@@ -40,20 +44,23 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
     let post_detail = use_state(|| PostDetailDto::default());
     {
         let post_detail = post_detail.clone();
-        use_effect_with_deps(move |_| {
-            let post_detail = post_detail.clone();
-            wasm_bindgen_futures::spawn_local(async move {
-                let response: Response<PostDetailDto> = reqwasm::http::Request::get(&detail_url)
-                    .send()
-                    .await
-                    .unwrap()
-                    .json()
-                    .await
-                    .unwrap();
-                post_detail.set(response.data.unwrap());
-            });
-            || ()
-        }, ());
+        use_effect_with_deps(
+            move |_| {
+                let post_detail = post_detail.clone();
+                wasm_bindgen_futures::spawn_local(async move {
+                    let response: Response<PostDetailDto> = reqwasm::http::Request::get(&detail_url)
+                        .send()
+                        .await
+                        .unwrap()
+                        .json()
+                        .await
+                        .unwrap();
+                    post_detail.set(response.data.unwrap());
+                });
+                || ()
+            },
+            (),
+        );
     }
     let mut post = (*post_detail).clone();
     let title_image = post.title_image.to_string();

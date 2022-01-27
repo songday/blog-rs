@@ -1,10 +1,8 @@
-# blog-rs
-
-![BlogListPage](screenshot1.png)
+![BlogListPage](screenshot1.jpg)
 
 ## 自带服务端的博客系统
 
-当前版本：`0.3.0`
+当前版本：`0.5.0`
 
 ## 亮点
 1. 单文件（小于 6 Mb）跨平台可执行文件
@@ -16,7 +14,7 @@
 
 ## A singleton self-serve Blog written in Rust (Warp + Yew)
 
-Current version: `0.3.0`
+Current version: `0.5.0`
 
 ## Features
 1. Single executable file (less than 6Mb), support `Windows`, `Linux`, `macOS`
