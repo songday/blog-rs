@@ -9,6 +9,8 @@ export function initEditor(content) {
         initialValue: content?content:'',
         height: '500px',
     });
+    for (let i = 0; i < tags.length; i++)
+        addTag(tags[i]);
 }
 
 export function setInitContent(intentContent) {
@@ -22,28 +24,26 @@ export function getContent() {
 }
 
 // tag
-export let tagInput;
 export let allTagsBox;
+let tags = [];
 
 function initTagElements() {
-    if (tagInput && allTagsBox)
+    if (allTagsBox)
         return;
-    tagInput = document.getElementById('tagInput');
-    // tagInput.addEventListener('keyup', inputTag, false);
     allTagsBox = document.getElementById('tags');
 }
 
 export function inputTag(event) {
     if (event.keyCode !== 13)
         return;
-    addTag(tagInput.value);
-    tagInput.value = '';
-    tagInput.focus();
+    const source = event.target;
+    addTag(source.value);
+    source.value = '';
+    source.focus();
 }
 
-export function selectTags(tags) {
-    for (let i = 0; i < tags.length; i++)
-        addTag(tags[i]);
+export function syncTags(new_tags) {
+    tags = new_tags;
 }
 
 function addTag(val) {
@@ -61,11 +61,10 @@ function addTag(val) {
     })
     tag.appendChild(a);
     allTagsBox.appendChild(tag);
-
     // allTagsBox.insertBefore(tag, tagInput);
 }
 
-export function getSelectedTags() {
+export function getAddedTags() {
     const tags = [];
     if (!allTagsBox)
         return tags;
@@ -76,21 +75,10 @@ export function getSelectedTags() {
     return tags;
 }
 
-export function clearSelectedTags() {
-    for (let i = 0; i < allTagsBox.childNodes.length; i++) {
-        allTagsBox.removeChild(allTagsBox.childNodes[i]);
-    }
-}
-
-export function goBack(e) {
-    location.href = '/';
-}
-
 export function randomTitleImage(event, post_id, callback) {
     let source = event.target || event.srcElement;
     while (source.tagName !== 'BUTTON' && source.parentNode)
         source = source.parentNode;
-    console.log(source);
     source.disabled = true;
     const content = source.innerHtml;
     source.innerHtml = '';
@@ -135,7 +123,7 @@ export const uploadTitleImage = (event, postId, files, callback) => {
     form_data.append('file', file);
     form_data.append('title-image-file-name', file.name);
     let source = event.target || event.srcElement;
-    while (source.tagName != 'BUTTON' && source.parentNode)
+    while (source.tagName !== 'BUTTON' && source.parentNode)
         source = source.parentNode;
     console.log(source);
     source.disabled = true;

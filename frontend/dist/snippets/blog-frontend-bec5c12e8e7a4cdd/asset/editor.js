@@ -36,14 +36,9 @@ function initTagElements() {
 export function inputTag(event) {
     if (event.keyCode !== 13)
         return;
-    initTagElements();
     addTag(tagInput.value);
     tagInput.value = '';
     tagInput.focus();
-}
-
-export function selectTag(tag) {
-    addTag(tag);
 }
 
 export function selectTags(tags) {

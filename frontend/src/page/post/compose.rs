@@ -21,14 +21,12 @@ extern "C" {
     fn get_content() -> String;
     #[wasm_bindgen(js_name = inputTag)]
     fn input_tag(event: web_sys::KeyboardEvent);
-    #[wasm_bindgen(js_name = selectTags)]
-    fn select_tags(tags: Vec<String>);
-    #[wasm_bindgen(js_name = getSelectedTags)]
-    fn get_selected_tags() -> Vec<wasm_bindgen::JsValue>;
+    #[wasm_bindgen(js_name = syncTags)]
+    fn sync_tags(tags: Vec<JsValue>);
+    #[wasm_bindgen(js_name = getAddedTags)]
+    fn get_added_tags() -> Vec<JsValue>;
     #[wasm_bindgen(js_name = randomTitleImage)]
     fn random_title_image(event: MouseEvent, id: u64, payload_callback: JsValue);
-    #[wasm_bindgen(js_name = goBack)]
-    fn go_back(event: MouseEvent);
     #[wasm_bindgen(js_name = uploadTitleImage)]
     fn upload_title_image(event: Event, post_id: u64, files: Vec<web_sys::File>, payload_callback: JsValue);
 }
@@ -37,10 +35,10 @@ extern "C" {
 pub struct UpdatePostProps {
     onsubmit: Callback<FocusEvent>,
     onchange: Callback<Event>,
-    onclick: Callback<MouseEvent>,
+    download_image: Callback<MouseEvent>,
     oninput: Callback<InputEvent>,
     onupdate: Callback<MouseEvent>,
-    // goback: Callback<MouseEvent>,
+    goBack: Callback<MouseEvent>,
     onload: Callback<Event>,
     post_id: u64,
     title_onchange: Callback<String>,
@@ -52,10 +50,10 @@ fn update_post(
     UpdatePostProps {
         onsubmit,
         onchange,
-        onclick,
+        download_image,
         oninput,
         onupdate,
-        // goback,
+        goBack,
         onload,
         post_id,
         title_onchange,
@@ -101,15 +99,10 @@ fn update_post(
     if post_detail.title_image.len() > 0 {
         title_image_onchange.emit(post_detail.title_image.clone());
     }
-    let tags = if post_detail.tags.is_none() {
-        html!{}
-    } else {
-        select_tags(post_detail.tags.unwrap());
-        post_detail.tags.unwrap().iter().map(|t| html!{
-            <span classes={"tag", "is-primary", "is-medium"}>{t}<button classes={"delete", "is-small"}></button></span>
-        }).collect::<Html>()
-    };
-    // let onkeyup_callback = Callback::from(|e: web_sys::KeyboardEvent| )
+    if post_detail.tags.is_some() {
+        let init_tags = post_detail.tags.unwrap().iter().map(|t| JsValue::from_str(t)).collect();
+        sync_tags(init_tags);
+    }
     html! {
       <>
         <div class="container">
@@ -138,7 +131,7 @@ fn update_post(
             </p>
             <p class="level-item has-text-centered">{"或/Or"}</p>
             <p class="level-item has-text-centered">
-              <button class="button" onclick={onclick}>
+              <button class="button">// onclick={download_image}
                 <span class="icon"><i class="fas fa-download"></i></span>
                 <span>{"下载一张/Download"}</span>
               </button>
@@ -168,14 +161,14 @@ fn update_post(
                 <input maxlength="10" id="tagInput" class="input" type="text" placeholder="回车添加/Press 'Enter' to add" onkeyup={input_tag}/>
               </div>
               <br/>
-              <div id="tags" class="tags">{tags}</div>
+              <div id="tags" class="tags"></div>
           </div>
           <div class="field is-grouped">
             <div class="control">
               <button class="button is-link" onclick={onupdate}>{ "更新/Update" }</button>
             </div>
             <div class="control">
-              <button class="button is-link is-light" onclick={go_back}>{ "返回/GoBack" }</button>
+              <button class="button is-link is-light" onclick={goBack}>{ "返回/GoBack" }</button>
             </div>
             </div>
           </div>
@@ -208,7 +201,7 @@ pub enum Msg {
     LoadedBytes(String, Vec<u8>),
     Files(Event, Vec<web_sys::File>),
     RetrieveRandomTitleImage(MouseEvent),
-    // GoBack,
+    GoBack,
     GoSignIn,
     PayloadCallback(String),
 }
@@ -267,7 +260,7 @@ impl Component for PostCompose {
             Msg::Ignore => {},
             Msg::UpdateTitle(s) => self.title = s,
             Msg::UpdatePost => {
-                let selected_tags = get_selected_tags();
+                let selected_tags = get_added_tags();
                 let tags = if selected_tags.is_empty() {
                     None
                 } else {
@@ -362,9 +355,10 @@ impl Component for PostCompose {
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
                 random_title_image(event, self.post_id, js_callback);
             },
-            // Msg::GoBack => {
-            //     go_back();
-            // },
+            Msg::GoBack => {
+                let navigator = ctx.link().navigator().unwrap();
+                navigator.push(crate::router::Route::ShowPost {id: self.post_id});
+            },
             Msg::GoSignIn => {
                 let any_route = AnyRoute::new(String::from("/401"));
                 let continue_url = crate::router::Route::ComposePost { id: self.post_id }.to_path();
@@ -410,20 +404,19 @@ impl Component for PostCompose {
             }
             Msg::Files(e, result)
         });
-        let onclick = ctx.link().callback(|e: MouseEvent| Msg::RetrieveRandomTitleImage(e));
+        let download_image = ctx.link().callback(|e: MouseEvent| Msg::RetrieveRandomTitleImage(e));
         let oninput = ctx.link().callback(|e: InputEvent| {
             let input = e.target_unchecked_into::<HtmlInputElement>();
             Msg::UpdateTitle(input.value())
         });
         let onupdate = ctx.link().callback(|_: MouseEvent| Msg::UpdatePost);
-        // let goback = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
+        let goBack = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
         let onload = ctx.link().callback(|_: Event| Msg::InitEditor);
-        // let onkeyup = ctx.link().callback(|e: web_sys::KeyboardEvent| Msg::InitEditor);
 
         html! {
           <>
-            <UpdatePost onsubmit={onsubmit} onchange={onchange} onclick={onclick} oninput={oninput} onupdate={onupdate}
-            onload={onload} post_id={post_id as u64} title_onchange={title_onchange.clone()}
+            <UpdatePost onsubmit={onsubmit} onchange={onchange} download_image={download_image} oninput={oninput} onupdate={onupdate}
+            goBack={goBack} onload={onload} post_id={post_id as u64} title_onchange={title_onchange.clone()}
             title_image_onchange={title_image_onchange.clone()} />
           </>
         }
