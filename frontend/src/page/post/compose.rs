@@ -17,6 +17,8 @@ use crate::component::Unauthorized;
 extern "C" {
     #[wasm_bindgen(js_name = initEditor)]
     fn init_editor();
+    #[wasm_bindgen(js_name = destroyEditor)]
+    fn destroy_editor();
     #[wasm_bindgen(js_name = getContent)]
     fn get_content() -> String;
     #[wasm_bindgen(js_name = inputTag)]
@@ -38,8 +40,8 @@ pub struct UpdatePostProps {
     download_image: Callback<MouseEvent>,
     oninput: Callback<InputEvent>,
     onupdate: Callback<MouseEvent>,
-    goBack: Callback<MouseEvent>,
-    onload: Callback<Event>,
+    go_back: Callback<MouseEvent>,
+    init_editor: Callback<Event>,
     post_id: u64,
     title_onchange: Callback<String>,
     title_image_onchange: Callback<String>,
@@ -53,8 +55,8 @@ fn update_post(
         download_image,
         oninput,
         onupdate,
-        goBack,
-        onload,
+        go_back,
+        init_editor,
         post_id,
         title_onchange,
         title_image_onchange,
@@ -168,14 +170,14 @@ fn update_post(
               <button class="button is-link" onclick={onupdate}>{ "更新/Update" }</button>
             </div>
             <div class="control">
-              <button class="button is-link is-light" onclick={goBack}>{ "返回/GoBack" }</button>
+              <button class="button is-link is-light" onclick={go_back}>{ "返回/Cancel" }</button>
             </div>
             </div>
           </div>
         </form>
         <link rel="stylesheet" href="/asset/codemirror.min.css" />
         <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
-        <script src="/asset/toastui-editor-all.min.js" onload={onload}></script>
+        <script src="/asset/toastui-editor-all.min.js" onload={init_editor}></script>// onload={init_editor}
       </>
     }
 }
@@ -410,15 +412,19 @@ impl Component for PostCompose {
             Msg::UpdateTitle(input.value())
         });
         let onupdate = ctx.link().callback(|_: MouseEvent| Msg::UpdatePost);
-        let goBack = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
-        let onload = ctx.link().callback(|_: Event| Msg::InitEditor);
+        let go_back = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
+        let init_editor = ctx.link().callback(|_: Event| Msg::InitEditor);
 
         html! {
           <>
-            <UpdatePost onsubmit={onsubmit} onchange={onchange} download_image={download_image} oninput={oninput} onupdate={onupdate}
-            goBack={goBack} onload={onload} post_id={post_id as u64} title_onchange={title_onchange.clone()}
+            <UpdatePost onsubmit={onsubmit} onchange={onchange} {download_image} oninput={oninput} onupdate={onupdate}
+            {go_back} {init_editor} post_id={post_id as u64} title_onchange={title_onchange.clone()}
             title_image_onchange={title_image_onchange.clone()} />
           </>
         }
+    }
+
+    fn destroy(&mut self, _ctx: &Context<Self>) {
+        destroy_editor();
     }
 }

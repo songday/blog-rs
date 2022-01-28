@@ -42,18 +42,21 @@ impl Component for PostsListByTag {
 
     fn view(&self, ctx: &Context<Self>) -> Html {
         let Self { tag_name } = self;
-        gloo::utils::document().set_title(tag_name);
         let mut request_uri = String::with_capacity(32);
         request_uri.push_str("/post/tag/");
         request_uri.push_str(tag_name);
         request_uri.push_str("/");
 
+        let decoded_tag_name = urlencoding::decode(tag_name).unwrap();
+
+        gloo::utils::document().set_title(decoded_tag_name);
+
         html! {
             <>
                 <div class="columns">
                     <div class="column is-10">
-                        <h1 class="title is-1">{ tag_name }</h1>
-                        <h2 class="subtitle">{ "&nbsp;" }</h2>
+                        <h1 class="title is-1">{ decoded_tag_name }</h1>
+                        <h2 class="subtitle">{ " " }</h2>
                     </div>
                 </div>
                 <PostsListComponent {request_uri} />

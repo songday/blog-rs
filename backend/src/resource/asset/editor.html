@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html><html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title></title>
+    <style>body{padding:0;margin:0}</style>
+    <link rel="stylesheet" href="/asset/codemirror.min.css" />
+    <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
+    <script type="application/javascript">
+        let editor = null;
+        function initEditor() {
+            const Editor = toastui.Editor;
+            editor = new Editor({
+                el: document.querySelector('#editor'),
+                previewStyle: 'vertical',
+                initialEditType: 'wysiwyg',
+                height: '500px',
+            });
+        }
+    </script>
+</head>
+<body>
+<div id="editor">this is editor</div>
+<script src="/asset/toastui-editor-all.min.js" onload="initEditor()"></script>
+</body></html>

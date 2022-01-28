@@ -9,8 +9,16 @@ export function initEditor(content) {
         initialValue: content?content:'',
         height: '500px',
     });
+    console.log("initEditor tags.length="+tags.length);
     for (let i = 0; i < tags.length; i++)
         addTag(tags[i]);
+}
+
+export function destroyEditor() {
+    console.log("destroyEditor called");
+    const editor = document.querySelector('#editor');
+    editor.innerHTML = '<p>aaaaaaaaa</p>';
+    editor.removeAttribute('style');
 }
 
 export function setInitContent(intentContent) {
@@ -75,10 +83,6 @@ export function getAddedTags() {
     return tags;
 }
 
-export function goBack(e) {
-    location.href = '/';
-}
-
 export function randomTitleImage(event, post_id, callback) {
     let source = event.target || event.srcElement;
     while (source.tagName !== 'BUTTON' && source.parentNode)
@@ -127,7 +131,7 @@ export const uploadTitleImage = (event, postId, files, callback) => {
     form_data.append('file', file);
     form_data.append('title-image-file-name', file.name);
     let source = event.target || event.srcElement;
-    while (source.tagName != 'BUTTON' && source.parentNode)
+    while (source.tagName !== 'BUTTON' && source.parentNode)
         source = source.parentNode;
     console.log(source);
     source.disabled = true;

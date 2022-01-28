@@ -89,7 +89,7 @@ impl Component for TagsList {
                 <div class="columns">
                     <div class="column is-10">
                         <h1 class="title is-1">{ "所有标签/All tags" }</h1>
-                        <h2 class="subtitle">{ "&nbsp;" }</h2>
+                        <h2 class="subtitle">{ " " }</h2>
                     </div>
                 </div>
                 <TagsListComponent />

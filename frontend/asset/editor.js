@@ -9,8 +9,16 @@ export function initEditor(content) {
         initialValue: content?content:'',
         height: '500px',
     });
+    console.log("initEditor tags.length="+tags.length);
     for (let i = 0; i < tags.length; i++)
         addTag(tags[i]);
+}
+
+export function destroyEditor() {
+    console.log("destroyEditor called");
+    const editor = document.querySelector('#editor');
+    editor.innerHTML = '<p>aaaaaaaaa</p>';
+    editor.removeAttribute('style');
 }
 
 export function setInitContent(intentContent) {
