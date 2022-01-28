@@ -15,16 +15,14 @@ use crate::component::Unauthorized;
 
 #[wasm_bindgen(module = "/asset/editor.js")]
 extern "C" {
-    #[wasm_bindgen(js_name = initEditor)]
-    fn init_editor();
-    #[wasm_bindgen(js_name = destroyEditor)]
-    fn destroy_editor();
     #[wasm_bindgen(js_name = getContent)]
     fn get_content() -> String;
+    #[wasm_bindgen(js_name = setContent)]
+    fn set_content(c: JsValue);
     #[wasm_bindgen(js_name = inputTag)]
     fn input_tag(event: web_sys::KeyboardEvent);
-    #[wasm_bindgen(js_name = syncTags)]
-    fn sync_tags(tags: Vec<JsValue>);
+    #[wasm_bindgen(js_name = showOriginTags)]
+    fn show_origin_tags(tags: Vec<JsValue>);
     #[wasm_bindgen(js_name = getAddedTags)]
     fn get_added_tags() -> Vec<JsValue>;
     #[wasm_bindgen(js_name = randomTitleImage)]
@@ -41,10 +39,11 @@ pub struct UpdatePostProps {
     oninput: Callback<InputEvent>,
     onupdate: Callback<MouseEvent>,
     go_back: Callback<MouseEvent>,
-    init_editor: Callback<Event>,
     post_id: u64,
     title_onchange: Callback<String>,
     title_image_onchange: Callback<String>,
+    set_content: Callback<String>,
+    set_tags: Callback<Option<Vec<String>>>,
 }
 
 #[function_component(UpdatePost)]
@@ -56,10 +55,11 @@ fn update_post(
         oninput,
         onupdate,
         go_back,
-        init_editor,
         post_id,
         title_onchange,
         title_image_onchange,
+        set_content,
+        set_tags,
     }: &UpdatePostProps,
 ) -> Html {
     let detail_url = format!("/post/show/{}?edit=true", post_id);
@@ -91,7 +91,7 @@ fn update_post(
     if post_detail.is_none() {
         return html! {};
     }
-    let post_detail = (*post_detail).clone().unwrap();
+    let mut post_detail = (*post_detail).clone().unwrap();
     if post_detail.id < 1 {
         return html! {
           <Unauthorized />
@@ -101,9 +101,13 @@ fn update_post(
     if post_detail.title_image.len() > 0 {
         title_image_onchange.emit(post_detail.title_image.clone());
     }
+    let mut content = String::new();
+    std::mem::swap(&mut post_data.content, &mut content);
+    set_content.emit(content);
     if post_detail.tags.is_some() {
-        let init_tags = post_detail.tags.unwrap().iter().map(|t| JsValue::from_str(t)).collect();
-        sync_tags(init_tags);
+        set_tags.emit(Some(post_detail.tags.unwrap()));
+    } else {
+        set_tags.emit(None);
     }
     html! {
       <>
@@ -155,7 +159,8 @@ fn update_post(
           </div>
           <div class="field">
             <label class="label">{"内容/Content"}</label>
-            <div id="editor">{&post_detail.content}</div>
+            <div id="post-content">{&post_detail.content}</div>
+            <iframe id="editor" width="100%" height="500" src="/asset/editor.html"></iframe>
           </div>
           <div class="field">
             <label class="label">{"标签/Labels"}</label>
@@ -175,9 +180,6 @@ fn update_post(
             </div>
           </div>
         </form>
-        <link rel="stylesheet" href="/asset/codemirror.min.css" />
-        <link rel="stylesheet" href="/asset/toastui-editor.min.css" />
-        <script src="/asset/toastui-editor-all.min.js" onload={init_editor}></script>// onload={init_editor}
       </>
     }
 }
@@ -191,6 +193,8 @@ pub struct PostCompose {
     post_id: u64,
     title: String,
     title_image: String,
+    content: String,
+    tags: Option<Vec<String>>,
     readers: HashMap<String, FileReader>,
 }
 
@@ -198,13 +202,14 @@ pub enum Msg {
     // RequestPostData(u64),
     Ignore,
     UpdateTitle(String),
-    InitEditor,
     UpdatePost,
     LoadedBytes(String, Vec<u8>),
     Files(Event, Vec<web_sys::File>),
     RetrieveRandomTitleImage(MouseEvent),
     GoBack,
     GoSignIn,
+    SetContent(String),
+    SetTags(Option<Vec<String>>),
     PayloadCallback(String),
 }
 
@@ -217,45 +222,14 @@ impl Component for PostCompose {
             post_id: ctx.props().post_id,
             title: String::new(),
             title_image: String::new(),
+            content: String::new(),
+            tags: None,
             readers: HashMap::default(),
         }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            /*
-            Msg::RequestPostData(post_id) => {
-                let detail_url = format!("/post/show/{}", post_id);
-                let post_detail = use_state(|| PostDetail::default());
-                {
-                    let post_detail = post_detail.clone();
-                    use_effect_with_deps(
-                        move |_| {
-                            let post_detail = post_detail.clone();
-                            wasm_bindgen_futures::spawn_local(async move {
-                                let response: Response<PostDetail> = reqwasm::http::Request::get(&detail_url)
-                                    .send()
-                                    .await
-                                    .unwrap()
-                                    .json()
-                                    .await
-                                    .unwrap();
-                                post_detail.set(response.data.unwrap());
-                            });
-                            || ()
-                        },
-                        (),
-                    );
-                }
-                let mut post_detail = (*post_detail).clone();
-                self.post_data.id = post_id as i64;
-                std::mem::swap(&mut self.post_data.title, &mut post_detail.title);
-                std::mem::swap(&mut self.post_data.title_image, &mut post_detail.title_image);
-                std::mem::swap(&mut self.post_data.content, &mut post_detail.content);
-                std::mem::swap(&mut self.post_data.tags, &mut post_detail.tags);
-                return true;
-            }
-            */
             Msg::PayloadCallback(s) => {
                 self.title_image = s;
             },
@@ -273,7 +247,7 @@ impl Component for PostCompose {
                     title: self.title.clone(),
                     title_image: self.title_image.clone(),
                     content: get_content(),
-                    tags: tags,
+                    tags,
                 };
                 console_log!(&post_data.content);
                 let navigator = ctx.link().navigator().unwrap();
@@ -348,15 +322,17 @@ impl Component for PostCompose {
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
                 upload_title_image(event, self.post_id, files, js_callback);
             },
-            Msg::InitEditor => {
-                init_editor();
-                return false;
-            },
             Msg::RetrieveRandomTitleImage(event) => {
                 let callback = ctx.link().callback(Msg::PayloadCallback);
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
                 random_title_image(event, self.post_id, js_callback);
             },
+            Msg::SetContent(c) => {
+                self.content = c;
+            }
+            Msg::SetTags(tags) => {
+                self.tags = tags;
+            }
             Msg::GoBack => {
                 let navigator = ctx.link().navigator().unwrap();
                 navigator.push(crate::router::Route::ShowPost {id: self.post_id});
@@ -413,18 +389,24 @@ impl Component for PostCompose {
         });
         let onupdate = ctx.link().callback(|_: MouseEvent| Msg::UpdatePost);
         let go_back = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
-        let init_editor = ctx.link().callback(|_: Event| Msg::InitEditor);
+        let set_content = Callback::from(|c: String| Msg::SetContent(c));
+        let set_tags = Callback::from(|tags: Option<Vec<String>>| Msg::SetTags(tags));
 
         html! {
           <>
             <UpdatePost onsubmit={onsubmit} onchange={onchange} {download_image} oninput={oninput} onupdate={onupdate}
-            {go_back} {init_editor} post_id={post_id as u64} title_onchange={title_onchange.clone()}
-            title_image_onchange={title_image_onchange.clone()} />
+            {go_back} post_id={post_id as u64} title_onchange={title_onchange.clone()}
+            title_image_onchange={title_image_onchange.clone()} {set_content} {set_tags} />
           </>
         }
     }
 
-    fn destroy(&mut self, _ctx: &Context<Self>) {
-        destroy_editor();
+    fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {
+        if self.tags.is_some() {
+            let origin_tags = self.tags.unwrap().iter().map(|t| JsValue::from_str(t)).collect();
+            show_origin_tags(origin_tags);
+        }
+        set_content(JsValue::from_str(&self.content));
     }
+
 }
