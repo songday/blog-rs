@@ -121,9 +121,20 @@ pub async fn random_title_image(id: u64) -> Result<String> {
     }
     let filename = format!("{}.{}", id, file_ext);
     // let mut file = tokio::fs::File::create(Path::new(&filename)).await?;
-    let (mut file, _path_buf, relative_path) = crate::util::io::get_save_file(id, &filename, file_ext, false).await?;
+    let (mut file, _path_buf, relative_path) = io::get_save_file(id, &filename, file_ext, false).await?;
     let b = response.bytes().await?;
     tokio::io::copy_buf(&mut &b[..], &mut file).await?;
     // file.shutdown()
     Ok(relative_path)
+}
+
+pub async fn delete_post_images(post_id: u64) -> Result<()> {
+    let (_, path, _) = io::get_save_file(post_id, "", "", false).await?;
+    let dir = path.parent().unwrap();
+    let mut files = tokio::fs::read_dir(dir).await?;
+    while let Some(entry) = files.next_entry().await? {
+        println!("Deleting {:?}", entry.file_name());
+        tokio::fs::remove_file(entry.path()).await?;
+    }
+    Ok(())
 }
