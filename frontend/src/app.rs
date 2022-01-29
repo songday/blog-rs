@@ -78,15 +78,9 @@ impl Component for App {
                           <a class="navbar-item" href="/management">
                             {"管理/Management"}
                           </a>
+                          <hr class="navbar-divider"/>
                           <a class="navbar-item">
                             {"关于/About"}
-                          </a>
-                          <a class="navbar-item">
-                            {"联系/Contact"}
-                          </a>
-                          <hr class="navbar-divider"/>
-                          <a class="navbar-item" href="https://github.com/songday/blog-rs">
-                            {"项目地址/Project"}
                           </a>
                         </div>
                       </div>
@@ -120,7 +114,7 @@ impl Component for App {
                         <a href="https://www.flaticon.com/free-icons/blog">{"Freepik - Flaticon"}</a>
                     </div>
                     <div class="content has-text-centered">
-                        { "Made by Songday with Love" }
+                        { "Made by Songday with Love &hearts; ♥️" }
                     </div>
                 </footer>
             </>

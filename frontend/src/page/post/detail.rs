@@ -1,8 +1,10 @@
 use blog_common::dto::post::PostDetail as PostDetailDto;
 use blog_common::dto::Response;
+use gloo::utils::document;
 use time::format_description;
 use time::OffsetDateTime;
 use wasm_bindgen::prelude::*;
+use web_sys::{Element, Node};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
@@ -14,6 +16,17 @@ extern "C" {
     fn show_notification_box();
     #[wasm_bindgen(js_name = hideNotificationBox)]
     fn hide_notification_box(event: MouseEvent);
+}
+
+fn show_content(c: &str) -> Html {
+    let div: Element = document().create_element("div").unwrap();
+    // Add content, classes etc.
+    div.set_inner_html(c);
+    div.set_class_name("content");
+    // Convert Element into a Node
+    let node: Node = div.into();
+    // Return that Node as a Html value
+    Html::VRef(node)
 }
 
 fn show_tags(post: &mut PostDetailDto) -> Html {
@@ -75,6 +88,7 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
                 <div class="hero-body">
                     <div class="container">
                         <p class="title is-1">
+                            // { &post.title }
                             { &post.title }
                         </p>
                         <p class="subtitle is-3">
@@ -87,11 +101,12 @@ fn app(ShowDetailProps { post_id }: &ShowDetailProps) -> Html {
             <div class="section container">
                 <article class="media block box my-6">
                     <div class="media-content">
-                        <div class="content">
-                            <p class="is-family-secondary">
-                                { &post.content }
-                            </p>
-                        </div>
+                        { show_content(&post.content) }
+                        // <div class="content">
+                            // <p class="is-family-secondary">
+                            //     { show_content(&post.content) }
+                            // </p>
+                        // </div>
                     </div>
                 </article>
             </div>
@@ -128,7 +143,7 @@ impl Component for PostDetail {
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {
-        weblog::console_log!("show_detail");
+        // weblog::console_log!("show_detail");
         let Self { post_id } = self;
         let mut delete_post_uri = String::with_capacity(32);
         delete_post_uri.push_str("/post/delete/");
@@ -141,10 +156,24 @@ impl Component for PostDetail {
                 <ShowDetail post_id={*post_id} />
                 <div class="container">
                     <div class="buttons are-small">
-                        <Link<Route> classes={classes!("button")} to={Route::ComposePost { id: *post_id }}>
-                            { "编辑/Edit" }
+                        <Link<Route> classes={classes!("button")} to={Route::ListPosts}>
+                            <span class="icon">
+                                <i class="fas fa-angle-double-left"></i>
+                            </span>
+                            <span>{ "返回/Back" }</span>
                         </Link<Route>>
-                        <button class="button is-danger is-outlined" onclick={show_notification_callback}>{"删除/Delete"}</button>
+                        <Link<Route> classes={classes!("button")} to={Route::ComposePost { id: *post_id }}>
+                            <span class="icon">
+                                <i class="far fa-edit"></i>
+                            </span>
+                            <span>{ "编辑/Edit" }</span>
+                        </Link<Route>>
+                        <button class="button is-danger is-outlined" onclick={show_notification_callback}>
+                            <span class="icon">
+                                <i class="far fa-trash-alt"></i>
+                            </span>
+                            <span>{"删除/Delete"}</span>
+                        </button>
                     </div>
                     <div id="notification" class="notification is-danger is-light" style="display:none;width:435px">
                         <button class="delete" onclick={hide_notification_callback.clone()}></button>

@@ -1,4 +1,3 @@
-use std::rc::Rc;
 use std::vec::Vec;
 
 use blog_common::dto::post::PostDetail;
@@ -41,16 +40,24 @@ fn tags_list() -> Html {
     if len == 0 {
         return html! {};
     }
+    let mut classes = String::with_capacity(32);
     let tags = tags
         .iter()
         .map(|t| {
-            html! {
-                <span class="tag">
+            let mut roll: usize = fastrand::usize(..val::TAG_SIZES.len());
+            classes.push_str("tag is-light");
+            classes.push_str(val::TAG_SIZES[roll]);
+            roll = fastrand::usize(..val::TAG_COLORS.len());
+            classes.push_str(val::TAG_COLORS[roll]);
+            let html = html! {
+                <span class={classes!(&classes)}>
                     <Link<Route> to={Route::ListPostsByTag { tag_name: String::from(t) }}>
                         { t }
                     </Link<Route>>
                 </span>
-            }
+            };
+            classes.clear();
+            html
         })
         .collect::<Html>();
     html! {
@@ -82,7 +89,7 @@ impl Component for TagsList {
                 <div class="columns">
                     <div class="column is-10">
                         <h1 class="title is-1">{ "所有标签/All tags" }</h1>
-                        <h2 class="subtitle">{ "&nbsp;" }</h2>
+                        <h2 class="subtitle">{ " " }</h2>
                     </div>
                 </div>
                 <TagsListComponent />
