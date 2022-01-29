@@ -15,10 +15,10 @@ use crate::component::Unauthorized;
 
 #[wasm_bindgen(module = "/asset/editor.js")]
 extern "C" {
+    #[wasm_bindgen(js_name = initAllTagsBox)]
+    fn init_all_tags_box();
     #[wasm_bindgen(js_name = getContent)]
     fn get_content() -> String;
-    #[wasm_bindgen(js_name = setContent)]
-    fn set_content(c: JsValue);
     #[wasm_bindgen(js_name = inputTag)]
     fn input_tag(event: web_sys::KeyboardEvent);
     #[wasm_bindgen(js_name = showOriginTags)]
@@ -37,13 +37,9 @@ pub struct UpdatePostProps {
     onchange: Callback<Event>,
     download_image: Callback<MouseEvent>,
     oninput: Callback<InputEvent>,
-    onupdate: Callback<MouseEvent>,
-    go_back: Callback<MouseEvent>,
     post_id: u64,
     title_onchange: Callback<String>,
     title_image_onchange: Callback<String>,
-    set_content: Callback<String>,
-    set_tags: Callback<Option<Vec<String>>>,
 }
 
 #[function_component(UpdatePost)]
@@ -53,16 +49,13 @@ fn update_post(
         onchange,
         download_image,
         oninput,
-        onupdate,
-        go_back,
         post_id,
         title_onchange,
         title_image_onchange,
-        set_content,
-        set_tags,
     }: &UpdatePostProps,
 ) -> Html {
     let detail_url = format!("/post/show/{}?edit=true", post_id);
+    console_log!("compose request post data");
     let post_detail = use_state(|| None::<PostDetail>);
     {
         let post_detail = post_detail.clone();
@@ -91,7 +84,7 @@ fn update_post(
     if post_detail.is_none() {
         return html! {};
     }
-    let mut post_detail = (*post_detail).clone().unwrap();
+    let post_detail = (*post_detail).clone().unwrap();
     if post_detail.id < 1 {
         return html! {
           <Unauthorized />
@@ -101,86 +94,62 @@ fn update_post(
     if post_detail.title_image.len() > 0 {
         title_image_onchange.emit(post_detail.title_image.clone());
     }
-    let mut content = String::new();
-    std::mem::swap(&mut post_data.content, &mut content);
-    set_content.emit(content);
+    // let mut content = String::new();
+    // std::mem::swap(&mut post_detail.content, &mut content);
+    // set_content.emit(content);
     if post_detail.tags.is_some() {
-        set_tags.emit(Some(post_detail.tags.unwrap()));
-    } else {
-        set_tags.emit(None);
+        let origin_tags = post_detail.tags.as_ref().unwrap().iter().map(|t| JsValue::from_str(t)).collect();
+        show_origin_tags(origin_tags);
     }
+
+    gloo::utils::document().set_title(&post_detail.title);
     html! {
-      <>
-        <div class="container">
-          <h1 class="title is-1">{"编辑博客/Editing post"}</h1>
-        </div>
-        <p>{" "}</p>
-        <form class="row g-3" onsubmit={onsubmit}>
-          <div class="container">
-            <div class="field">
-              <label class="label">{"题图/Image"}</label>
+        <>
+            <div class="container">
+                <div class="field">
+                    <label class="label">{"题图/Image"}</label>
+                </div>
+                <nav class="level">
+                    <p class="level-item has-text-centered">{" "}</p>
+                    <p class="level-item has-text-centered">
+                        <div class="file is-normal">
+                            <label class="file-label">
+                                <input class="file-input" multiple=false accept="image/*" type="file" name="title-image" onchange={onchange}/>
+                                <span class="file-cta">
+                                    <span class="file-icon"><i class="fas fa-upload"></i></span>
+                                    <span class="file-label">{"上传图片/Upload"}</span>
+                                </span>
+                            </label>
+                        </div>
+                    </p>
+                    <p class="level-item has-text-centered">{"或/Or"}</p>
+                    <p class="level-item has-text-centered">
+                        <button class="button" onclick={download_image}>// onclick={download_image}
+                            <span class="icon"><i class="fas fa-download"></i></span>
+                            <span>{"下载一张/Download"}</span>
+                        </button>
+                    </p>
+                    <p class="level-item has-text-centered">{" "}</p>
+                </nav>
             </div>
-            <nav class="level">
-            <p class="level-item has-text-centered">
-              {""}
-            </p>
-            <p class="level-item has-text-centered">
-              <div class="file is-normal">
-                <label class="file-label">
-                  <input class="file-input" multiple=false accept="image/*" type="file" name="title-image" onchange={onchange}/>
-                  <span class="file-cta">
-                    <span class="file-icon"><i class="fas fa-upload"></i></span>
-                    <span class="file-label">{"上传图片/Upload"}</span>
-                  </span>
-                </label>
-              </div>
-            </p>
-            <p class="level-item has-text-centered">{"或/Or"}</p>
-            <p class="level-item has-text-centered">
-              <button class="button">// onclick={download_image}
-                <span class="icon"><i class="fas fa-download"></i></span>
-                <span>{"下载一张/Download"}</span>
-              </button>
-            </p>
-            <p class="level-item has-text-centered">{""}</p>
-          </nav>
-        </div>
-        <section class="hero is-large is-light has-background">
-          <img id="title-image" src={post_detail.title_image.clone()} class="hero-background is-transparent"/>
-          <div class="hero-body"></div>
-        </section>
-        <div class="container">
-          <div class="field">
-            <label class="label">{"标题/Title"}</label>
-            <div class="control">
-              <input class="input" type="text" value={post_detail.title.clone()}
-                  oninput={oninput}/>
+            <section class="hero is-large is-light has-background">
+                <img id="title-image" src={post_detail.title_image.clone()} class="hero-background is-transparent"/>
+                <div class="hero-body"></div>
+            </section>
+            <div class="container">
+                <div class="field">
+                    <label class="label">{"标题/Title"}</label>
+                    <div class="control">
+                        <input class="input" type="text" value={post_detail.title.clone()} oninput={oninput}/>
+                    </div>
+                </div>
+                <div class="field">
+                    <label class="label">{"内容/Content"}</label>
+                    <div id="post-content" style="display:none">{&post_detail.content}</div>
+                    <iframe id="editor" width="100%" height="520" src="/asset/editor.html" style="padding:0;margin:0"></iframe>
+                </div>
             </div>
-          </div>
-          <div class="field">
-            <label class="label">{"内容/Content"}</label>
-            <div id="post-content">{&post_detail.content}</div>
-            <iframe id="editor" width="100%" height="500" src="/asset/editor.html"></iframe>
-          </div>
-          <div class="field">
-            <label class="label">{"标签/Labels"}</label>
-              <div class="control">
-                <input maxlength="10" id="tagInput" class="input" type="text" placeholder="回车添加/Press 'Enter' to add" onkeyup={input_tag}/>
-              </div>
-              <br/>
-              <div id="tags" class="tags"></div>
-          </div>
-          <div class="field is-grouped">
-            <div class="control">
-              <button class="button is-link" onclick={onupdate}>{ "更新/Update" }</button>
-            </div>
-            <div class="control">
-              <button class="button is-link is-light" onclick={go_back}>{ "返回/Cancel" }</button>
-            </div>
-            </div>
-          </div>
-        </form>
-      </>
+        </>
     }
 }
 
@@ -193,8 +162,6 @@ pub struct PostCompose {
     post_id: u64,
     title: String,
     title_image: String,
-    content: String,
-    tags: Option<Vec<String>>,
     readers: HashMap<String, FileReader>,
 }
 
@@ -208,8 +175,6 @@ pub enum Msg {
     RetrieveRandomTitleImage(MouseEvent),
     GoBack,
     GoSignIn,
-    SetContent(String),
-    SetTags(Option<Vec<String>>),
     PayloadCallback(String),
 }
 
@@ -222,8 +187,6 @@ impl Component for PostCompose {
             post_id: ctx.props().post_id,
             title: String::new(),
             title_image: String::new(),
-            content: String::new(),
-            tags: None,
             readers: HashMap::default(),
         }
     }
@@ -327,12 +290,6 @@ impl Component for PostCompose {
                 let js_callback = Closure::once_into_js(move |payload: String| callback.emit(payload));
                 random_title_image(event, self.post_id, js_callback);
             },
-            Msg::SetContent(c) => {
-                self.content = c;
-            }
-            Msg::SetTags(tags) => {
-                self.tags = tags;
-            }
             Msg::GoBack => {
                 let navigator = ctx.link().navigator().unwrap();
                 navigator.push(crate::router::Route::ShowPost {id: self.post_id});
@@ -387,26 +344,41 @@ impl Component for PostCompose {
             let input = e.target_unchecked_into::<HtmlInputElement>();
             Msg::UpdateTitle(input.value())
         });
-        let onupdate = ctx.link().callback(|_: MouseEvent| Msg::UpdatePost);
-        let go_back = ctx.link().callback(|_: MouseEvent| Msg::GoBack);
-        let set_content = Callback::from(|c: String| Msg::SetContent(c));
-        let set_tags = Callback::from(|tags: Option<Vec<String>>| Msg::SetTags(tags));
 
         html! {
-          <>
-            <UpdatePost onsubmit={onsubmit} onchange={onchange} {download_image} oninput={oninput} onupdate={onupdate}
-            {go_back} post_id={post_id as u64} title_onchange={title_onchange.clone()}
-            title_image_onchange={title_image_onchange.clone()} {set_content} {set_tags} />
-          </>
+            <>
+                <div class="container">
+                    <h1 class="title is-1">{"编辑博客/Editing post"}</h1>
+                </div>
+                <p>{" "}</p>
+                <UpdatePost onsubmit={onsubmit} onchange={onchange} {download_image} oninput={oninput}
+                    post_id={post_id as u64} title_onchange={title_onchange.clone()}
+                    title_image_onchange={title_image_onchange.clone()} />
+                <div class="container" id="tagsContainer" style="display:none">
+                    <div class="field">
+                        <label class="label">{"标签/Labels"}</label>
+                        <div class="control">
+                            <input maxlength="10" id="tagInput" class="input" type="text" placeholder="回车添加/Press 'Enter' to add" onkeyup={input_tag}/>
+                        </div>
+                        <br/>
+                        <div id="tags" class="tags"></div>
+                    </div>
+                    <div class="field is-grouped">
+                        <div class="control">
+                            <button class="button is-link" onclick={ctx.link().callback(|_: MouseEvent| Msg::UpdatePost)}>{ "更新/Update" }</button>
+                        </div>
+                        <div class="control">
+                            <button class="button is-link is-light" onclick={ctx.link().callback(|_: MouseEvent| Msg::GoBack)}>{ "返回/Cancel" }</button>
+                        </div>
+                    </div>
+                </div>
+            </>
         }
     }
 
     fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {
-        if self.tags.is_some() {
-            let origin_tags = self.tags.unwrap().iter().map(|t| JsValue::from_str(t)).collect();
-            show_origin_tags(origin_tags);
-        }
-        set_content(JsValue::from_str(&self.content));
+        // console_log!("rendered,",first_render);
+        init_all_tags_box();
     }
 
 }

@@ -1,17 +1,15 @@
-export function setContent(c) {
-    const w = document.getElementsByTagName("editor")[0].contentWindow;
-    // var iframeDocument = document.getElementsByTagName("iframe")[0].contentDocument;
-    // https://developer.mozilla.org/zh-CN/docs/Web/API/Window/postMessage
-    w.editor.setMarkdown(c, false);
-}
-
 export function getContent() {
-    const w = document.getElementsByTagName("editor")[0].contentWindow;
-    return w.editor.getMarkdown();
+    const w = document.getElementById("editor").contentWindow;
+    // var iframeDocument = document.getElementById("iframe").contentDocument;
+    // https://developer.mozilla.org/zh-CN/docs/Web/API/Window/postMessage
+    // w.editor.setMarkdown(c, false);
+    return w.getContent();
 }
 
-// tag
-let allTagsBox;
+let allTagsBox = null;
+export function initAllTagsBox() {
+    // allTagsBox = document.getElementById('tags');
+}
 
 export function inputTag(event) {
     if (event.keyCode !== 13)
@@ -23,6 +21,8 @@ export function inputTag(event) {
 }
 
 export function showOriginTags(tags) {
+    allTagsBox = document.getElementById('tags');
+    document.getElementById('tagsContainer').style.display = 'block';
     for (let i = 0; i < tags.length; i++)
         addTag(tags[i]);
 }
@@ -30,8 +30,6 @@ export function showOriginTags(tags) {
 function addTag(val) {
     if (!val)
         return;
-    if (!allTagsBox)
-        allTagsBox = document.getElementById('tags');
     const tag = document.createElement('span');
     tag.className = "tag is-primary is-medium";
     tag.innerHTML = val;
@@ -48,8 +46,6 @@ function addTag(val) {
 
 export function getAddedTags() {
     const tags = [];
-    if (!allTagsBox)
-        return tags;
     for (let i = 0; i < allTagsBox.childNodes.length; i++) {
         if (allTagsBox.childNodes[i].tagName === 'SPAN')
             tags.push(allTagsBox.childNodes[i].firstChild.nodeValue);

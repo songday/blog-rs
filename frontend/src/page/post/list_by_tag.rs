@@ -49,7 +49,7 @@ impl Component for PostsListByTag {
 
         let decoded_tag_name = urlencoding::decode(tag_name).unwrap();
 
-        gloo::utils::document().set_title(decoded_tag_name);
+        gloo::utils::document().set_title(&decoded_tag_name);
 
         html! {
             <>

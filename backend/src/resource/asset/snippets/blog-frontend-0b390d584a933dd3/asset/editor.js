@@ -1,44 +1,14 @@
-export let editor = null;
-
-export function initEditor(content) {
-    const Editor = toastui.Editor;
-    editor = new Editor({
-        el: document.querySelector('#editor'),
-        previewStyle: 'vertical',
-        initialEditType: 'wysiwyg',
-        initialValue: content?content:'',
-        height: '500px',
-    });
-    console.log("initEditor tags.length="+tags.length);
-    for (let i = 0; i < tags.length; i++)
-        addTag(tags[i]);
-}
-
-export function destroyEditor() {
-    console.log("destroyEditor called");
-    const editor = document.querySelector('#editor');
-    editor.innerHTML = '<p>aaaaaaaaa</p>';
-    editor.removeAttribute('style');
-}
-
-export function setInitContent(intentContent) {
-    if (editor == null)
-        this.initEditor();
-    editor.setMarkdown(intentContent, false);
-}
-
 export function getContent() {
-    return editor.getMarkdown();
+    const w = document.getElementById("editor").contentWindow;
+    // var iframeDocument = document.getElementById("iframe").contentDocument;
+    // https://developer.mozilla.org/zh-CN/docs/Web/API/Window/postMessage
+    // w.editor.setMarkdown(c, false);
+    return w.getContent();
 }
 
-// tag
-export let allTagsBox;
-let tags = [];
-
-function initTagElements() {
-    if (allTagsBox)
-        return;
-    allTagsBox = document.getElementById('tags');
+let allTagsBox = null;
+export function initAllTagsBox() {
+    // allTagsBox = document.getElementById('tags');
 }
 
 export function inputTag(event) {
@@ -50,14 +20,16 @@ export function inputTag(event) {
     source.focus();
 }
 
-export function syncTags(new_tags) {
-    tags = new_tags;
+export function showOriginTags(tags) {
+    allTagsBox = document.getElementById('tags');
+    document.getElementById('tagsContainer').style.display = 'block';
+    for (let i = 0; i < tags.length; i++)
+        addTag(tags[i]);
 }
 
 function addTag(val) {
     if (!val)
         return;
-    initTagElements();
     const tag = document.createElement('span');
     tag.className = "tag is-primary is-medium";
     tag.innerHTML = val;
@@ -74,8 +46,6 @@ function addTag(val) {
 
 export function getAddedTags() {
     const tags = [];
-    if (!allTagsBox)
-        return tags;
     for (let i = 0; i < allTagsBox.childNodes.length; i++) {
         if (allTagsBox.childNodes[i].tagName === 'SPAN')
             tags.push(allTagsBox.childNodes[i].firstChild.nodeValue);
