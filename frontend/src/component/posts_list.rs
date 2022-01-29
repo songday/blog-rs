@@ -49,9 +49,9 @@ pub fn posts_list(PostsListComponentProps { request_uri }: &PostsListComponentPr
                 uri.push_str("prev/");
                 uri.push_str(id.to_string().as_str());
             },
-            PaginationType::NEXT(id) => {
+            PaginationType::NEXT(_top_id, bottom_id) => {
                 uri.push_str("next/");
-                uri.push_str(id.to_string().as_str());
+                uri.push_str(bottom_id.to_string().as_str());
             },
         }
         console_log!("uri=", &uri);
@@ -81,7 +81,6 @@ pub fn posts_list(PostsListComponentProps { request_uri }: &PostsListComponentPr
     }
     let top_id = posts[0].id;
     let bottom_id = posts[len - 1].id;
-    let max_id = pagination_state.max_post_id;
     let row_num = len / 2 + 1;
     let mut left_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
     let mut right_column_data: Vec<&PostDetail> = Vec::with_capacity(row_num);
@@ -95,20 +94,29 @@ pub fn posts_list(PostsListComponentProps { request_uri }: &PostsListComponentPr
             is_odd = true;
         }
     }
-    let prev_disabled = if max_id < top_id { true } else { false };
+    let prev_disabled = if top_id < pagination_state.max_post_id {
+        false
+    } else {
+        true
+    };
     let next_disabled = if len < val::POSTS_PAGE_SIZE as usize {
         true
     } else {
         false
     };
-    let prev = {
+    let prev = if prev_disabled {
+        Callback::noop()
+    } else {
         let pagination_state = pagination_state.clone();
         Callback::from(move |_| pagination_state.dispatch(PaginationType::PREV(top_id)))
     };
-    let next = {
+    let next = if next_disabled {
+        Callback::noop()
+    } else {
         let pagination_state = pagination_state.clone();
-        Callback::from(move |_| pagination_state.dispatch(PaginationType::NEXT(bottom_id)))
+        Callback::from(move |_| pagination_state.dispatch(PaginationType::NEXT(top_id, bottom_id)))
     };
+    web_sys::window().unwrap().scroll_to_with_x_and_y(0.0, 0.0);
     html! {
         <>
             <div class="columns">
@@ -147,7 +155,7 @@ impl Default for PaginationState {
     fn default() -> Self {
         Self {
             max_post_id: 0,
-            pagination_type: PaginationType::NEXT(0),
+            pagination_type: PaginationType::NEXT(0, 0),
         }
     }
 }
@@ -157,7 +165,7 @@ impl Reducible for PaginationState {
 
     fn reduce(self: Rc<Self>, action: Self::Action) -> Rc<Self> {
         let new_max_post_id = match action {
-            PaginationType::NEXT(top_id) => {
+            PaginationType::NEXT(top_id, _bottom_id) => {
                 if self.max_post_id < top_id {
                     top_id
                 } else {
@@ -178,5 +186,5 @@ impl Reducible for PaginationState {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PaginationType {
     PREV(i64),
-    NEXT(i64),
+    NEXT(i64, i64),
 }

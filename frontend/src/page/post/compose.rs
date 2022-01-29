@@ -15,8 +15,6 @@ use crate::component::Unauthorized;
 
 #[wasm_bindgen(module = "/asset/editor.js")]
 extern "C" {
-    #[wasm_bindgen(js_name = initAllTagsBox)]
-    fn init_all_tags_box();
     #[wasm_bindgen(js_name = getContent)]
     fn get_content() -> String;
     #[wasm_bindgen(js_name = inputTag)]
@@ -98,7 +96,13 @@ fn update_post(
     // std::mem::swap(&mut post_detail.content, &mut content);
     // set_content.emit(content);
     if post_detail.tags.is_some() {
-        let origin_tags = post_detail.tags.as_ref().unwrap().iter().map(|t| JsValue::from_str(t)).collect();
+        let origin_tags = post_detail
+            .tags
+            .as_ref()
+            .unwrap()
+            .iter()
+            .map(|t| JsValue::from_str(t))
+            .collect();
         show_origin_tags(origin_tags);
     }
 
@@ -292,7 +296,7 @@ impl Component for PostCompose {
             },
             Msg::GoBack => {
                 let navigator = ctx.link().navigator().unwrap();
-                navigator.push(crate::router::Route::ShowPost {id: self.post_id});
+                navigator.push(crate::router::Route::ShowPost { id: self.post_id });
             },
             Msg::GoSignIn => {
                 let any_route = AnyRoute::new(String::from("/401"));
@@ -378,7 +382,6 @@ impl Component for PostCompose {
 
     fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {
         // console_log!("rendered,",first_render);
-        init_all_tags_box();
+        // init_all_tags_box();
     }
-
 }

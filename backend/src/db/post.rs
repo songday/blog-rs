@@ -70,12 +70,14 @@ async fn to_detail_list(posts: Vec<Post>) -> Result<Vec<PostDetail>> {
 fn append_pagination_sql(sql: &mut String, pagination_type: &str, post_id: u64) -> bool {
     let mut order_by_asc = false;
     if post_id > 0 {
+        let combine_word = if sql.rfind("WHERE").is_some() { "AND" } else { "WHERE" };
+        sql.push_str(combine_word);
         if pagination_type == "prev" {
-            sql.push_str("WHERE id>");
+            sql.push_str(" id>");
             sql.push_str(post_id.to_string().as_str());
             order_by_asc = true;
         } else if pagination_type == "next" {
-            sql.push_str("WHERE id<");
+            sql.push_str(" id<");
             sql.push_str(post_id.to_string().as_str());
         }
     }

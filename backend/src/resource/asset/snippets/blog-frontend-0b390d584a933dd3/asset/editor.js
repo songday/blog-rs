@@ -7,9 +7,6 @@ export function getContent() {
 }
 
 let allTagsBox = null;
-export function initAllTagsBox() {
-    // allTagsBox = document.getElementById('tags');
-}
 
 export function inputTag(event) {
     if (event.keyCode !== 13)

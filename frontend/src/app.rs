@@ -114,7 +114,7 @@ impl Component for App {
                         <a href="https://www.flaticon.com/free-icons/blog">{"Freepik - Flaticon"}</a>
                     </div>
                     <div class="content has-text-centered">
-                        { "Made by Songday with Love" }
+                        { "Made by Songday with Love &hearts; ♥️" }
                     </div>
                 </footer>
             </>
