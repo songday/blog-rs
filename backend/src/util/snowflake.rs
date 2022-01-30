@@ -7,7 +7,7 @@ lazy_static! {
     static ref LAST_TIMESTAMP: Mutex<u64> = Mutex::new(0);
 }
 
-const START_TIME_MILLIS: u64 = 1638510962;
+const START_TIME_MILLIS: u64 = 1643212800;
 
 pub(crate) fn gen_id() -> u64 {
     loop {

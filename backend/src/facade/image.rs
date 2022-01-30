@@ -52,13 +52,21 @@ pub async fn verify_image(token: Option<String>) -> Result<WarpResponse, Rejecti
 }
 
 pub async fn get_upload_image(tail: Tail) -> Result<impl Reply, Rejection> {
-    service::image::get_upload_image(tail.as_str())
+    let tail_str = tail.as_str();
+    service::image::get_upload_image(tail_str)
         .await
         .map(|d| {
+            let content_length = d.len();
             // 这里指定返回值，否则Rustc推到不出来类型
             let mut r: Response<hyper::Body> = Response::new(d.into());
             let mut header = HeaderMap::with_capacity(2);
-            header.insert(header::CONTENT_TYPE, HeaderValue::from_str("image/png").unwrap());
+            let image_mime = if tail_str.ends_with("png") {
+                "image/png"
+            } else {
+                "image/jpg"
+            };
+            header.insert(header::CONTENT_TYPE, HeaderValue::from_str(image_mime).unwrap());
+            header.insert(header::CONTENT_LENGTH, HeaderValue::from(content_length));
             let headers = r.headers_mut();
             headers.extend(header);
             r

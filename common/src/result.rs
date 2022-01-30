@@ -48,6 +48,8 @@ pub enum Error {
     CannotFoundTag,
     #[error("Upload failed")]
     UploadFailed,
+    #[error("Upload file not found")]
+    FileNotFound,
     #[error("Unknown file type")]
     UnknownFileType,
     #[error("Unsupported file type {0}")]

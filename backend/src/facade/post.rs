@@ -81,10 +81,12 @@ pub async fn show(
 
 pub async fn delete(id: u64, user: Option<UserInfo>) -> Result<impl Reply, Rejection> {
     if user.is_some() {
-        // post::delete(id).await.map(|_| wrap_json_data("Deleted")).map_err(|e| wrap_json_err(500, e.0))
-        if let Err(e) = post::delete(id).await {
+        if let Err(e) = image::delete_post_images(id).await {
+            eprintln!("{:?}", e);
+        } else if let Err(e) = post::delete(id).await {
             eprintln!("{:?}", e);
         }
+        // post::delete(id).await.map(|_| wrap_json_data("Deleted")).map_err(|e| wrap_json_err(500, e.0))
     }
     Ok(warp::redirect::found(Uri::from_static("/")))
 }
