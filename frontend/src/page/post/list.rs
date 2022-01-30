@@ -8,15 +8,14 @@ use weblog::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
-use crate::router::Route;
 use crate::component::PostsListComponent;
+use crate::router::Route;
 
 pub enum Msg {
     Compose,
 }
 
-pub struct PostsList {
-}
+pub struct PostsList {}
 
 impl Component for PostsList {
     type Message = Msg;

@@ -79,9 +79,9 @@ impl Component for App {
                             {"管理/Management"}
                           </a>
                           <hr class="navbar-divider"/>
-                          <a class="navbar-item">
-                            {"关于/About"}
-                          </a>
+                            <Link<Route> classes={"navbar-item"} to={Route::About}>
+                                {"关于/About"}
+                            </Link<Route>>
                         </div>
                       </div>
                     </div>

@@ -30,8 +30,8 @@ pub async fn get_upload_image(path: &str) -> Result<Vec<u8>> {
     match tokio::fs::read(path_buf.as_path()).await {
         Ok(d) => Ok(d),
         Err(e) => {
-            eprintln!("{:?}", e);
-            Err(Error::UploadFailed.into())
+            eprintln!("{} {:?}", path, e);
+            Err(Error::FileNotFound.into())
         },
     }
 }
@@ -129,12 +129,17 @@ pub async fn random_title_image(id: u64) -> Result<String> {
 }
 
 pub async fn delete_post_images(post_id: u64) -> Result<()> {
-    let (_, path, _) = io::get_save_file(post_id, "", "", false).await?;
-    let dir = path.parent().unwrap();
+    let (path, _) = io::get_save_path(post_id, "", "", false).await?;
+    // let dir = path.parent().unwrap();
+    let dir = std::env::current_dir()?.join(path);
+    println!("dir={:?}", dir);
     let mut files = tokio::fs::read_dir(dir).await?;
+    let post_id = post_id.to_string();
     while let Some(entry) = files.next_entry().await? {
-        println!("Deleting {:?}", entry.file_name());
-        tokio::fs::remove_file(entry.path()).await?;
+        if entry.file_name().into_string().unwrap().starts_with(&post_id) {
+            println!("Deleting {:?}", entry.file_name());
+            tokio::fs::remove_file(entry.path()).await?;
+        }
     }
     Ok(())
 }

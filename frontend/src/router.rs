@@ -26,6 +26,7 @@ pub enum Route {
 #[function_component(About)]
 fn about() -> Html {
     html! {
+        <div class="container content">
         <p>{"省资源"}</p>
         <ul>
         <li>{"文件小"}</li>
@@ -61,6 +62,7 @@ fn about() -> Html {
         <li>{"Export posts data to other static site generators."}</li>
         <li>{"Run as a simple file server, and render markdown files (md ext) dynamically."}</li>
         </ul>
+        </div>
     }
 }
 

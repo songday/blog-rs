@@ -83,8 +83,7 @@ pub async fn delete(id: u64, user: Option<UserInfo>) -> Result<impl Reply, Rejec
     if user.is_some() {
         if let Err(e) = image::delete_post_images(id).await {
             eprintln!("{:?}", e);
-        }
-        else if let Err(e) = post::delete(id).await {
+        } else if let Err(e) = post::delete(id).await {
             eprintln!("{:?}", e);
         }
         // post::delete(id).await.map(|_| wrap_json_data("Deleted")).map_err(|e| wrap_json_err(500, e.0))

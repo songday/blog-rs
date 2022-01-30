@@ -56,12 +56,12 @@ impl From<Option<&str>> for SupportFileType {
     }
 }
 
-pub async fn get_save_file(
+pub async fn get_save_path(
     post_id: u64,
     origin_filename: &str,
     ext: &str,
     rename: bool,
-) -> std::io::Result<(File, PathBuf, String)> {
+) -> std::io::Result<(PathBuf, String)> {
     let id = post_id.to_string();
 
     // 生成子目录
@@ -102,14 +102,25 @@ pub async fn get_save_file(
     #[cfg(target_os = "windows")]
     let f = f.replace("\\", "/");
 
+    Ok((path_buf, f))
+}
+
+pub async fn get_save_file(
+    post_id: u64,
+    origin_filename: &str,
+    ext: &str,
+    rename: bool,
+) -> std::io::Result<(File, PathBuf, String)> {
+    let (path_buf, path_str) = get_save_path(post_id, origin_filename, ext, rename).await?;
+
     let file = OpenOptions::new()
         .read(false)
         .write(true)
         .create(true)
-        .open(path)
+        .open(path_buf.as_path())
         .await?;
 
-    Ok((file, path_buf, f))
+    Ok((file, path_buf, path_str))
 }
 
 async fn get_upload_file_writer(
