@@ -62,6 +62,19 @@ fn about() -> Html {
         <li>{"Export posts data to other static site generators."}</li>
         <li>{"Run as a simple file server, and render markdown files (md ext) dynamically."}</li>
         </ul>
+        <hr/>
+        <p>{"如何使用"}</p>
+        <ul>
+        <li>{"直接打开执行文件（第一次会自动初始化数据库文件"}</li>
+        <li>{"通过浏览器访问：http://localhost:9270"}</li>
+        <li>{"第一次需要输入管理密码，设置了以后，就可以使用了"}</li>
+        </ul>
+        <p>{"How to use"}</p>
+        <ul>
+        <li>{"Execute file directly, application will initialize database for the first time."}</li>
+        <li>{"Visit: http://localhost:9270 with any modern browser."}</li>
+        <li>{"First time it will ask you to setup a password, once it's done, you're ready to go."}</li>
+        </ul>
         </div>
     }
 }

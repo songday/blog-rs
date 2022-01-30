@@ -39,6 +39,13 @@ impl From<Error> for ErrorWrapper {
 
 impl warp::reject::Reject for ErrorWrapper {}
 
+impl From<zip::result::ZipError> for ErrorWrapper {
+    fn from(e: zip::result::ZipError) -> Self {
+        eprintln!("{}", e);
+        Error::ReadPostIdDataByTagFailed.into()
+    }
+}
+
 impl From<std::io::Error> for ErrorWrapper {
     fn from(e: std::io::Error) -> Self {
         eprintln!("{}", e);

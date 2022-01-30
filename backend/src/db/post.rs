@@ -293,7 +293,7 @@ pub async fn show(id: u64, editable: bool) -> Result<PostDetail> {
     } else {
         let tags = sqlx::query_as::<Sqlite, Tag>("SELECT t.id AS id, t.name AS name FROM tag t INNER JOIN tag_usage u ON t.id = u.tag_id WHERE u.post_id = ? ORDER BY t.created_at DESC")
             .bind(id)
-            .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
+            .fetch_all(super::get_sqlite())
             .await?.iter().map(|t| t.name.clone()).collect();
         let mut post_detail: PostDetail = (&r.unwrap()).into();
         post_detail.tags = Some(tags);
@@ -307,4 +307,11 @@ pub async fn delete(id: u64) -> Result<()> {
         .execute(super::get_sqlite())
         .await?;
     Ok(())
+}
+
+pub async fn all() -> Result<Vec<Post>> {
+    let posts = sqlx::query_as::<Sqlite, Post>("SELECT * FROM post ORDER BY id DESC")
+        .fetch_all(super::get_sqlite())
+        .await?;
+    Ok(posts)
 }
