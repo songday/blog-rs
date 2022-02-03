@@ -14,7 +14,7 @@ use blog_common::{
 };
 
 use crate::{
-    facade::{self, asset, image, management, post, tag, user},
+    facade::{self, asset, export, image, management, post, tag, user},
     service::status,
     util::result::Result,
 };
@@ -203,6 +203,12 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(auth())
         .and(warp::body::aggregate())
         .and_then(image::save);
+    let export = warp::get()
+        .and(warp::path("export"))
+        .and(warp::path::tail())
+        .and(warp::path::end())
+        .and(auth())
+        .and_then(export::export_handler);
 
     let cors = warp::cors()
         // .allow_any_origin()
@@ -243,6 +249,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(upload_image)
         .or(upload_title_image)
         .or(save_image)
+        .or(export)
         .with(cors)
         // .with(warp::service(session_id_wrapper))
         .recover(facade::handle_rejection);

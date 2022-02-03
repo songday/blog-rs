@@ -27,7 +27,11 @@ pub async fn hugo() -> Result<String> {
 
     let mut filename = util::common::simple_uuid();
     filename.push_str(".zip");
-    let output_file = std::env::current_dir()?.join("export").join(filename.as_str());
+    let export_dir = std::env::current_dir()?.join("export");
+    if !export_dir.exists() {
+        std::fs::create_dir(export_dir.as_path())?;
+    }
+    let output_file = export_dir.join(filename.as_str());
     let file = std::fs::File::create(output_file)?;
     let mut zip = zip::ZipWriter::new(file);
     let mut file_name = String::with_capacity(32);

@@ -17,3 +17,4 @@ backend/data
 *.iml
 backend/upload
 blog.dat*
+export/

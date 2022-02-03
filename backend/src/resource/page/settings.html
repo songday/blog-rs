@@ -35,6 +35,26 @@
                     console.log(err);
                 });
         }
+        function export_hugo(t) {
+            const clazzName = t.className;
+            t.disabled = true;
+            t.className = clazzName + ' is-loading';
+            fetch('/export/hugo').then(response => response.text())
+                .then(data => {
+                    t.className = clazzName;
+                    t.disabled = false;
+                    console.log(data);
+                    if (data !== '') {
+                        location.href = data;
+                    } else {
+                        document.getElementById('errorMessage').value = data.error.detail;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
         document.addEventListener('DOMContentLoaded', () => {
             (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
                 const $notification = $delete.parentNode;
@@ -66,11 +86,12 @@
         <button class="button is-medium" onclick="post();">更新/Update</button>
         <button class="button is-medium" onclick="location.href='/';">返回/Back</button>
     </div>
+    <p>&nbsp;</p>
     <h1 class="title">
         导出/Export
     </h1>
     <p>&nbsp;</p>
-    <p>Hugo</p>
+    <p><button class="button is-medium" onclick="export_hugo(this)">Hugo</button></p>
 </div>
 </body>
 </html>
