@@ -14,19 +14,8 @@ pub async fn index() -> Result<impl Reply, Rejection> {
         Ok(warp::reply::html(INDEX_HTML).into_response())
         // Ok(warp::reply::Response::new(INDEX_HTML.into()))
     } else {
-        let token = crate::util::common::simple_uuid();
-        status::user_online(&token, UserInfo { id: 1 });
         // Ok(warp::redirect::redirect(hyper::Uri::from_static("/management/index")))
-        let html = management::SETTINGS_HTML
-            .replace("{{ name }}", "")
-            .replace("{{ domain }}", "")
-            .replace("{{ copyright }}", "")
-            .replace("{{ license }}", "");
-        let mut response = warp::reply::Response::new(html.into());
-        response.headers_mut().append(
-            hyper::header::SET_COOKIE.as_str(),
-            super::session_id_cookie(&token).parse().unwrap(),
-        );
+        let response = management::show_settings_with_fake_auth();
         Ok(response)
     }
 }

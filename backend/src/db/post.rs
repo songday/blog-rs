@@ -103,7 +103,7 @@ pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<
 
     let mut sql = String::with_capacity(256);
     sql.push_str(
-        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post ",
+        "SELECT id,title,title_image,'' AS markdown_content,'' AS rendered_content,created_at,updated_at FROM post ",
     );
     let order_by_asc = append_pagination_sql(&mut sql, pagination_type, post_id);
     println!("sql={}", sql);

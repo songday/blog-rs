@@ -209,6 +209,12 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .and(warp::path::end())
         .and(auth())
         .and_then(export::export_handler);
+    let forgot_password = warp::get()
+        .and(warp::path("management"))
+        .and(warp::path("forgot-password"))
+        .and(warp::path::end())
+        .and(warp::host::optional())
+        .and_then(management::forgot_password);
 
     let cors = warp::cors()
         // .allow_any_origin()
@@ -250,6 +256,7 @@ pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result
         .or(upload_title_image)
         .or(save_image)
         .or(export)
+        .or(forgot_password)
         .with(cors)
         // .with(warp::service(session_id_wrapper))
         .recover(facade::handle_rejection);
