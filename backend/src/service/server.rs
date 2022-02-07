@@ -68,7 +68,25 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
 //     Ok(server)
 // }
 
-pub async fn create_warp_server(address: &str, receiver: Receiver<()>) -> Result<impl Future<Output = ()> + 'static> {
+pub async fn create_static_file_server(
+    address: &str,
+    receiver: Receiver<()>,
+) -> Result<impl Future<Output = ()> + 'static> {
+    let dir = std::env::current_dir().unwrap();
+
+    println!("Serving directory path is {}", dir.as_path().display());
+    let routes = warp::get().and(warp::fs::dir(dir));
+
+    let addr = address.parse::<SocketAddr>()?;
+
+    let (_addr, server) = warp::serve(routes).bind_with_graceful_shutdown(addr, async {
+        receiver.await.ok();
+    });
+
+    Ok(server)
+}
+
+pub async fn create_blog_server(address: &str, receiver: Receiver<()>) -> Result<impl Future<Output = ()> + 'static> {
     let index = warp::get().and(warp::path::end()).and_then(crate::facade::index::index);
     let asset = warp::get()
         .and(warp::path("asset"))

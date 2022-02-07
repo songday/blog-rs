@@ -1,6 +1,6 @@
 [package]
 name = "blog-backend"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Songday <songday@yeah.net>"]
 edition = "2021"
 
@@ -17,6 +17,7 @@ argon2 = "0.3"
 base64 = "0.13"
 bytes = "1"
 # chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "3", features = ["derive"] }
 comrak = "0.12"
 # ctrlc = { version = "3.0", features = ["termination"] }
 # crc = "^1.0.0"

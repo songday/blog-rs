@@ -1,6 +1,6 @@
 [package]
 name = "blog-common"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["Songday"]
 edition = "2021"
 
