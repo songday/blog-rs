@@ -24,3 +24,9 @@ Current version: `0.5.2`
 4. All static resources were gzipped for bandwidth optimization
 5. Embed `Markdown` editor with [tui.editor](https://github.com/nhn/tui.editor)
 6. Export posts for `Hugo`, you can simply use this as a static site management tool.
+
+---
+
+Thanks to JetBrains for supporting this project with a free open source license for their amazing IDE **IntelliJ IDEA**.
+
+[![IntelliJ IDEA](https://www.jetbrains.com/idea/docs/logo_intellij_idea.png)](https://www.jetbrains.com/idea/)
