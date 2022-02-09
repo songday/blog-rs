@@ -3,24 +3,24 @@
 
 ## 自带服务端的博客系统
 
-当前版本：`0.5.1`
+当前版本：`0.5.2`
 
 ## 亮点
-1. 单文件（小于 6 Mb）跨平台可执行文件
-2. 两种工作模式：1、带博客后台的创作模式，2、纯文本文件服务器模式（暂未实现）
-3. 自带 HTTP 服务（暂时不支持 HTTPS）
+1. 单文件（小于 5 Mb）跨平台可执行文件
+2. 两种工作模式：1、带博客后台的创作模式，2、纯文本文件服务器模式（使用命令行`-m`参数）
+3. 自带 HTTP 服务（暂时不支持 HTTPS，使用`-p`更换端口，默认是：9270）
 4. 所有嵌入静态资源均通过`gzip`压缩，优化网络传输
 5. 嵌入`Markdown`编辑器：[tui.editor](https://github.com/nhn/tui.editor)
-6. 导出`Hugo`数据（即将在`0.5.2`版本推出），可以把软件当作一个静态网站的管理后端。
+6. 导出`Hugo`数据，可以把软件当作一个静态网站的管理后端。
 
 ## A singleton self-serve Blog written in Rust (Warp + Yew)
 
-Current version: `0.5.1`
+Current version: `0.5.2`
 
 ## Features
-1. Single executable file (less than 6Mb), support `Windows`, `Linux`, `macOS`
-2. Two serve mode. One with `Blog backend`, another one is pure static file service ( Not implemented yet )
-3. Self-hosting (port can be changed via command-line argument)
+1. Single executable file (less than 5Mb), support `Windows`, `Linux`, `macOS`
+2. Two serve mode. One with `Blog backend`, another one is static file service ( Specified by `-m` command line argument )
+3. Self-hosting (port can be changed via command-line argument `-p`, default is 9270)
 4. All static resources were gzipped for bandwidth optimization
 5. Embed `Markdown` editor with [tui.editor](https://github.com/nhn/tui.editor)
-6. Export posts for `Hugo` ( Coming soon `0.5.2` ), you can simply use this as a static site management tool.
+6. Export posts for `Hugo`, you can simply use this as a static site management tool.

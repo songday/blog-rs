@@ -142,7 +142,7 @@ impl Component for PostDetail {
         changed
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
         // weblog::console_log!("show_detail");
         let Self { post_id } = self;
         let mut delete_post_uri = String::with_capacity(32);
@@ -151,17 +151,22 @@ impl Component for PostDetail {
 
         let show_notification_callback = Callback::from(|_: MouseEvent| show_notification_box());
         let hide_notification_callback = Callback::from(|e: MouseEvent| hide_notification_box(e));
+
+        let nav = ctx.link().navigator().unwrap();
+        let go_back = ctx.link().callback(move |e: MouseEvent| nav.back());
+
+        web_sys::window().unwrap().scroll_to_with_x_and_y(0.0, 0.0);
         html! {
             <>
                 <ShowDetail post_id={*post_id} />
                 <div class="container">
                     <div class="buttons are-small">
-                        <Link<Route> classes={classes!("button")} to={Route::ListPosts}>
+                        <button class="button" onclick={go_back}>
                             <span class="icon">
                                 <i class="fas fa-angle-double-left"></i>
                             </span>
                             <span>{ "返回/Back" }</span>
-                        </Link<Route>>
+                        </button>
                         <Link<Route> classes={classes!("button")} to={Route::ComposePost { id: *post_id }}>
                             <span class="icon">
                                 <i class="far fa-edit"></i>

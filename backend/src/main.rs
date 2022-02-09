@@ -58,8 +58,8 @@ fn main() -> result::Result<()> {
 
     let run_mode = if args.mode.is_none() {
         let mut line = String::with_capacity(16);
-        println!("请指定运行模式, 's' 是静态文件服务, 否则则是博客后台");
-        println!("Please specify run mode, 's' is for static file serve, otherwise is full Blog backend");
+        println!("指定运行模式, 直接回车是博客后台，按 s 是静态文件服务");
+        println!("Specify run mode, default (Press 'Enter' directly) is Blog backend, `s` is static file serve");
         let _b1 = std::io::stdin().read_line(&mut line).unwrap();
         // println!("Hello , {}", line);
         // println!("no of bytes read , {}", b1);
