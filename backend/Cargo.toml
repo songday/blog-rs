@@ -1,6 +1,6 @@
 [package]
 name = "blog-backend"
-version = "0.5.2"
+version = "0.5.5"
 authors = ["Songday <songday@yeah.net>"]
 edition = "2021"
 
@@ -22,6 +22,7 @@ comrak = "0.12"
 # ctrlc = { version = "3.0", features = ["termination"] }
 # crc = "^1.0.0"
 futures = "0.3"
+git2 = "0.13"
 hyper = "0.14"
 image = { version = "0.23", features = ["jpeg", "png", "gif"] }
 lazy_static = "1.4"
@@ -30,7 +31,7 @@ once_cell = "1.9"
 parking_lot = "0.11"
 password-hash = { version = "0.3", features = ["rand_core"] }
 # percent-encoding = "2.1"
-# pulldown-cmark = "0.8"
+# pulldown-cmark = "0.9"
 rand = "0.8"
 regex = "1.5"
 reqwest = "0.11"

@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::result::ErrorResponse;
 
+pub mod git;
 pub mod management;
 pub mod post;
 pub mod tag;

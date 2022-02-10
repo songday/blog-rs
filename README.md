@@ -5,6 +5,11 @@
 
 当前版本：`0.5.2`
 
+## 如何发布博客
+1. 使用本工具自带的Http Server
+2. 导出到`Hugo`
+3. 推送到支持`Git pages`的服务商，比如：[GitHub Pages](https://pages.github.com/) （即将推出）
+
 ## 亮点
 1. 单文件（小于 5 Mb）跨平台可执行文件
 2. 两种工作模式：1、带博客后台的创作模式，2、纯文本文件服务器模式（使用命令行`-m`参数）
@@ -16,6 +21,11 @@
 ## A singleton self-serve Blog written in Rust (Warp + Yew)
 
 Current version: `0.5.2`
+
+## How to deploy posts
+1. Use embedding http server of this tool directly
+2. Export posts to `Hugo` or other static site generator
+3. Push to any `Git pages` provider, like: [GitHub Pages](https://pages.github.com/) (Coming soon)
 
 ## Features
 1. Single executable file (less than 5Mb), support `Windows`, `Linux`, `macOS`
@@ -29,4 +39,4 @@ Current version: `0.5.2`
 
 Thanks to JetBrains for supporting this project with a free open source license for their amazing IDE **IntelliJ IDEA**.
 
-[![IntelliJ IDEA](https://www.jetbrains.com/idea/docs/logo_intellij_idea.png)](https://www.jetbrains.com/idea/)
+[![IntelliJ IDEA](https://resources.jetbrains.com/storage/products/company/brand/logos/IntelliJ_IDEA_icon.svg)](https://www.jetbrains.com/)
