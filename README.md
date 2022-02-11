@@ -5,7 +5,7 @@
 
 当前版本：`0.5.2`
 
-## 如何发布博客
+## 发布博客的3种方式
 1. 使用本工具自带的Http Server
 2. 导出到`Hugo`
 3. 推送到支持`Git pages`的服务商，比如：[GitHub Pages](https://pages.github.com/) （即将推出）
@@ -22,7 +22,7 @@
 
 Current version: `0.5.2`
 
-## How to deploy posts
+## Deploy posts in 3 ways
 1. Use embedding http server of this tool directly
 2. Export posts to `Hugo` or other static site generator
 3. Push to any `Git pages` provider, like: [GitHub Pages](https://pages.github.com/) (Coming soon)

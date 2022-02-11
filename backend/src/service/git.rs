@@ -2,7 +2,7 @@ use std::vec::Vec;
 use std::path::Path;
 
 use blog_common::dto::git::GitRepositoryInfo;
-use git2::{Commit, Direction, Error as GitError, ObjectType, Oid, Repository, Signature};
+use git2::{Commit, Direction, Error as GitError, ObjectType, Oid, Repository, RepositoryState, Signature, StatusOptions, StatusShow};
 
 fn sync_to_remote(info: &GitRepositoryInfo, ) -> Result<(), ()> {
     // export posts data to file system
@@ -19,18 +19,36 @@ fn sync_to_remote(info: &GitRepositoryInfo, ) -> Result<(), ()> {
     Ok(())
 }
 
+fn get_signature<'a>(repo: &'a Repository) -> Result<Signature<'a>, GitError> {
+    let config = repo.config()?;
+    let name = config.get_str("user.name")?;
+    let email = config.get_str("user.email")?;
+    Ok(Signature::now(name, email)?)
+}
+
+fn get_changed_files(repo: &Repository, ) -> Result<Vec<String>, GitError> {
+    let state = repo.state();
+    if state.eq(&RepositoryState::Clean) {
+        return Ok(vec![]);
+    }
+    let mut status_options = StatusOptions::new();
+    let status = repo.statuses(Some(status_options.show(StatusShow::Index)))?;
+    for f in status.iter() {}
+    Ok(vec![])
+}
+
 fn find_last_commit(repo: &Repository) -> Result<Commit, GitError> {
     let obj = repo.head()?.resolve()?.peel(ObjectType::Commit)?;
     obj.into_commit().map_err(|_| GitError::from_str("Couldn't find commit"))
 }
 
 fn add_and_commit(info: &GitRepositoryInfo, repo: &Repository, files: Vec<&Path>, message: &str) -> Result<Oid, GitError> {
+    let signature = get_signature(repo)?;
     let mut index = repo.index()?;
     for file in files.iter() {
         index.add_path(file)?;
     }
     let oid = index.write_tree()?;
-    let signature = Signature::now(&info.name, &info.email)?;
     let parent_commit = find_last_commit(&repo)?;
     let tree = repo.find_tree(oid)?;
     repo.commit(Some("HEAD"), //  point HEAD to our new commit
