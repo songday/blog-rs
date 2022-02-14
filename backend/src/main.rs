@@ -68,22 +68,11 @@ fn main() -> result::Result<()> {
         args.mode.unwrap()
     };
 
-    // let mut address = if args.port.is_none() {
-    //     String::from("127.0.0.1")
-    // } else {
-    //     args.address.unwrap()
-    // };
     let mut address = args.address.unwrap_or(String::from("127.0.0.1"));
-
-    // let port = if args.port.is_none() {
-    //     String::from("9270")
-    // } else {
-    //     args.port.unwrap()
-    // };
-    let port = args.port.as_ref().unwrap_or("9270");
+    let port = args.port.unwrap_or(String::from("9270"));
 
     address.push_str(":");
-    address.push_str(port);
+    address.push_str(&port);
 
     if run_mode.eq("s") {
         println!("Creating server instance...");
