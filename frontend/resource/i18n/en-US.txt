@@ -1,0 +1,17 @@
+pp = Previous Page
+np = Next Page
+back = Back
+edit = Edit
+delete = Delete
+deletion_confirm = Data cannot be recovered（including images etc.）
+cancel = Cancel
+ti = Image
+upload_image = Upload image
+or = or
+download_image = Download image randomly
+title = Title
+content = Content
+edit_post = Edit Post
+labels = Labels
+add_label = Press 'Enter' to add new tag
+update = Update post

@@ -1,0 +1,17 @@
+pp = 上一页
+np = 下一页
+back = 返回
+edit = 编辑
+delete = 删除
+deletion_confirm = 删除后，数据将不能恢复（包括图片等数据）
+cancel = 取消
+ti = 题图
+upload_image = 上传图片
+or = 或者
+download_image = 随机下载图片
+title = 标题
+content = 内容
+edit_post = 编辑博客
+labels = 标签
+add_label = 按'回车'添加新的标签
+update = 更新博客

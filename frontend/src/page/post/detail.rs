@@ -8,7 +8,14 @@ use web_sys::{Element, Node};
 use yew::prelude::*;
 use yew_router::prelude::*;
 
+use crate::i18n;
 use crate::router::Route;
+
+#[wasm_bindgen(module = "/asset/common.js")]
+extern "C" {
+    #[wasm_bindgen(js_name = userLanguage)]
+    fn user_language() -> String;
+}
 
 #[wasm_bindgen(module = "/asset/show.js")]
 extern "C" {
@@ -155,6 +162,12 @@ impl Component for PostDetail {
         let nav = ctx.link().navigator().unwrap();
         let go_back = ctx.link().callback(move |e: MouseEvent| nav.back());
 
+        let messages = i18n::get(
+            &user_language(),
+            vec!["back", "edit", "delete", "deletion_confirm", "cancel"],
+        )
+        .unwrap();
+
         web_sys::window().unwrap().scroll_to_with_x_and_y(0.0, 0.0);
         html! {
             <>
@@ -165,27 +178,27 @@ impl Component for PostDetail {
                             <span class="icon">
                                 <i class="fas fa-angle-double-left"></i>
                             </span>
-                            <span>{ "返回/Back" }</span>
+                            <span>{ messages.get("back").unwrap() }</span>
                         </button>
                         <Link<Route> classes={classes!("button")} to={Route::ComposePost { id: *post_id }}>
                             <span class="icon">
                                 <i class="far fa-edit"></i>
                             </span>
-                            <span>{ "编辑/Edit" }</span>
+                            <span>{ messages.get("edit").unwrap() }</span>
                         </Link<Route>>
                         <button class="button is-danger is-outlined" onclick={show_notification_callback}>
                             <span class="icon">
                                 <i class="far fa-trash-alt"></i>
                             </span>
-                            <span>{"删除/Delete"}</span>
+                            <span>{ messages.get("delete").unwrap() }</span>
                         </button>
                     </div>
                     <div id="notification" class="notification is-danger is-light" style="display:none;width:435px">
                         <button class="delete" onclick={hide_notification_callback.clone()}></button>
-                        { "删除后，数据将不能恢复/Data cannot be recovered" }<br/>
+                        { messages.get("deletion_confirm").unwrap() }<br/>
                         <div class="buttons">
-                            <a class="button is-danger is-outlined" href={delete_post_uri}>{"删除/Delete"}</a>
-                            <button class="button is-success" onclick={hide_notification_callback}>{"放弃/Cancel"}</button>
+                            <a class="button is-danger is-outlined" href={delete_post_uri}>{ messages.get("delete").unwrap() }</a>
+                            <button class="button is-success" onclick={hide_notification_callback}>{ messages.get("cancel").unwrap() }</button>
                         </div>
                     </div>
                 </div>

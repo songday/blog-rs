@@ -1,10 +1,13 @@
-use std::vec::Vec;
 use std::path::Path;
+use std::vec::Vec;
 
 use blog_common::dto::git::GitRepositoryInfo;
-use git2::{Commit, Direction, Error as GitError, ObjectType, Oid, Repository, RepositoryState, Signature, StatusOptions, StatusShow};
+use git2::{
+    Commit, Direction, Error as GitError, ObjectType, Oid, Repository, RepositoryState, Signature, StatusOptions,
+    StatusShow,
+};
 
-fn sync_to_remote(info: &GitRepositoryInfo, ) -> Result<(), ()> {
+fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), ()> {
     // export posts data to file system
     // todo
     // open git repository
@@ -26,7 +29,7 @@ fn get_signature<'a>(repo: &'a Repository) -> Result<Signature<'a>, GitError> {
     Ok(Signature::now(name, email)?)
 }
 
-fn get_changed_files(repo: &Repository, ) -> Result<Vec<String>, GitError> {
+fn get_changed_files(repo: &Repository) -> Result<Vec<String>, GitError> {
     let state = repo.state();
     if state.eq(&RepositoryState::Clean) {
         return Ok(vec![]);
@@ -39,10 +42,16 @@ fn get_changed_files(repo: &Repository, ) -> Result<Vec<String>, GitError> {
 
 fn find_last_commit(repo: &Repository) -> Result<Commit, GitError> {
     let obj = repo.head()?.resolve()?.peel(ObjectType::Commit)?;
-    obj.into_commit().map_err(|_| GitError::from_str("Couldn't find commit"))
+    obj.into_commit()
+        .map_err(|_| GitError::from_str("Couldn't find commit"))
 }
 
-fn add_and_commit(info: &GitRepositoryInfo, repo: &Repository, files: Vec<&Path>, message: &str) -> Result<Oid, GitError> {
+fn add_and_commit(
+    info: &GitRepositoryInfo,
+    repo: &Repository,
+    files: Vec<&Path>,
+    message: &str,
+) -> Result<Oid, GitError> {
     let signature = get_signature(repo)?;
     let mut index = repo.index()?;
     for file in files.iter() {
@@ -51,12 +60,14 @@ fn add_and_commit(info: &GitRepositoryInfo, repo: &Repository, files: Vec<&Path>
     let oid = index.write_tree()?;
     let parent_commit = find_last_commit(&repo)?;
     let tree = repo.find_tree(oid)?;
-    repo.commit(Some("HEAD"), //  point HEAD to our new commit
-                &signature, // author
-                &signature, // committer
-                message, // commit message
-                &tree, // tree
-                &[&parent_commit]) // parents
+    repo.commit(
+        Some("HEAD"), //  point HEAD to our new commit
+        &signature,   // author
+        &signature,   // committer
+        message,      // commit message
+        &tree,        // tree
+        &[&parent_commit],
+    ) // parents
 }
 
 fn push(repo: &Repository, url: &str) -> Result<(), GitError> {

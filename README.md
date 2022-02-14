@@ -1,5 +1,9 @@
+**Home page**
 ![BlogListPage](screenshot1.jpg)
+**Page in chinese**
 ![BlogDetailPage](screenshot2.jpg)
+**Buttons in English**
+![Buttons in English](screenshot_en-US.jpg)
 
 ## 自带服务端的博客系统
 
@@ -17,6 +21,7 @@
 4. 所有嵌入静态资源均通过`gzip`压缩，优化网络传输
 5. 嵌入`Markdown`编辑器：[tui.editor](https://github.com/nhn/tui.editor)
 6. 导出`Hugo`数据，可以把软件当作一个静态网站的管理后端。
+7. 部分页面支持了 **i18n**
 
 ## A singleton self-serve Blog written in Rust (Warp + Yew)
 
@@ -34,6 +39,7 @@ Current version: `0.5.2`
 4. All static resources were gzipped for bandwidth optimization
 5. Embed `Markdown` editor with [tui.editor](https://github.com/nhn/tui.editor)
 6. Export posts for `Hugo`, you can simply use this as a static site management tool.
+7. Some pages support **i18n**
 
 ---
 

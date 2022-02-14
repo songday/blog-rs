@@ -5,13 +5,21 @@ use blog_common::dto::post::PostDetail;
 use blog_common::dto::{PaginationData, Response};
 use blog_common::val;
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
 use weblog::*;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
+use crate::i18n;
 use crate::router::Route;
 
 const POSTS_PAGE_SIZE: usize = val::POSTS_PAGE_SIZE as usize;
+
+#[wasm_bindgen(module = "/asset/common.js")]
+extern "C" {
+    #[wasm_bindgen(js_name = userLanguage)]
+    fn user_language() -> String;
+}
 
 fn view_posts(posts: Vec<&PostDetail>) -> Html {
     posts.iter().map(|&post| html! {
@@ -170,6 +178,7 @@ pub fn posts_list(PostsListComponentProps { request_uri }: &PostsListComponentPr
         })
     };
     web_sys::window().unwrap().scroll_to_with_x_and_y(0.0, 0.0);
+    let messages = i18n::get(&user_language(), vec!["pp", "np"]).unwrap();
     html! {
         <>
             <div class="columns">
@@ -187,10 +196,10 @@ pub fn posts_list(PostsListComponentProps { request_uri }: &PostsListComponentPr
             <div class="container">
                 <nav class="pagination is-right" role="navigation" aria-label="pagination">
                     <a class="pagination-previous" disabled={prev_disabled} onclick={prev}>
-                        {"上一页/Previous"}
+                        {messages.get("pp").unwrap()}
                     </a>
                     <a class="pagination-next" disabled={next_disabled} onclick={next}>
-                        {"下一页/Next page"}
+                        {messages.get("np").unwrap()}
                     </a>
                 </nav>
             </div>

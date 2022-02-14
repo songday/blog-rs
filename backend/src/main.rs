@@ -56,21 +56,21 @@ fn main() -> result::Result<()> {
         }
     });
 
-    let run_mode = if args.mode.is_none() {
-        let mut line = String::with_capacity(16);
-        println!("指定运行模式, 直接回车是博客后台，按 s 是静态文件服务");
-        println!("Specify run mode, default (Press 'Enter' directly) is Blog backend, `s` is static file serve");
-        let _b1 = std::io::stdin().read_line(&mut line).unwrap();
-        // println!("Hello , {}", line);
-        // println!("no of bytes read , {}", b1);
-        String::from(line.trim())
-    } else {
-        args.mode.unwrap()
-    };
+    // let run_mode = if args.mode.is_none() {
+    //     let mut line = String::with_capacity(16);
+    //     println!("指定运行模式, 直接回车是博客后台，按 s 是静态文件服务");
+    //     println!("Specify run mode, default (Press 'Enter' directly) is Blog backend, `s` is static file serve");
+    //     let _b1 = std::io::stdin().read_line(&mut line).unwrap();
+    //     // println!("Hello , {}", line);
+    //     // println!("no of bytes read , {}", b1);
+    //     String::from(line.trim())
+    // } else {
+    //     args.mode.unwrap()
+    // };
 
+    let run_mode = args.mode.unwrap_or(String::new());
     let mut address = args.address.unwrap_or(String::from("127.0.0.1"));
     let port = args.port.unwrap_or(String::from("9270"));
-
     address.push_str(":");
     address.push_str(&port);
 

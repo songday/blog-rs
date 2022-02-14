@@ -12,6 +12,13 @@ use yew_router::prelude::*;
 use yew_router::{self, AnyRoute};
 
 use crate::component::Unauthorized;
+use crate::i18n;
+
+#[wasm_bindgen(module = "/asset/common.js")]
+extern "C" {
+    #[wasm_bindgen(js_name = userLanguage)]
+    fn user_language() -> String;
+}
 
 #[wasm_bindgen(module = "/asset/editor.js")]
 extern "C" {
@@ -106,12 +113,15 @@ fn update_post(
         show_origin_tags(origin_tags);
     }
 
+    let message_ids = vec!["ti", "upload_image", "or", "download_image", "title", "content"];
+    let messages = i18n::get(&user_language(), message_ids).unwrap();
+
     gloo::utils::document().set_title(&post_detail.title);
     html! {
         <>
             <div class="container">
                 <div class="field">
-                    <label class="label">{"题图/Image"}</label>
+                    <label class="label">{ messages.get("ti").unwrap() }</label>
                 </div>
                 <nav class="level">
                     <p class="level-item has-text-centered">{" "}</p>
@@ -121,16 +131,16 @@ fn update_post(
                                 <input class="file-input" multiple=false accept="image/*" type="file" name="title-image" onchange={onchange}/>
                                 <span class="file-cta">
                                     <span class="file-icon"><i class="fas fa-upload"></i></span>
-                                    <span class="file-label">{"上传图片/Upload"}</span>
+                                    <span class="file-label">{ messages.get("upload_image").unwrap() }</span>
                                 </span>
                             </label>
                         </div>
                     </p>
-                    <p class="level-item has-text-centered">{"或/Or"}</p>
+                    <p class="level-item has-text-centered">{ messages.get("or").unwrap() }</p>
                     <p class="level-item has-text-centered">
                         <button class="button" onclick={download_image}>// onclick={download_image}
                             <span class="icon"><i class="fas fa-download"></i></span>
-                            <span>{"下载一张/Download"}</span>
+                            <span>{ messages.get("download_image").unwrap() }</span>
                         </button>
                     </p>
                     <p class="level-item has-text-centered">{" "}</p>
@@ -142,13 +152,13 @@ fn update_post(
             </section>
             <div class="container">
                 <div class="field">
-                    <label class="label">{"标题/Title"}</label>
+                    <label class="label">{ messages.get("title").unwrap() }</label>
                     <div class="control">
                         <input class="input" type="text" value={post_detail.title.clone()} oninput={oninput}/>
                     </div>
                 </div>
                 <div class="field">
-                    <label class="label">{"内容/Content"}</label>
+                    <label class="label">{ messages.get("content").unwrap() }</label>
                     <div id="post-content" style="display:none">{&post_detail.content}</div>
                     <iframe id="editor" width="100%" height="520" src="/asset/editor.html" style="padding:0;margin:0"></iframe>
                 </div>
@@ -349,10 +359,13 @@ impl Component for PostCompose {
             Msg::UpdateTitle(input.value())
         });
 
+        let message_ids = vec!["edit_post", "labels", "add_label", "update", "cancel"];
+        let messages = i18n::get(&user_language(), message_ids).unwrap();
+
         html! {
             <>
                 <div class="container">
-                    <h1 class="title is-1">{"编辑博客/Editing post"}</h1>
+                    <h1 class="title is-1">{ messages.get("edit_post").unwrap() }</h1>
                 </div>
                 <p>{" "}</p>
                 <UpdatePost onsubmit={onsubmit} onchange={onchange} {download_image} oninput={oninput}
@@ -360,19 +373,19 @@ impl Component for PostCompose {
                     title_image_onchange={title_image_onchange.clone()} />
                 <div class="container" id="tagsContainer" style="display:none">
                     <div class="field">
-                        <label class="label">{"标签/Labels"}</label>
+                        <label class="label">{ messages.get("labels").unwrap() }</label>
                         <div class="control">
-                            <input maxlength="10" id="tagInput" class="input" type="text" placeholder="回车添加/Press 'Enter' to add" onkeyup={input_tag}/>
+                            <input maxlength="10" id="tagInput" class="input" type="text" placeholder={ messages.get("add_label").unwrap().to_string() } onkeyup={input_tag}/>
                         </div>
                         <br/>
                         <div id="tags" class="tags"></div>
                     </div>
                     <div class="field is-grouped">
                         <div class="control">
-                            <button class="button is-link" onclick={ctx.link().callback(|_: MouseEvent| Msg::UpdatePost)}>{ "更新/Update" }</button>
+                            <button class="button is-link" onclick={ctx.link().callback(|_: MouseEvent| Msg::UpdatePost)}>{ messages.get("update").unwrap() }</button>
                         </div>
                         <div class="control">
-                            <button class="button is-link is-light" onclick={ctx.link().callback(|_: MouseEvent| Msg::GoBack)}>{ "返回/Cancel" }</button>
+                            <button class="button is-link is-light" onclick={ctx.link().callback(|_: MouseEvent| Msg::GoBack)}>{ messages.get("cancel").unwrap() }</button>
                         </div>
                     </div>
                 </div>
