@@ -1,8 +1,10 @@
 use std::{collections::HashMap, convert::Infallible, net::SocketAddr};
 
 use futures::future::Future;
+use hyper::{Uri, header::HeaderValue, HeaderMap};
+use password_hash::Output;
 use tokio::sync::oneshot::Receiver;
-use warp::{self, reject, Filter};
+use warp::{self, reject, Filter, Server, TlsServer};
 
 use blog_common::{
     dto::{
@@ -69,7 +71,7 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
 // }
 
 pub async fn create_static_file_server(
-    address: &str,
+    address: SocketAddr,
     receiver: Receiver<()>,
 ) -> Result<impl Future<Output = ()> + 'static> {
     let dir = std::env::current_dir().unwrap();
@@ -77,16 +79,55 @@ pub async fn create_static_file_server(
     println!("Serving directory path is {}", dir.as_path().display());
     let routes = warp::get().and(warp::fs::dir(dir));
 
-    let addr = address.parse::<SocketAddr>()?;
+    //let addr = address.parse::<SocketAddr>()?;
 
-    let (_addr, server) = warp::serve(routes).bind_with_graceful_shutdown(addr, async {
+    let (_addr, server) = warp::serve(routes).bind_with_graceful_shutdown(address, async {
         receiver.await.ok();
     });
 
     Ok(server)
 }
 
-pub async fn create_blog_server(address: &str, receiver: Receiver<()>) -> Result<impl Future<Output = ()> + 'static> {
+pub async fn create_blog_server(http_addr: SocketAddr,receiver: Receiver<()>)->Result<impl Future<Output = ()> + 'static>{
+    let routes = blog_filter();
+    let routes = routes.recover(facade::handle_rejection);
+    //let http_addr = http_config.http_address;
+    let server=warp::serve(routes);  
+    let server=server.bind_with_graceful_shutdown(http_addr, async {
+        receiver.await.ok();
+    }).1;
+    return Ok(server);
+}
+pub async fn create_blog_server_hsts(http_addr: SocketAddr,receiver: Receiver<()>)->Result<impl Future<Output = ()> + 'static>{
+
+    let mut HSTSheaders = HeaderMap::new();
+    HSTSheaders.insert("Strict-Transport-Security", HeaderValue::from_static("max-age=31536000; includeSubDomains; preload"));
+    let hsts = warp::any().map(warp::reply).with(warp::reply::with::headers(HSTSheaders));
+    let hsts_redir=warp::get().and(warp::path("http").map(|| {
+        println!("This is http server");
+        warp::redirect(Uri::from_static("https://127.0.0.1:443"))
+    }));
+    let hsts=hsts_redir.or(hsts);
+    let server=warp::serve(hsts);  
+    let server=server.bind_with_graceful_shutdown(http_addr, async {
+        receiver.await.ok();
+    }).1;
+    return Ok(server);
+}
+pub async fn create_tls_blog_server(https_addr: SocketAddr,receiver: Receiver<()>)->Result<impl Future<Output = ()> + 'static>{
+    let routes = blog_filter();
+    let routes = routes.recover(facade::handle_rejection);
+    //let https_addr = https_config.https_address;
+    let server=warp::serve(routes);
+    let server=server.tls()
+    .cert_path("cert.pem")
+    .key_path("priv.key");
+    let server=server.bind_with_graceful_shutdown(https_addr, async {
+        receiver.await.ok();
+    }).1;
+    return Ok(server);
+}
+pub fn blog_filter() -> impl Filter<Extract = impl warp::Reply,Error = warp::Rejection> + Clone{
     let index = warp::get().and(warp::path::end()).and_then(crate::facade::index::index);
     let asset = warp::get()
         .and(warp::path("asset"))
@@ -238,8 +279,10 @@ pub async fn create_blog_server(address: &str, receiver: Receiver<()>) -> Result
         // .allow_any_origin()
         .allow_origins(
             vec![
-                "http://localhost:9270",
-                "http://127.0.0.1:9270",
+                "http://localhost:80",
+                "http://127.0.0.1:80",
+                "https://localhost:443",
+                "https://127.0.0.1:443",
                 // todo 读取配置里面的域名信息，然后填写在这里
             ]
             .into_iter(),
@@ -275,15 +318,9 @@ pub async fn create_blog_server(address: &str, receiver: Receiver<()>) -> Result
         .or(save_image)
         .or(export)
         .or(forgot_password)
-        .with(cors)
-        // .with(warp::service(session_id_wrapper))
-        .recover(facade::handle_rejection);
+        .with(cors);
 
-    let addr = address.parse::<SocketAddr>()?;
+    routes
 
-    let (_addr, server) = warp::serve(routes).bind_with_graceful_shutdown(addr, async {
-        receiver.await.ok();
-    });
-
-    Ok(server)
 }
+
