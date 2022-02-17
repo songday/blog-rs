@@ -47,7 +47,7 @@ tokio = { version = "1", features = ["fs", "io-util", "macros", "rt", "rt-multi-
 uuid = { version = "0.8", features = ["v5"] }
 urlencoding = "2"
 v_htmlescape = "0.14"
-warp = "0.3"
+warp = {version="0.3",features=["tls"]}
 zip = { version = "0.5", default-features = false }
 
 # https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#platform-specific-dependencies
