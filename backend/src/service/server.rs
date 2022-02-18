@@ -1,7 +1,7 @@
 use std::{collections::HashMap, convert::Infallible, net::SocketAddr};
 
 use futures::future::Future;
-use hyper::{Uri, header::HeaderValue, HeaderMap};
+use hyper::{header::HeaderValue, HeaderMap, Uri};
 use password_hash::Output;
 use tokio::sync::oneshot::Receiver;
 use warp::{self, reject, Filter, Server, TlsServer};
@@ -88,46 +88,66 @@ pub async fn create_static_file_server(
     Ok(server)
 }
 
-pub async fn create_blog_server(http_addr: SocketAddr,receiver: Receiver<()>)->Result<impl Future<Output = ()> + 'static>{
+pub async fn create_blog_server(
+    http_addr: SocketAddr,
+    receiver: Receiver<()>,
+) -> Result<impl Future<Output = ()> + 'static> {
     let routes = blog_filter();
     let routes = routes.recover(facade::handle_rejection);
     //let http_addr = http_config.http_address;
-    let server=warp::serve(routes);  
-    let server=server.bind_with_graceful_shutdown(http_addr, async {
-        receiver.await.ok();
-    }).1;
+    let server = warp::serve(routes);
+    let server = server
+        .bind_with_graceful_shutdown(http_addr, async {
+            receiver.await.ok();
+        })
+        .1;
     return Ok(server);
 }
-pub async fn create_blog_server_hsts(http_addr: SocketAddr,receiver: Receiver<()>)->Result<impl Future<Output = ()> + 'static>{
-
-    let mut HSTSheaders = HeaderMap::new();
-    HSTSheaders.insert("Strict-Transport-Security", HeaderValue::from_static("max-age=31536000; includeSubDomains; preload"));
-    let hsts = warp::any().map(warp::reply).with(warp::reply::with::headers(HSTSheaders));
-    let hsts_redir=warp::get().and(warp::path("http").map(|| {
-        println!("This is http server");
-        warp::redirect(Uri::from_static("https://127.0.0.1:443"))
-    }));
-    let hsts=hsts_redir.or(hsts);
-    let server=warp::serve(hsts);  
-    let server=server.bind_with_graceful_shutdown(http_addr, async {
-        receiver.await.ok();
-    }).1;
+pub async fn create_blog_server_hsts(
+    http_addr: SocketAddr,
+    receiver: Receiver<()>,
+) -> Result<impl Future<Output = ()> + 'static> {
+    let mut hsts_headers = HeaderMap::new();
+    hsts_headers.insert(
+        "Strict-Transport-Security",
+        HeaderValue::from_static("max-age=31536000; includeSubDomains; preload"),
+    );
+    let route = warp::any()
+        .and(warp::header::<String>("host"))
+        .map(|host: String| {
+            let mut html = String::from("<html><head><meta http-equiv=\"Refresh\" content=\"0; URL=https://");
+            html.push_str(&host);
+            html.push_str("\"></head></html>");
+            html
+        })
+        .with(warp::reply::with::headers(hsts_headers));
+    let server = warp::serve(route);
+    let server = server
+        .bind_with_graceful_shutdown(http_addr, async {
+            receiver.await.ok();
+        })
+        .1;
     return Ok(server);
 }
-pub async fn create_tls_blog_server(https_addr: SocketAddr,receiver: Receiver<()>)->Result<impl Future<Output = ()> + 'static>{
+pub async fn create_tls_blog_server(
+    https_addr: SocketAddr,
+    receiver: Receiver<()>,
+    cert_path: &str,
+    key_path: &str,
+) -> Result<impl Future<Output = ()> + 'static> {
     let routes = blog_filter();
     let routes = routes.recover(facade::handle_rejection);
     //let https_addr = https_config.https_address;
-    let server=warp::serve(routes);
-    let server=server.tls()
-    .cert_path("cert.pem")
-    .key_path("priv.key");
-    let server=server.bind_with_graceful_shutdown(https_addr, async {
-        receiver.await.ok();
-    }).1;
+    let server = warp::serve(routes);
+    let server = server.tls().cert_path(cert_path).key_path(key_path);
+    let server = server
+        .bind_with_graceful_shutdown(https_addr, async {
+            receiver.await.ok();
+        })
+        .1;
     return Ok(server);
 }
-pub fn blog_filter() -> impl Filter<Extract = impl warp::Reply,Error = warp::Rejection> + Clone{
+pub fn blog_filter() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let index = warp::get().and(warp::path::end()).and_then(crate::facade::index::index);
     let asset = warp::get()
         .and(warp::path("asset"))
@@ -321,6 +341,4 @@ pub fn blog_filter() -> impl Filter<Extract = impl warp::Reply,Error = warp::Rej
         .with(cors);
 
     routes
-
 }
-

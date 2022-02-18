@@ -1,57 +1,57 @@
+use blog_backend::{db, service, util::result};
 use clap::Parser;
+use futures::{
+    future::{join_all, BoxFuture},
+    Future,
+};
+use std::net::SocketAddr;
 use tokio::{
     runtime::{Builder, Runtime},
     sync::oneshot,
 };
-use futures::{future::{BoxFuture, join_all}, Future};
-use std::{net::SocketAddr};
-use blog_backend::{db, service, util::result};
-
-#[derive(Debug, PartialEq)]
-enum RunMode {
-    Blog,
-    StaticBackend,
-}
 
 /// Simple blog backend
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[clap(name = "Songday blog backend", author, version, about, long_about = None)]
 struct Args {
     /// Specify run mode: 'static' is for static file serve, 'blog' is blog warp server mode
-    #[clap( long , default_value ="blog")]
-    mode: String,
-
-   /// Enable HTTP Server
     #[clap(long)]
-    http_enable:bool,
-    /// Specify http listening address, default value is '127.0.0.1'
-    #[clap(long , default_value="127.0.0.1")]
-    http_address: String,
+    mode: Option<String>,
+
+    /// HTTP Server Settings
+    /// Specify http listening address, e.g.: [::] or 127.0.0.1 or other particular ip, default is '127.0.0.1'
+    #[clap(long, default_value = "127.0.0.1")]
+    ip: String,
 
     /// Specify listening port, default value is '80'
-    #[clap( long, default_value_t=80)]
-    http_port: u16,
+    #[clap(long, default_value_t = 80)]
+    port: u16,
+
     /// Enable HTTPS Server
     #[clap(long)]
-    https_enable:bool,
-    /// Specify https listening address, default value is '127.0.0.1'
-    #[clap( long , default_value="127.0.0.1")]
-    https_address: String,
+    https_enabled: bool,
+
+    /// Enable HTTPS Server
+    #[clap(long)]
+    cert_path: Option<String>,
+
+    /// Enable HTTPS Server
+    #[clap(long)]
+    key_path: Option<String>,
 
     /// Specify listening port, default value is '443'
-    #[clap( long, default_value_t=443)]
+    #[clap(long, default_value_t = 443)]
     https_port: u16,
+
     /// Enable HSTS Redirect Server
     #[clap(long)]
-    hsts_enable:bool,
+    hsts_enabled: bool,
+
+    /// Hostname for CORS
+    #[clap(long)]
+    cors_host: Option<String>,
 }
-pub struct HttpConfig{
-    pub enabled:bool,
-}
-pub struct HttpsConfig{
-    pub enabled:bool,
-    pub hsts:bool,
-}
+
 fn main() -> result::Result<()> {
     let args = Args::parse();
 
@@ -62,8 +62,8 @@ fn main() -> result::Result<()> {
         .thread_stack_size(1024 * 1024)
         .build()?;
 
-        let (tx1, rx1) = oneshot::channel::<()>();
-        let (tx2, rx2) = oneshot::channel::<()>();
+    let (tx1, rx1) = oneshot::channel::<()>();
+    let (tx2, rx2) = oneshot::channel::<()>();
 
     runtime.spawn(async {
         match tokio::signal::ctrl_c().await {
@@ -94,54 +94,50 @@ fn main() -> result::Result<()> {
         }
     });
 
+    let mut addr = String::from(&args.ip);
+    addr.push_str(":");
+    addr.push_str(&args.port.to_string());
+    let http_address = addr.parse::<SocketAddr>()?;
 
-
-    let run_mode = args.mode;
-    if run_mode.eq("static") {
-        println!("Creating server instance...");
-        let http_address=args.http_address.parse::<SocketAddr>()?;
+    if args.mode.is_some() && args.mode.unwrap().eq("static") {
+        println!("Creating static file server instance...");
         let server = runtime.block_on(service::server::create_static_file_server(http_address, rx1))?;
 
         println!("Starting static file server...");
         runtime.block_on(server);
-    } else if run_mode.eq("blog"){
-        let mut https_address = args.https_address;
-        https_address.push_str(":");
-        https_address.push_str(&args.https_port.to_string());
-        let https_address=https_address.parse::<SocketAddr>()?;
-        let mut http_address = args.http_address;
-        http_address.push_str(":");
-        http_address.push_str(&args.http_port.to_string());
-        let http_address=http_address.parse::<SocketAddr>()?;
-        let https_config=HttpsConfig{
-            enabled:args.https_enable,
-            hsts:args.hsts_enable,
-           };
-        let http_config=HttpConfig{
-            enabled:args.http_enable,
-           };
+    } else {
         println!("Initializing database connection...");
         runtime.block_on(db::init_datasource());
-        
+
         println!("Creating server instance...");
-        let mut vec:Vec<BoxFuture<()>> = Vec::new();
-        if http_config.enabled{
-            if https_config.hsts{
-                let server=runtime.block_on( service::server::create_blog_server_hsts(http_address, rx1));
-                vec.push(Box::pin(server.unwrap()));              
-                println!("Creating HSTS Redirect server instance...");
-            }else{
-                let server= runtime.block_on(service::server::create_blog_server(http_address, rx1));
-                println!("Starting http blog backend server...");
-                vec.push(Box::pin(server.unwrap()));
-            }
+        let mut servers: Vec<BoxFuture<()>> = Vec::new();
+
+        if args.hsts_enabled {
+            let server = runtime.block_on(service::server::create_blog_server_hsts(http_address, rx1));
+            servers.push(Box::pin(server.unwrap()));
+            println!("Creating HSTS Redirect server instance...");
+        } else {
+            let server = runtime.block_on(service::server::create_blog_server(http_address, rx1));
+            println!("Starting http blog backend server...");
+            servers.push(Box::pin(server.unwrap()));
         }
-        if https_config.enabled{
-            let server=runtime.block_on(service::server::create_tls_blog_server(https_address, rx2));
+
+        if args.https_enabled {
+            let mut addr = String::from(&args.ip);
+            addr.push_str(":");
+            addr.push_str(&args.https_port.to_string());
+            let https_address = addr.parse::<SocketAddr>()?;
+
+            let server = runtime.block_on(service::server::create_tls_blog_server(
+                https_address,
+                rx2,
+                &args.cert_path.unwrap(),
+                &args.key_path.unwrap(),
+            ));
             println!("Starting https blog backend server...");
-            vec.push(Box::pin(server.unwrap()));
+            servers.push(Box::pin(server.unwrap()));
         }
-        let server=join_all(vec);
+        let server = join_all(servers);
 
         runtime.block_on(server);
         println!("Closing database connections...");
