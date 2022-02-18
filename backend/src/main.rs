@@ -19,7 +19,7 @@ struct Args {
     mode: Option<String>,
 
     /// HTTP Server Settings
-    /// Specify http listening address, e.g.: [::] or 127.0.0.1 or other particular ip, default is '127.0.0.1'
+    /// Specify http listening address, e.g.: 0.0.0.0 or [::] or 127.0.0.1 or other particular ip, default is '127.0.0.1'
     #[clap(long, default_value = "127.0.0.1")]
     ip: String,
 
@@ -31,15 +31,15 @@ struct Args {
     #[clap(long)]
     https_enabled: bool,
 
-    /// Enable HTTPS Server
+    /// Cert file path, needed by https
     #[clap(long)]
     cert_path: Option<String>,
 
-    /// Enable HTTPS Server
+    /// Key file path, needed by https
     #[clap(long)]
     key_path: Option<String>,
 
-    /// Specify listening port, default value is '443'
+    /// Specify HTTPS listening port, default value is '443'
     #[clap(long, default_value_t = 443)]
     https_port: u16,
 
