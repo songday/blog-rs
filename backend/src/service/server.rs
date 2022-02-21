@@ -1,4 +1,5 @@
 use std::{collections::HashMap, convert::Infallible, net::SocketAddr};
+use std::vec::Vec;
 
 use futures::future::Future;
 use hyper::{header::HeaderValue, HeaderMap, Uri};
@@ -30,7 +31,7 @@ impl reject::Reject for FilterError {}
 // https://github.com/jxs/warp/blob/add-wrap-fn/examples/wrapping.rs#L4
 fn session_id_wrapper<F, T>(filter: F) -> impl Filter<Extract = (&'static str,)> + Clone + Send + Sync + 'static
 where
-    F: Filter<Extract = (T,), Error = std::convert::Infallible> + Clone + Send + Sync + 'static,
+    F: Filter<Extract = (T,), Error = Infallible> + Clone + Send + Sync + 'static,
     F::Extract: warp::Reply,
 {
     warp::any()
@@ -59,6 +60,23 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
     //         reject::custom(FilterError)
     //     })
     // })
+}
+
+fn hsts_header_appender<F, T>(
+    filter: F,
+) -> impl Filter<Extract = (warp::reply::WithHeader<T>,)> + Clone + Send + Sync + 'static
+    where
+        T: warp::Reply,
+        F: Filter<Extract = (T,), Error = std::convert::Infallible> + Clone + Send + Sync + 'static,
+        F::Extract: warp::Reply,
+{
+    warp::any()
+        // .map(|| {
+        //     println!("before filter");
+        // })
+        // .untuple_one()
+        .and(filter)
+        .map(|reply| warp::reply::with_header(reply, "Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload"))
 }
 
 // pub async fn create_server(
@@ -91,10 +109,10 @@ pub async fn create_static_file_server(
 pub async fn create_blog_server(
     http_addr: SocketAddr,
     receiver: Receiver<()>,
+    cors_host: &Option<String>,
 ) -> Result<impl Future<Output = ()> + 'static> {
-    let routes = blog_filter();
+    let routes = blog_filter("http", http_addr.port(), cors_host, false);
     let routes = routes.recover(facade::handle_rejection);
-    //let http_addr = http_config.http_address;
     let server = warp::serve(routes);
     let server = server
         .bind_with_graceful_shutdown(http_addr, async {
@@ -103,6 +121,7 @@ pub async fn create_blog_server(
         .1;
     return Ok(server);
 }
+
 pub async fn create_blog_server_hsts(
     http_addr: SocketAddr,
     receiver: Receiver<()>,
@@ -129,15 +148,18 @@ pub async fn create_blog_server_hsts(
         .1;
     return Ok(server);
 }
+
 pub async fn create_tls_blog_server(
     https_addr: SocketAddr,
     receiver: Receiver<()>,
     cert_path: &str,
     key_path: &str,
+    cors_host: &Option<String>,
+    hsts_enabled: bool,
 ) -> Result<impl Future<Output = ()> + 'static> {
-    let routes = blog_filter();
+    let routes = blog_filter("https", https_addr.port(), cors_host, hsts_enabled);
     let routes = routes.recover(facade::handle_rejection);
-    //let https_addr = https_config.https_address;
+    let routes = routes.with(warp::wrap_fn(hsts_header_appender));
     let server = warp::serve(routes);
     let server = server.tls().cert_path(cert_path).key_path(key_path);
     let server = server
@@ -147,7 +169,8 @@ pub async fn create_tls_blog_server(
         .1;
     return Ok(server);
 }
-pub fn blog_filter() -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+
+pub fn blog_filter(scheme: &str, port: u16, cors_host: &Option<String>, hsts_enabled: bool,) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let index = warp::get().and(warp::path::end()).and_then(crate::facade::index::index);
     let asset = warp::get()
         .and(warp::path("asset"))
@@ -295,18 +318,26 @@ pub fn blog_filter() -> impl Filter<Extract = impl warp::Reply, Error = warp::Re
         .and(warp::host::optional())
         .and_then(management::forgot_password);
 
+    // Setting CORS
+    let mut host = String::with_capacity(32);
+    let mut origins: Vec<&str> = Vec::with_capacity(5);
+
+    host.push_str(scheme);
+    host.push_str("://localhost");
+    if port != 80 && port != 443 {
+        host.push_str(":");
+        host.push_str(&port.to_string());
+    }
+    origins.push(&host);
+    let host = host.replace("localhost", "127.0.0.1");
+    origins.push(&host);
+    if cors_host.is_some() {
+        origins.push(&cors_host.as_ref().unwrap());
+    }
+
     let cors = warp::cors()
         // .allow_any_origin()
-        .allow_origins(
-            vec![
-                "http://localhost:80",
-                "http://127.0.0.1:80",
-                "https://localhost:443",
-                "https://127.0.0.1:443",
-                // todo 读取配置里面的域名信息，然后填写在这里
-            ]
-            .into_iter(),
-        )
+        .allow_origins(origins)
         .max_age(60 * 60)
         // 当需要 Fetch 传 Cookie 的时候，需要下面这行
         // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials
@@ -314,7 +345,9 @@ pub fn blog_filter() -> impl Filter<Extract = impl warp::Reply, Error = warp::Re
         .allow_headers(vec!["Authorization", "Content-Type"].into_iter())
         .allow_methods(vec!["GET", "POST", "DELETE"].into_iter())
         .build();
+    // End
 
+    // Combine routes
     let routes = index
         .or(asset)
         .or(get_upload)
@@ -339,6 +372,7 @@ pub fn blog_filter() -> impl Filter<Extract = impl warp::Reply, Error = warp::Re
         .or(export)
         .or(forgot_password)
         .with(cors);
+    // End
 
     routes
 }

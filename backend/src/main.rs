@@ -117,7 +117,7 @@ fn main() -> result::Result<()> {
             servers.push(Box::pin(server.unwrap()));
             println!("Creating HSTS Redirect server instance...");
         } else {
-            let server = runtime.block_on(service::server::create_blog_server(http_address, rx1));
+            let server = runtime.block_on(service::server::create_blog_server(http_address, rx1, &args.cors_host));
             println!("Starting http blog backend server...");
             servers.push(Box::pin(server.unwrap()));
         }
@@ -133,6 +133,8 @@ fn main() -> result::Result<()> {
                 rx2,
                 &args.cert_path.unwrap(),
                 &args.key_path.unwrap(),
+                &args.cors_host,
+                args.hsts_enabled,
             ));
             println!("Starting https blog backend server...");
             servers.push(Box::pin(server.unwrap()));
