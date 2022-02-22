@@ -1,11 +1,11 @@
-use std::{collections::HashMap, convert::Infallible, net::SocketAddr};
 use std::vec::Vec;
+use std::{collections::HashMap, convert::Infallible, net::SocketAddr};
 
 use futures::future::Future;
 use hyper::{header::HeaderValue, HeaderMap, Uri};
 use password_hash::Output;
 use tokio::sync::oneshot::Receiver;
-use warp::{self, reject, Filter, Server, TlsServer};
+use warp::{self, reject, Filter, Rejection, Reply, Server, TlsServer};
 
 use blog_common::{
     dto::{
@@ -65,10 +65,10 @@ fn auth() -> impl Filter<Extract = (Option<UserInfo>,), Error = Infallible> + Cl
 fn hsts_header_appender<F, T>(
     filter: F,
 ) -> impl Filter<Extract = (warp::reply::WithHeader<T>,)> + Clone + Send + Sync + 'static
-    where
-        T: warp::Reply,
-        F: Filter<Extract = (T,), Error = std::convert::Infallible> + Clone + Send + Sync + 'static,
-        F::Extract: warp::Reply,
+where
+    T: warp::Reply,
+    F: Filter<Extract = (T,), Error = std::convert::Infallible> + Clone + Send + Sync + 'static,
+    F::Extract: warp::Reply,
 {
     warp::any()
         // .map(|| {
@@ -76,7 +76,13 @@ fn hsts_header_appender<F, T>(
         // })
         // .untuple_one()
         .and(filter)
-        .map(|reply| warp::reply::with_header(reply, "Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload"))
+        .map(|reply| {
+            warp::reply::with_header(
+                reply,
+                "Strict-Transport-Security",
+                "max-age=31536000; includeSubDomains; preload",
+            )
+        })
 }
 
 // pub async fn create_server(
@@ -111,8 +117,8 @@ pub async fn create_blog_server(
     receiver: Receiver<()>,
     cors_host: &Option<String>,
 ) -> Result<impl Future<Output = ()> + 'static> {
-    let routes = blog_filter("http", http_addr.port(), cors_host, false);
-    let routes = routes.recover(facade::handle_rejection);
+    let routes = blog_filter("http", http_addr.port(), cors_host);
+    // let routes = routes.recover(facade::handle_rejection);
     let server = warp::serve(routes);
     let server = server
         .bind_with_graceful_shutdown(http_addr, async {
@@ -122,32 +128,14 @@ pub async fn create_blog_server(
     return Ok(server);
 }
 
-pub async fn create_blog_server_hsts(
-    http_addr: SocketAddr,
-    receiver: Receiver<()>,
-) -> Result<impl Future<Output = ()> + 'static> {
-    let mut hsts_headers = HeaderMap::new();
-    hsts_headers.insert(
-        "Strict-Transport-Security",
-        HeaderValue::from_static("max-age=31536000; includeSubDomains; preload"),
-    );
-    let route = warp::any()
-        .and(warp::header::<String>("host"))
-        .map(|host: String| {
-            let mut html = String::from("<html><head><meta http-equiv=\"Refresh\" content=\"0; URL=https://");
-            html.push_str(&host);
-            html.push_str("\"></head></html>");
-            html
-        })
-        .with(warp::reply::with::headers(hsts_headers));
-    let server = warp::serve(route);
-    let server = server
-        .bind_with_graceful_shutdown(http_addr, async {
-            receiver.await.ok();
-        })
-        .1;
-    return Ok(server);
-}
+// enum MyServer {
+//     normal(Server<dyn Filter<Extract = dyn Reply, Error = Rejection, Future = dyn Future<Output = core::result::Result<dyn Reply, Rejection>> + Send>>),
+//     https(TlsServer<dyn Filter<Extract = dyn Reply, Error = Rejection, Future = dyn Future<Output = core::result::Result<dyn Reply, Rejection>> + Send>>),
+// }
+//
+// fn get_server() -> Option<Server<impl Filter<Extract = impl warp::Reply, Error = warp::Rejection>>> {
+//     None
+// }
 
 pub async fn create_tls_blog_server(
     https_addr: SocketAddr,
@@ -155,10 +143,28 @@ pub async fn create_tls_blog_server(
     cert_path: &str,
     key_path: &str,
     cors_host: &Option<String>,
-    hsts_enabled: bool,
 ) -> Result<impl Future<Output = ()> + 'static> {
-    let routes = blog_filter("https", https_addr.port(), cors_host, hsts_enabled);
-    let routes = routes.recover(facade::handle_rejection);
+    let routes = blog_filter("https", https_addr.port(), cors_host);
+    // let routes = routes.recover(facade::handle_rejection);
+    let server = warp::serve(routes);
+    let server = server.tls().cert_path(cert_path).key_path(key_path);
+    let server = server
+        .bind_with_graceful_shutdown(https_addr, async {
+            receiver.await.ok();
+        })
+        .1;
+    return Ok(server);
+}
+
+pub async fn create_tls_blog_server_with_hsts(
+    https_addr: SocketAddr,
+    receiver: Receiver<()>,
+    cert_path: &str,
+    key_path: &str,
+    cors_host: &Option<String>,
+) -> Result<impl Future<Output = ()> + 'static> {
+    let routes = blog_filter("https", https_addr.port(), cors_host);
+    // let routes = routes.recover(facade::handle_rejection);
     let routes = routes.with(warp::wrap_fn(hsts_header_appender));
     let server = warp::serve(routes);
     let server = server.tls().cert_path(cert_path).key_path(key_path);
@@ -170,7 +176,12 @@ pub async fn create_tls_blog_server(
     return Ok(server);
 }
 
-pub fn blog_filter(scheme: &str, port: u16, cors_host: &Option<String>, hsts_enabled: bool,) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+pub fn blog_filter(
+    scheme: &str,
+    port: u16,
+    cors_host: &Option<String>,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = core::convert::Infallible> + Clone {
+    // pub fn blog_filter(scheme: &str, port: u16, cors_host: &Option<String>,) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let index = warp::get().and(warp::path::end()).and_then(crate::facade::index::index);
     let asset = warp::get()
         .and(warp::path("asset"))
@@ -374,5 +385,9 @@ pub fn blog_filter(scheme: &str, port: u16, cors_host: &Option<String>, hsts_ena
         .with(cors);
     // End
 
-    routes
+    // let t:() = routes;
+    // let t:() = routes.recover(facade::handle_rejection);
+
+    // routes
+    routes.recover(facade::handle_rejection)
 }

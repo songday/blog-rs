@@ -112,15 +112,9 @@ fn main() -> result::Result<()> {
         println!("Creating server instance...");
         let mut servers: Vec<BoxFuture<()>> = Vec::new();
 
-        if args.hsts_enabled {
-            let server = runtime.block_on(service::server::create_blog_server_hsts(http_address, rx1));
-            servers.push(Box::pin(server.unwrap()));
-            println!("Creating HSTS Redirect server instance...");
-        } else {
-            let server = runtime.block_on(service::server::create_blog_server(http_address, rx1, &args.cors_host));
-            println!("Starting http blog backend server...");
-            servers.push(Box::pin(server.unwrap()));
-        }
+        let server = runtime.block_on(service::server::create_blog_server(http_address, rx1, &args.cors_host));
+        println!("Starting http blog backend server...");
+        servers.push(Box::pin(server.unwrap()));
 
         if args.https_enabled {
             let mut addr = String::from(&args.ip);
@@ -128,16 +122,27 @@ fn main() -> result::Result<()> {
             addr.push_str(&args.https_port.to_string());
             let https_address = addr.parse::<SocketAddr>()?;
 
-            let server = runtime.block_on(service::server::create_tls_blog_server(
-                https_address,
-                rx2,
-                &args.cert_path.unwrap(),
-                &args.key_path.unwrap(),
-                &args.cors_host,
-                args.hsts_enabled,
-            ));
-            println!("Starting https blog backend server...");
-            servers.push(Box::pin(server.unwrap()));
+            let cert_path = &args.cert_path.unwrap();
+            let key_path = &args.key_path.unwrap();
+
+            if args.hsts_enabled {
+                let server = service::server::create_tls_blog_server_with_hsts(
+                    https_address,
+                    rx2,
+                    cert_path,
+                    key_path,
+                    &args.cors_host,
+                );
+                let server = runtime.block_on(server);
+                println!("Starting https blog backend server...");
+                servers.push(Box::pin(server.unwrap()));
+            } else {
+                let server =
+                    service::server::create_tls_blog_server(https_address, rx2, cert_path, key_path, &args.cors_host);
+                let server = runtime.block_on(server);
+                println!("Starting https blog backend server...");
+                servers.push(Box::pin(server.unwrap()));
+            }
         }
         let server = join_all(servers);
 
