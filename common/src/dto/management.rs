@@ -9,13 +9,13 @@ pub struct AdminUser {
 }
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
-pub struct Settings {
+pub struct Setting {
     pub item: String,
     pub content: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SiteData {
-    pub settings: Settings,
+    pub settings: Setting,
     pub user_info: Option<UserInfo>,
 }

@@ -9,7 +9,7 @@ use warp::{self, reject, Filter, Rejection, Reply, Server, TlsServer};
 
 use blog_common::{
     dto::{
-        management::{AdminUser, Settings},
+        management::{AdminUser, Setting},
         post::PostData,
         user::UserInfo,
     },
@@ -211,7 +211,7 @@ pub fn blog_filter(
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
-        .and(warp::body::json::<Settings>())
+        .and(warp::body::json::<Setting>())
         .and_then(management::update_settings);
     let user_logout = warp::get()
         .and(warp::path("user"))

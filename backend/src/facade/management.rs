@@ -2,7 +2,7 @@ use core::{convert::Infallible, result::Result};
 
 use blog_common::{
     dto::{
-        management::{AdminUser, Settings},
+        management::{AdminUser, Setting},
         user::UserInfo,
     },
     result::Error,
@@ -48,7 +48,7 @@ pub async fn admin_login(token: Option<String>, params: AdminUser) -> Result<imp
     facade::response(management::admin_login(&token, &params.password).await)
 }
 
-pub async fn update_settings(token: Option<String>, setting: Settings) -> Result<impl Reply, Rejection> {
+pub async fn update_settings(token: Option<String>, setting: Setting) -> Result<impl Reply, Rejection> {
     if let Err(e) = status::check_auth(token) {
         return facade::response(Err(e));
     }

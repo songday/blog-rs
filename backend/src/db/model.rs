@@ -78,7 +78,7 @@ pub struct TagUsage {
 }
 
 #[derive(Clone, Default, Debug, Serialize, sqlx::FromRow)]
-pub struct Settings {
+pub struct Setting {
     pub item: String,
     pub content: String,
     // pub settings: blog_common::dto::management::Settings,
@@ -91,8 +91,8 @@ pub struct Settings {
 //     }
 // }
 
-impl From<blog_common::dto::management::Settings> for Settings {
-    fn from(settings: blog_common::dto::management::Settings) -> Self {
+impl From<blog_common::dto::management::Setting> for Setting {
+    fn from(settings: blog_common::dto::management::Setting) -> Self {
         Self {
             item: settings.item,
             content: settings.content,

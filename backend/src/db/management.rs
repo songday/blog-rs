@@ -5,7 +5,7 @@ use sqlx::{Row, Sqlite};
 use crate::{
     db::{
         self,
-        model::{Settings, User},
+        model::{Setting, User},
         DATA_SOURCE,
     },
     service::status,
@@ -22,7 +22,7 @@ pub async fn has_admin_password() -> Result<bool> {
 }
 
 pub async fn admin_login(token: &str, password: &str) -> Result<bool> {
-    let d = sqlx::query_as::<Sqlite, crate::db::model::Settings>("SELECT * FROM settings WHERE item='admin_password'")
+    let d = sqlx::query_as::<Sqlite, crate::db::model::Setting>("SELECT * FROM settings WHERE item='admin_password'")
         .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
 
@@ -35,7 +35,7 @@ pub async fn admin_login(token: &str, password: &str) -> Result<bool> {
     return Ok(false);
 }
 
-pub async fn update_settings(settings: Settings) -> Result<()> {
+pub async fn update_settings(settings: Setting) -> Result<()> {
     // db::sled_save(&DATA_SOURCE.get().unwrap().management, "settings", &setting).await?;
     let content = if settings.item.eq("admin_password") {
         if settings.content.is_empty() {
