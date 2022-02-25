@@ -106,7 +106,10 @@ pub async fn git(mut root_path: PathBuf, last_export_timestamp: i64) -> Result<(
     let posts = post::all_by_since(last_export_timestamp).await?;
     let mut write_file = |filename: &String, post: &Post| -> Result<()> {
         root_path.set_file_name(filename);
-        let mut file = OpenOptions::new().write(true).truncate(true).open(root_path.as_path())?;
+        let mut file = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .open(root_path.as_path())?;
         let content = render(post, "hugo.md");
         file.write_all(content.as_bytes())?;
         Ok(())

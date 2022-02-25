@@ -12,7 +12,8 @@
         function showNotification() {}
         function post() {
             const data = {
-                admin_password:document.getElementById('admin_password1').value,
+                item: 'admin_password',
+                content:document.getElementById('admin_password1').value,
             };
             const options = {
                 method: 'POST',

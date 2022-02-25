@@ -10,7 +10,7 @@ pub(crate) const INDEX_HTML: &'static str = include_str!("../resource/page/index
 
 pub async fn index() -> Result<impl Reply, Rejection> {
     //检查是否有data.db，有则返回前端 index，否则返回设置页面
-    if crate::db::management::has_settings().await.unwrap_or(false) {
+    if crate::db::management::has_admin_password().await.unwrap_or(false) {
         Ok(warp::reply::html(INDEX_HTML).into_response())
         // Ok(warp::reply::Response::new(INDEX_HTML.into()))
     } else {

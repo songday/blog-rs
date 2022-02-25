@@ -9,7 +9,7 @@ use std::{
 };
 
 use ahash::AHasher;
-use blog_common::{dto::tag::TagUsageAmount, result::Error};
+use blog_common::{dto::tag::TagUsageAmount, result::Error, util::time};
 use bytes::{Buf, Bytes, BytesMut};
 use lazy_static::lazy_static;
 use parking_lot::RwLock;
@@ -90,7 +90,7 @@ pub(super) async fn record_usage(post_id: i64, tags: &Vec<String>) -> Result<()>
                 if !tags_in_db_iter.any(|e| e.name.eq(tag)) {
                     let id = sqlx::query("REPLACE INTO tag(name, created_at)VALUES(?,?)")
                         .bind(tag)
-                        .bind(common::get_current_sec()? as i64)
+                        .bind(time::unix_epoch_sec() as i64)
                         .execute(&DATA_SOURCE.get().unwrap().sqlite)
                         .await?
                         .last_insert_rowid();

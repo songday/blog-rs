@@ -10,7 +10,8 @@ pub struct AdminUser {
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct Settings {
-    pub admin_password: String,
+    pub item: String,
+    pub content: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]

@@ -23,8 +23,3 @@ lazy_static! {
     pub static ref EMAIL_REGEX: Regex = Regex::new(r"[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+").unwrap();
     pub static ref HTML_TAG_REGEX: Regex = Regex::new(r"<[^>]+>|<[^>]>|</[^>]>").unwrap();
 }
-
-pub fn get_current_sec() -> Result<u64> {
-    let d = SystemTime::now().duration_since(UNIX_EPOCH)?;
-    Ok(d.as_secs())
-}

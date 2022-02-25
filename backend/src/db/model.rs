@@ -79,7 +79,8 @@ pub struct TagUsage {
 
 #[derive(Clone, Default, Debug, Serialize, sqlx::FromRow)]
 pub struct Settings {
-    pub admin_password: String,
+    pub item: String,
+    pub content: String,
     // pub settings: blog_common::dto::management::Settings,
 }
 
@@ -92,7 +93,9 @@ pub struct Settings {
 
 impl From<blog_common::dto::management::Settings> for Settings {
     fn from(settings: blog_common::dto::management::Settings) -> Self {
-        let admin_password = settings.admin_password;
-        Self { admin_password }
+        Self {
+            item: settings.item,
+            content: settings.content,
+        }
     }
 }
