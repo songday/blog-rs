@@ -22,7 +22,7 @@ fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), ()> {
     Ok(())
 }
 
-fn get_signature<'a>(repo: &'a Repository) -> Result<Signature<'a>, GitError> {
+fn get_signature(repo: &Repository) -> Result<Signature, GitError> {
     let config = repo.config()?;
     let name = config.get_str("user.name")?;
     let email = config.get_str("user.email")?;

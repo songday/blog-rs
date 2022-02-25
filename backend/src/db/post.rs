@@ -315,3 +315,11 @@ pub async fn all() -> Result<Vec<Post>> {
         .await?;
     Ok(posts)
 }
+
+pub async fn all_by_since(timestamp: i64) -> Result<Vec<Post>> {
+    let posts = sqlx::query_as::<Sqlite, Post>("SELECT * FROM post WHERE updated_at>=? ORDER BY id DESC")
+        .bind(timestamp)
+        .fetch_all(super::get_sqlite())
+        .await?;
+    Ok(posts)
+}
