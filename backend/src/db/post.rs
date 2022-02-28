@@ -92,7 +92,7 @@ fn append_pagination_sql(sql: &mut String, pagination_type: &str, post_id: u64) 
 }
 
 pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<PaginationData<Vec<PostDetail>>> {
-    let row = sqlx::query("SELECT COUNT(id) FROM post")
+    let row = sqlx::query("SELECT COUNT(id) FROM posts")
         .fetch_one(super::get_sqlite())
         .await?;
     let total: i64 = row.get(0);
@@ -103,7 +103,7 @@ pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<
 
     let mut sql = String::with_capacity(256);
     sql.push_str(
-        "SELECT id,title,title_image,'' AS markdown_content,'' AS rendered_content,created_at,updated_at FROM post ",
+        "SELECT id,title,title_image,'' AS markdown_content,'' AS rendered_content,created_at,updated_at FROM posts ",
     );
     let order_by_asc = append_pagination_sql(&mut sql, pagination_type, post_id);
     println!("sql={}", sql);
@@ -124,7 +124,7 @@ pub async fn list(pagination_type: &str, post_id: u64, page_size: u8) -> Result<
     p.push(SqlParam::I64(offset));
     p.push(SqlParam::I8(page_size as i8));
     let id_array =
-        db::sqlite_get_list::<crate::db::Id>("SELECT id FROM post ORDER BY id DESC LIMIT ?,?", Some(p)).await?;
+        db::sqlite_get_list::<crate::db::Id>("SELECT id FROM posts ORDER BY id DESC LIMIT ?,?", Some(p)).await?;
     let id_array: Vec<i64> = id_array.iter().map(|d| d.id).collect();
     let d = db::sled_get_list::<PostDetail>(&DATA_SOURCE.get().unwrap().setting, &id_array).await?;
     */
@@ -138,7 +138,7 @@ pub async fn list_by_tag(
 ) -> Result<PaginationData<Vec<PostDetail>>> {
     let tag_name = urlencoding::decode(&tag_name)?;
     let s = tag_name.as_ref();
-    let tag = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tag WHERE name = ?")
+    let tag = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tags WHERE name = ?")
         .bind(s)
         .fetch_optional(super::get_sqlite())
         .await?;
@@ -147,7 +147,7 @@ pub async fn list_by_tag(
     }
     let tag = tag.unwrap();
 
-    let r = sqlx::query("SELECT COUNT(*) FROM tag_usage WHERE tag_id = ?")
+    let r = sqlx::query("SELECT COUNT(*) FROM tags_usage WHERE tag_id = ?")
         .bind(tag.id)
         .fetch_one(super::get_sqlite())
         .await?;
@@ -163,12 +163,12 @@ pub async fn list_by_tag(
     }
 
     let mut sql = String::with_capacity(256);
-    sql.push_str("SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ");
+    sql.push_str("SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM posts WHERE id IN (SELECT post_id FROM tags_usage WHERE tag_id = ? ");
     let order_by_asc = append_pagination_sql(&mut sql, pagination_type, post_id);
     sql.push_str(")");
     println!("sql={}", sql);
     let mut d = sqlx::query_as::<Sqlite, Post>(
-        // "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id IN (SELECT post_id FROM tag_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
+        // "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM posts WHERE id IN (SELECT post_id FROM tags_usage WHERE tag_id = ? ORDER BY id DESC LIMIT ?, ?)",
         &sql,
     )
     .bind(tag.id)
@@ -187,7 +187,7 @@ pub async fn list_by_tag(
 pub async fn new_post() -> Result<i64> {
     let id = snowflake::gen_id() as i64;
     let last_insert_rowid =
-        sqlx::query("INSERT INTO post(id, title, title_image, markdown_content, rendered_content, created_at)VALUES(?,?,'','','',?)")
+        sqlx::query("INSERT INTO posts(id, title, title_image, markdown_content, rendered_content, created_at)VALUES(?,?,'','','',?)")
             .bind(&id)
             .bind(val::DEFAULT_POST_TITLE)
             .bind(time::unix_epoch_sec() as i64)
@@ -203,7 +203,7 @@ pub async fn new_post() -> Result<i64> {
 }
 
 pub async fn update_title_image(id: i64, title_image: &str) -> Result<()> {
-    sqlx::query("UPDATE post SET title_image=? WHERE id=?")
+    sqlx::query("UPDATE posts SET title_image=? WHERE id=?")
         .bind(title_image)
         .bind(id)
         .execute(super::get_sqlite())
@@ -214,9 +214,9 @@ pub async fn update_title_image(id: i64, title_image: &str) -> Result<()> {
 
 async fn get_post(id: i64, edit: bool) -> Result<Option<Post>> {
     let sql = if edit {
-        "SELECT id,title,title_image,'' AS markdown_content,markdown_content AS rendered_content,created_at,updated_at FROM post WHERE id = ?"
+        "SELECT id,title,title_image,'' AS markdown_content,markdown_content AS rendered_content,created_at,updated_at FROM posts WHERE id = ?"
     } else {
-        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM post WHERE id = ?"
+        "SELECT id,title,title_image,'' AS markdown_content,rendered_content,created_at,updated_at FROM posts WHERE id = ?"
     };
     sqlx::query_as::<Sqlite, Post>(sql)
         .bind(id)
@@ -266,7 +266,7 @@ pub async fn save(post_data: PostData) -> Result<PostDetail> {
 
     // save to sqlite
     sqlx::query(
-        "UPDATE post SET title=?, title_image=?, markdown_content=?, rendered_content=?, updated_at=? WHERE id=?",
+        "UPDATE posts SET title=?, title_image=?, markdown_content=?, rendered_content=?, updated_at=? WHERE id=?",
     )
     .bind(post_title)
     .bind(&post_detail.title_image)
@@ -291,7 +291,7 @@ pub async fn show(id: u64, editable: bool) -> Result<PostDetail> {
     if r.is_none() {
         Err(Error::CannotFoundPost.into())
     } else {
-        let tags = sqlx::query_as::<Sqlite, Tag>("SELECT t.id AS id, t.name AS name FROM tag t INNER JOIN tag_usage u ON t.id = u.tag_id WHERE u.post_id = ? ORDER BY t.created_at DESC")
+        let tags = sqlx::query_as::<Sqlite, Tag>("SELECT t.id AS id, t.name AS name FROM tags t INNER JOIN tags_usage u ON t.id = u.tag_id WHERE u.post_id = ? ORDER BY t.created_at DESC")
             .bind(id)
             .fetch_all(super::get_sqlite())
             .await?.iter().map(|t| t.name.clone()).collect();
@@ -302,7 +302,7 @@ pub async fn show(id: u64, editable: bool) -> Result<PostDetail> {
 }
 
 pub async fn delete(id: u64) -> Result<()> {
-    let r = sqlx::query("DELETE FROM post WHERE id=?")
+    let r = sqlx::query("DELETE FROM posts WHERE id=?")
         .bind(id as i64)
         .execute(super::get_sqlite())
         .await?;
@@ -310,14 +310,14 @@ pub async fn delete(id: u64) -> Result<()> {
 }
 
 pub async fn all() -> Result<Vec<Post>> {
-    let posts = sqlx::query_as::<Sqlite, Post>("SELECT * FROM post ORDER BY id DESC")
+    let posts = sqlx::query_as::<Sqlite, Post>("SELECT * FROM posts ORDER BY id DESC")
         .fetch_all(super::get_sqlite())
         .await?;
     Ok(posts)
 }
 
 pub async fn all_by_since(timestamp: i64) -> Result<Vec<Post>> {
-    let posts = sqlx::query_as::<Sqlite, Post>("SELECT * FROM post WHERE updated_at>=? ORDER BY id DESC")
+    let posts = sqlx::query_as::<Sqlite, Post>("SELECT * FROM posts WHERE updated_at>=? ORDER BY id DESC")
         .bind(timestamp)
         .fetch_all(super::get_sqlite())
         .await?;

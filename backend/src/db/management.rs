@@ -56,7 +56,7 @@ pub async fn update_settings(settings: Setting) -> Result<()> {
         .await?;
 
     if r.rows_affected() < 1 {
-        sqlx::query("INSERT INTO settings(id,item,value,created_at,updated_at)VALUES(1,?,?,?,?)")
+        sqlx::query("INSERT INTO settings(id,item,content,created_at,updated_at)VALUES(1,?,?,?,?)")
             .bind(&settings.item)
             .bind(&content)
             .bind(now)

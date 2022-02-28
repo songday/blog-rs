@@ -53,6 +53,11 @@ struct Args {
 }
 
 fn main() -> result::Result<()> {
+    if std::env::var_os("RUST_LOG").is_none() {
+        std::env::set_var("RUST_LOG", "access-log=info");
+    }
+    pretty_env_logger::init();
+
     let args = Args::parse();
 
     let runtime = Builder::new_multi_thread()

@@ -358,6 +358,8 @@ pub fn blog_filter(
         .build();
     // End
 
+    let logger = warp::log("access-log");
+
     // Combine routes
     let routes = index
         .or(asset)
@@ -382,6 +384,7 @@ pub fn blog_filter(
         .or(save_image)
         .or(export)
         .or(forgot_password)
+        .with(logger)
         .with(cors);
     // End
 

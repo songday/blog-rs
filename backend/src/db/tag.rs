@@ -25,7 +25,7 @@ use crate::{
 };
 
 pub async fn top() -> Result<Vec<TagUsageAmount>> {
-    let tags = sqlx::query("SELECT t.id,t.name,u.amount FROM tag t INNER JOIN (SELECT tag_id, COUNT(tag_id) AS amount FROM tag_usage GROUP BY tag_id) u ON t.id=u.tag_id ORDER BY u.amount DESC")
+    let tags = sqlx::query("SELECT t.id,t.name,u.amount FROM tags t INNER JOIN (SELECT tag_id, COUNT(tag_id) AS amount FROM tags_usage GROUP BY tag_id) u ON t.id=u.tag_id ORDER BY u.amount DESC")
         .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
     let name_list = tags
@@ -40,7 +40,7 @@ pub async fn top() -> Result<Vec<TagUsageAmount>> {
 }
 
 pub async fn list() -> Result<Vec<String>> {
-    let tag_list = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tag ORDER BY created_at DESC")
+    let tag_list = sqlx::query_as::<Sqlite, Tag>("SELECT id,name FROM tags ORDER BY created_at DESC")
         .fetch_all(&DATA_SOURCE.get().unwrap().sqlite)
         .await?;
     let name_list = tag_list.iter().map(|i| i.name.clone()).collect::<Vec<String>>();
@@ -52,7 +52,7 @@ pub async fn get_names(id_array: Vec<i64>) -> Result<Vec<String>> {
         return Ok(vec![]);
     }
     let mut sql = String::with_capacity(256);
-    sql.push_str("SELECT name from tag WHERE id IN (");
+    sql.push_str("SELECT name from tags WHERE id IN (");
     for id in id_array.iter() {
         sql.push_str(id.to_string().as_str());
         sql.push(',');
@@ -69,7 +69,7 @@ pub async fn get_names(id_array: Vec<i64>) -> Result<Vec<String>> {
 pub(super) async fn record_usage(post_id: i64, tags: &Vec<String>) -> Result<()> {
     // query id list by name list
     let mut sql = String::with_capacity(256);
-    sql.push_str("SELECT id,name from tag WHERE name IN (");
+    sql.push_str("SELECT id,name from tags WHERE name IN (");
     for _i in 0..tags.len() {
         sql.push_str("?,");
     }
@@ -88,7 +88,7 @@ pub(super) async fn record_usage(post_id: i64, tags: &Vec<String>) -> Result<()>
             let mut tags_in_db_iter = tags_in_db.iter();
             for tag in tags.iter() {
                 if !tags_in_db_iter.any(|e| e.name.eq(tag)) {
-                    let id = sqlx::query("REPLACE INTO tag(name, created_at)VALUES(?,?)")
+                    let id = sqlx::query("REPLACE INTO tags(name, created_at)VALUES(?,?)")
                         .bind(tag)
                         .bind(time::unix_epoch_sec() as i64)
                         .execute(&DATA_SOURCE.get().unwrap().sqlite)
@@ -108,7 +108,7 @@ pub(super) async fn record_usage(post_id: i64, tags: &Vec<String>) -> Result<()>
     // 把没有用到的tag id删除
     if tags_in_db.len() > 0 {
         let mut sql = String::with_capacity(512);
-        sql.push_str("DELETE FROM tag_usage WHERE post_id = ? AND tag_id NOT IN (");
+        sql.push_str("DELETE FROM tags_usage WHERE post_id = ? AND tag_id NOT IN (");
         for _idx in 0..tags_in_db.len() {
             sql.push_str("?,");
         }
@@ -123,7 +123,7 @@ pub(super) async fn record_usage(post_id: i64, tags: &Vec<String>) -> Result<()>
 
     let post_id = post_id;
     for tag in tags_in_db {
-        sqlx::query("REPLACE INTO tag_usage(post_id, tag_id)VALUES(?,?)")
+        sqlx::query("REPLACE INTO tags_usage(post_id, tag_id)VALUES(?,?)")
             .bind(post_id)
             .bind(tag.id)
             .execute(&DATA_SOURCE.get().unwrap().sqlite)
@@ -134,7 +134,7 @@ pub(super) async fn record_usage(post_id: i64, tags: &Vec<String>) -> Result<()>
 
 pub(crate) async fn get_tags_by_post_ids(ids: Vec<i64>) -> Result<HashMap<i64, Vec<Tag>>> {
     let mut sql = String::from(
-        "SELECT u.post_id, t.id, t.name FROM tag_usage u INNER JOIN tag t ON u.tag_id = t.id WHERE u.post_id IN (",
+        "SELECT u.post_id, t.id, t.name FROM tags_usage u INNER JOIN tags t ON u.tag_id = t.id WHERE u.post_id IN (",
     );
     for _i in 0..ids.len() {
         sql.push_str("?,");
