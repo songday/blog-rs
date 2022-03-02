@@ -7,16 +7,16 @@ use git2::{
     StatusShow,
 };
 
-fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), ()> {
-    // export posts data to file system
-    // todo
+pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), ()> {
     // open git repository
-    let repo = match Repository::open(&info.path) {
+    let mut path = std::env::current_dir().unwrap();
+    path.join(&info.repository_name);
+    let repo = match Repository::open(path.as_path()) {
         Ok(repo) => repo,
         Err(e) => panic!("failed to open: {}", e),
     };
     // perform committing
-    // todo
+    let changed_files = get_changed_files(&repo);
     // try pushing
     // todo
     Ok(())

@@ -5,7 +5,7 @@
 [&gt;&gt;更多截图/More screenshots](manual/screenshots.md)
 
 ## 用户使用手册/User manual
-[用户使用手册](manual/how-to-use-zh.md)
+[用户使用手册](manual/how-to-use-zh.md)  
 [User manual](manual/how-to-use-en.md)
 
 ## 自带服务端的博客系统

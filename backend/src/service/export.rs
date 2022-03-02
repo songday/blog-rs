@@ -2,6 +2,7 @@ use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::path::PathBuf;
 
+use blog_common::dto::git::GitRepositoryInfo;
 use lazy_static::lazy_static;
 use tera::Tera;
 use zip::write::FileOptions;
@@ -72,7 +73,7 @@ pub async fn hugo() -> Result<String> {
     let file = std::fs::File::create(output_file)?;
     let mut zip = zip::ZipWriter::new(file);
 
-    let mut zip_file = |file_name: &String, post: &Post| -> Result<()> {
+    let zip_file = |file_name: &String, post: &Post| -> Result<()> {
         zip.start_file(file_name, FileOptions::default())?;
         let content = render(post, "hugo.md");
         zip.write_all(content.as_bytes())?;
@@ -102,18 +103,21 @@ pub async fn hugo() -> Result<String> {
     Ok(filename)
 }
 
-pub async fn git(mut root_path: PathBuf, last_export_timestamp: i64) -> Result<()> {
-    let posts = post::all_by_since(last_export_timestamp).await?;
-    let mut write_file = |filename: &String, post: &Post| -> Result<()> {
-        root_path.set_file_name(filename);
-        let mut file = OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .open(root_path.as_path())?;
+pub async fn git(git: &GitRepositoryInfo) -> Result<()> {
+    let mut path = std::env::current_dir().unwrap();
+    path.join(&git.repository_name);
+
+    let posts = post::all_by_since(git.last_export_second).await?;
+    let write_file = |filename: &String, post: &Post| -> Result<()> {
+        path.set_file_name(filename);
+        let mut file = OpenOptions::new().write(true).truncate(true).open(path.as_path())?;
         let content = render(post, "hugo.md");
         file.write_all(content.as_bytes())?;
         Ok(())
     };
     write_posts(&posts, write_file);
+
+    let r = super::git::sync_to_remote(git);
+
     Ok(())
 }

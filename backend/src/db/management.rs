@@ -22,9 +22,7 @@ pub async fn has_admin_password() -> Result<bool> {
 }
 
 pub async fn admin_login(token: &str, password: &str) -> Result<bool> {
-    let d = sqlx::query_as::<Sqlite, crate::db::model::Setting>("SELECT * FROM settings WHERE item='admin_password'")
-        .fetch_optional(&DATA_SOURCE.get().unwrap().sqlite)
-        .await?;
+    let d = get_setting("admin_password").await?;
 
     if let Some(settings) = d {
         if crypt::verify_password(password, &settings.content)? {
@@ -35,7 +33,7 @@ pub async fn admin_login(token: &str, password: &str) -> Result<bool> {
     return Ok(false);
 }
 
-pub async fn update_settings(settings: Setting) -> Result<()> {
+pub async fn update_setting(settings: Setting) -> Result<()> {
     // db::sled_save(&DATA_SOURCE.get().unwrap().management, "settings", &setting).await?;
     let content = if settings.item.eq("admin_password") {
         if settings.content.is_empty() {
@@ -65,4 +63,12 @@ pub async fn update_settings(settings: Setting) -> Result<()> {
             .await?;
     }
     Ok(())
+}
+
+pub async fn get_setting(item: &str) -> Result<Option<Setting>> {
+    let r = sqlx::query_as::<Sqlite, crate::db::model::Setting>("SELECT * FROM settings WHERE item=?")
+        .bind(item)
+        .fetch_optional(super::get_sqlite())
+        .await?;
+    Ok(r)
 }

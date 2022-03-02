@@ -1,5 +1,5 @@
 use blog_common::{
-    dto::{user::UserInfo, Response as ApiResponse},
+    dto::{git::GitRepositoryInfo, user::UserInfo, Response as ApiResponse},
     result::{Error, ErrorResponse},
     val,
 };
@@ -8,6 +8,7 @@ use hyper::header::{self, HeaderMap, HeaderValue};
 use warp::{filters::path::Tail, http::Response, Rejection, Reply};
 
 use crate::{
+    db::management,
     db::post,
     facade::{session_id_cookie, wrap_json_data, wrap_json_err},
     service::{export, status},
@@ -21,6 +22,9 @@ pub async fn export_handler(tail: Tail, user: Option<UserInfo>) -> Result<Respon
     let path = tail.as_str();
     if path.eq("hugo") {
         return hugo().await;
+    }
+    if path.eq("git") {
+        return git().await;
     }
     if path.rfind(".zip").is_some() {
         return Ok(get_file(path));
@@ -58,5 +62,23 @@ async fn hugo() -> Result<Response<Body>, Rejection> {
         .header(header::CONTENT_LENGTH, uri.len())
         .body(uri.into())
         .unwrap();
+    Ok(r)
+}
+
+async fn git() -> Result<Response<Body>, Rejection> {
+    let setting = management::get_setting("git-pages").await?;
+    let mut message = String::with_capacity(32);
+    if setting.is_none() {
+        message.push_str("Cannot find git repository setting");
+    } else {
+        let setting = setting.unwrap();
+        let r = serde_json::from_str::<GitRepositoryInfo>(&setting.content);
+        if let Ok(info) = r {
+            let r = export::git(&info).await;
+        } else {
+            message.push_str("Cannot deserialize git repository info");
+        }
+    }
+    let r = Response::builder().body(message.into()).unwrap();
     Ok(r)
 }

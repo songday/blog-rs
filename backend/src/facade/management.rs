@@ -52,7 +52,7 @@ pub async fn update_settings(token: Option<String>, setting: Setting) -> Result<
     if let Err(e) = status::check_auth(token) {
         return facade::response(Err(e));
     }
-    facade::response(management::update_settings(setting.into()).await)
+    facade::response(management::update_setting(setting.into()).await)
 }
 
 pub async fn forgot_password(authority: Option<warp::host::Authority>) -> Result<impl Reply, Rejection> {
