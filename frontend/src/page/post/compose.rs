@@ -119,7 +119,7 @@ fn update_post(
     gloo::utils::document().set_title(&post_detail.title);
     html! {
         <>
-            <p>{" "}</p>
+            { crate::component::blank_node() }
             <div class="container">
                 <div class="field">
                     <label class="label">{ messages.get("ti").unwrap() }</label>

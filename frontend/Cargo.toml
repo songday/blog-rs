@@ -25,6 +25,7 @@ fastrand = "1.7"
 fluent = "0.16"
 gloo = "0.6"
 gloo-file = "0.2"
+gloo-utils = "0.1"
 js-sys = "0.3"
 thiserror = "1.0"
 parking_lot = { version = "0.11", features = ["wasm-bindgen"]}

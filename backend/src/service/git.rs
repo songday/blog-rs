@@ -14,7 +14,7 @@ pub const SETTING_ITEM_NAME: &'static str = "git-pages";
 
 pub async fn new_repository(info: GitRepositoryInfo) -> Result<(), String> {
     // clone repository
-    let mut path = std::env::current_dir().unwrap();
+    let path = std::env::current_dir().unwrap();
     let path = path.join(&info.repository_name);
     if path.exists() {
         return Err(format!("Target directory {} already exists", path.as_path().display()));

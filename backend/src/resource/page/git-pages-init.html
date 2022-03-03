@@ -30,10 +30,10 @@
                     t.disabled = false;
                     console.log(data);
                     if (data.status === 0) {
-                        location.href = '/';
+                        location.href = '.';
                     } else {
-                        document.getElementById('errorMessage').value = data.error.detail;
-                        document.getElementById('errorMessage').style.display = 'block';
+                        document.getElementById('errorMessage').innerHTML = data.error.detail;
+                        document.getElementById('notification').style.display = 'block';
                     }
                 })
                 .catch(err => {
@@ -89,7 +89,11 @@
     </div>
     <div>
         <button class="button is-medium" onclick="newRepository(this);">克隆/Clone</button>
-        <button class="button is-medium" onclick="location.href='/';">返回/Back</button>
+        <button class="button is-medium" onclick="location.href='/management';">返回/Back</button>
+    </div>
+    <div id="notification" class="notification is-danger is-light" style="display:none;width:435px">
+        <button class="delete" onclick=""></button>
+        <span id="errorMessage"></span>
     </div>
 </div>
 </body>
