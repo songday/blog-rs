@@ -20,6 +20,7 @@ pub fn simple_uuid() -> String {
 }
 
 lazy_static! {
+    pub static ref BLANKS: Regex = Regex::new(r"\s\s+").unwrap();
     pub static ref EMAIL_REGEX: Regex = Regex::new(r"[^@ \t\r\n]+@[^@ \t\r\n]+\.[^@ \t\r\n]+").unwrap();
     pub static ref HTML_TAG_REGEX: Regex = Regex::new(r"<[^>]+>|<[^>]>|</[^>]>").unwrap();
 }

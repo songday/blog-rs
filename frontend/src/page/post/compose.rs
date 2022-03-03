@@ -119,6 +119,7 @@ fn update_post(
     gloo::utils::document().set_title(&post_detail.title);
     html! {
         <>
+            <p>{" "}</p>
             <div class="container">
                 <div class="field">
                     <label class="label">{ messages.get("ti").unwrap() }</label>
@@ -146,10 +147,12 @@ fn update_post(
                     <p class="level-item has-text-centered">{" "}</p>
                 </nav>
             </div>
+            <p>{" "}</p>
             <section class="hero is-large is-light has-background">
                 <img id="title-image" src={post_detail.title_image.clone()} class="hero-background is-transparent"/>
                 <div class="hero-body"></div>
             </section>
+            <p>{" "}</p>
             <div class="container">
                 <div class="field">
                     <label class="label">{ messages.get("title").unwrap() }</label>
@@ -372,6 +375,7 @@ impl Component for PostCompose {
                     post_id={post_id as u64} title_onchange={title_onchange.clone()}
                     title_image_onchange={title_image_onchange.clone()} />
                 <div class="container" id="tagsContainer" style="display:none">
+                    <p>{" "}</p>
                     <div class="field">
                         <label class="label">{ messages.get("labels").unwrap() }</label>
                         <div class="control">
@@ -380,6 +384,7 @@ impl Component for PostCompose {
                         <br/>
                         <div id="tags" class="tags"></div>
                     </div>
+                    <p>{" "}</p>
                     <div class="field is-grouped">
                         <div class="control">
                             <button class="button is-link" onclick={ctx.link().callback(|_: MouseEvent| Msg::UpdatePost)}>{ messages.get("update").unwrap() }</button>

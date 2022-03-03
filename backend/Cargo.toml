@@ -22,7 +22,7 @@ comrak = "0.12"
 # ctrlc = { version = "3.0", features = ["termination"] }
 # crc = "^1.0.0"
 futures = "0.3"
-git2 = "0.13"
+git2 = "0.14"
 hyper = "0.14"
 image = { version = "0.23", features = ["jpeg", "png", "gif"] }
 lazy_static = "1.4"

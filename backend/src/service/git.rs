@@ -7,16 +7,55 @@ use git2::{
     StatusShow,
 };
 
-pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), ()> {
+use crate::db::management;
+use crate::db::model::Setting;
+
+pub const SETTING_ITEM_NAME: &'static str = "git-pages";
+
+pub async fn new_repository(info: GitRepositoryInfo) -> Result<(), String> {
+    // clone repository
+    let mut path = std::env::current_dir().unwrap();
+    let path = path.join(&info.repository_name);
+    if path.exists() {
+        return Err(format!("Target directory {} already exists", path.as_path().display()));
+    }
+    if let Err(e) = std::fs::create_dir(path.as_path()) {
+        return Err(format!("Failed creating directory: {}", path.as_path().display()));
+    }
+    if let Err(e) = Repository::clone(&info.remote_url, path.as_path()) {
+        return Err(format!("Failed clone git repository: {}", e));
+    };
+    // save to db
+    let r = serde_json::to_string(&info);
+    let setting = Setting {
+        item: String::from(SETTING_ITEM_NAME),
+        content: r.unwrap(),
+    };
+    match management::update_setting(setting).await {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            Err(format!("Failed updating settings: {:?}", e.0))
+        },
+    }
+}
+
+pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), String> {
     // open git repository
     let mut path = std::env::current_dir().unwrap();
     path.join(&info.repository_name);
     let repo = match Repository::open(path.as_path()) {
         Ok(repo) => repo,
-        Err(e) => panic!("failed to open: {}", e),
+        Err(e) => {
+            return Err(format!("failed to open git repository: {}", e));
+        },
     };
     // perform committing
-    let changed_files = get_changed_files(&repo);
+    let changed_files = match get_changed_files(&repo) {
+        Ok(f) => f,
+        Err(e) => {
+            return Err(format!("Failed to get changed files: {}", e));
+        }
+    };
     // try pushing
     // todo
     Ok(())
@@ -36,8 +75,12 @@ fn get_changed_files(repo: &Repository) -> Result<Vec<String>, GitError> {
     }
     let mut status_options = StatusOptions::new();
     let status = repo.statuses(Some(status_options.show(StatusShow::Index)))?;
-    for f in status.iter() {}
-    Ok(vec![])
+    let mut files: Vec<String> = Vec::with_capacity(25);
+    for f in status.iter() {
+        let path = dbg!(f.path().unwrap());
+        files.push(String::from(path));
+    }
+    Ok(files)
 }
 
 fn find_last_commit(repo: &Repository) -> Result<Commit, GitError> {

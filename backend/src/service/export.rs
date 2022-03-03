@@ -12,11 +12,15 @@ use crate::db::post;
 use crate::util::{self, result::Result};
 
 static HUGO_TEMPLATE: &'static str = include_str!("../resource/static-site/template/hugo.txt");
+static GIT_PAGES_DETAIL_HTML: &'static str = include_str!("../resource/page/git-pages-detail.html");
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
         let mut tera = Tera::default();
         if let Err(e) = tera.add_raw_template("hugo.md", HUGO_TEMPLATE) {
+            eprintln!("{:?}", e);
+        }
+        if let Err(e) = tera.add_raw_template("git-pages-detail.html", GIT_PAGES_DETAIL_HTML) {
             eprintln!("{:?}", e);
         }
         tera
@@ -116,8 +120,6 @@ pub async fn git(git: &GitRepositoryInfo) -> Result<()> {
         Ok(())
     };
     write_posts(&posts, write_file);
-
-    let r = super::git::sync_to_remote(git);
 
     Ok(())
 }

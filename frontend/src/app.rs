@@ -78,6 +78,9 @@ impl Component for App {
                           <a class="navbar-item" href="/management">
                             {"管理/Management"}
                           </a>
+                          <a class="navbar-item" href="/management/git-pages">
+                            {"Git Pages"}
+                          </a>
                           <hr class="navbar-divider"/>
                             <Link<Route> classes={"navbar-item"} to={Route::About}>
                                 {"关于/About"}

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Git pages</title>
+    <link rel="stylesheet" href="/asset/bulma.min-82aac43507618108.css">
+    <link rel="stylesheet" href="/asset/fontawesome.min-5e9e696c59c57e83.css">
+    <link rel="stylesheet" href="/asset/regular.min-a0c258fb7c5f655d.css">
+    <link rel="stylesheet" href="/asset/solid.min-70c2e5caa950974d.css">
+    <script type="application/javascript">
+        function clone() {
+            const url = '/git/clone/' + encodeURIComponent(document.getElementById('url').value);
+            fetch(url).then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.status === 0) {
+                        location.href = '/';
+                    } else {
+                        document.getElementById('errorMessage').value = data.error.detail;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+        function push() {
+            //todo
+        }
+        function post() {
+            const data = {
+                item: 'admin_password',
+                content:document.getElementById('admin_password1').value,
+            };
+            const options = {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            };
+            fetch('/management/settings/update', options).then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    if (data.status === 0) {
+                        location.href = '/';
+                    } else {
+                        document.getElementById('errorMessage').value = data.error.detail;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+        function export_hugo(t) {
+            const clazzName = t.className;
+            t.disabled = true;
+            t.className = clazzName + ' is-loading';
+            fetch('/export/hugo').then(response => response.text())
+                .then(data => {
+                    t.className = clazzName;
+                    t.disabled = false;
+                    console.log(data);
+                    if (data !== '') {
+                        location.href = data;
+                    } else {
+                        document.getElementById('errorMessage').value = data.error.detail;
+                        document.getElementById('errorMessage').style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                const $notification = $delete.parentNode;
+
+                $delete.addEventListener('click', () => {
+                    $notification.parentNode.removeChild($notification);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="container">
+    <h1 class="title">
+        Git pages settings
+    </h1>
+    <p>&nbsp;</p>
+    <div class="field">
+        <label class="label">仓库地址/Git repository URL</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="text" placeholder="" id="url" value=""/>
+            <span class="icon is-small is-left">
+              <i class="fas fa-lock"></i>
+            </span>
+        </div>
+        <p class="help">帮助/Help.</p>
+    </div>
+    <div class="field">
+        <label class="label">邮箱/Email</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="password" placeholder="" id="email" value=""/>
+            <span class="icon is-small is-left">
+              <i class="fas fa-lock"></i>
+            </span>
+        </div>
+        <p class="help">For git config: 'user.email'.</p>
+    </div>
+    <div class="field">
+        <label class="label">用户名/UserName</label>
+        <div class="control is-medium has-icons-left has-icons-right">
+            <input class="input" type="password" placeholder="" id="username" value=""/>
+            <span class="icon is-small is-left">
+              <i class="fas fa-lock"></i>
+            </span>
+        </div>
+        <p class="help">For git config: 'user.name'.</p>
+    </div>
+    <div>
+        <button class="button is-medium" onclick="push();">发布/Push</button>
+        <button class="button is-medium" onclick="location.href='/';">返回/Back</button>
+        <button class="button is-medium" onclick="reset();">重置/Reset</button>
+    </div>
+</div>
+</body>
+</html>

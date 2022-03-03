@@ -17,7 +17,7 @@ use blog_common::{
 };
 
 use crate::{
-    facade::{self, asset, export, image, management, post, tag, user},
+    facade::{self, asset, export, git, image, management, post, tag, user},
     service::status,
     util::result::Result,
 };
@@ -328,6 +328,22 @@ pub fn blog_filter(
         .and(warp::path::end())
         .and(warp::host::optional())
         .and_then(management::forgot_password);
+    let management_git = warp::get()
+        .and(warp::path("management"))
+        .and(warp::path("git-pages"))
+        .and(warp::path::end())
+        .and_then(git::show);
+    let git_clone = warp::post()
+        .and(warp::path("git"))
+        .and(warp::path("new-repository"))
+        .and(warp::body::form::<HashMap<String, String>>())
+        .and(warp::path::end())
+        .and_then(git::new_repository);
+    let git_push = warp::get()
+        .and(warp::path("git"))
+        .and(warp::path("push"))
+        .and(warp::path::end())
+        .and_then(git::push);
 
     // Setting CORS
     let mut host = String::with_capacity(32);
@@ -384,6 +400,9 @@ pub fn blog_filter(
         .or(save_image)
         .or(export)
         .or(forgot_password)
+        .or(management_git)
+        .or(git_clone)
+        .or(git_push)
         .with(logger)
         .with(cors);
     // End
