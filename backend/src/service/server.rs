@@ -333,12 +333,17 @@ pub fn blog_filter(
         .and(warp::path("git-pages"))
         .and(warp::path::end())
         .and_then(git::show);
-    let git_clone = warp::post()
+    let git_new = warp::post()
         .and(warp::path("git"))
-        .and(warp::path("new-repository"))
-        .and(warp::body::form::<HashMap<String, String>>())
+        .and(warp::path("new"))
         .and(warp::path::end())
+        .and(warp::body::form::<HashMap<String, String>>())
         .and_then(git::new_repository);
+    let git_remove = warp::get()
+        .and(warp::path("git"))
+        .and(warp::path("remove"))
+        .and(warp::path::end())
+        .and_then(git::remove_repository);
     let git_push = warp::get()
         .and(warp::path("git"))
         .and(warp::path("push"))
@@ -401,7 +406,8 @@ pub fn blog_filter(
         .or(export)
         .or(forgot_password)
         .or(management_git)
-        .or(git_clone)
+        .or(git_new)
+        .or(git_remove)
         .or(git_push)
         .with(logger)
         .with(cors);

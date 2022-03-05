@@ -33,16 +33,16 @@ pub async fn admin_login(token: &str, password: &str) -> Result<bool> {
     return Ok(false);
 }
 
-pub async fn update_setting(settings: Setting) -> Result<()> {
+pub async fn update_setting(setting: Setting) -> Result<()> {
     // db::sled_save(&DATA_SOURCE.get().unwrap().management, "settings", &setting).await?;
-    let content = if settings.item.eq("admin_password") {
-        if settings.content.is_empty() {
+    let content = if setting.item.eq("admin_password") {
+        if setting.content.is_empty() {
             String::new()
         } else {
-            crypt::encrypt_password(&settings.content)?
+            crypt::encrypt_password(&setting.content)?
         }
     } else {
-        settings.content
+        setting.content
     };
 
     let now = time::unix_epoch_sec() as i64;
@@ -50,12 +50,13 @@ pub async fn update_setting(settings: Setting) -> Result<()> {
     let r = sqlx::query("UPDATE settings SET content=?,updated_at=? WHERE item=?")
         .bind(&content)
         .bind(now)
+        .bind(&setting.item)
         .execute(db::get_sqlite())
         .await?;
 
     if r.rows_affected() < 1 {
         sqlx::query("INSERT INTO settings(item,content,created_at,updated_at)VALUES(?,?,?,?)")
-            .bind(&settings.item)
+            .bind(&setting.item)
             .bind(&content)
             .bind(now)
             .bind(now)

@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::vec::Vec;
 
 use blog_common::dto::git::GitRepositoryInfo;
@@ -12,14 +12,19 @@ use crate::db::model::Setting;
 
 pub const SETTING_ITEM_NAME: &'static str = "git-pages";
 
+pub fn get_repository_path(info: &GitRepositoryInfo) -> PathBuf {
+    let path = std::env::current_dir().unwrap();
+    let path = path.join("git-pages");
+    path.join(&info.repository_name)
+}
+
 pub async fn new_repository(info: GitRepositoryInfo) -> Result<(), String> {
     // clone repository
-    let path = std::env::current_dir().unwrap();
-    let path = path.join(&info.repository_name);
+    let path = get_repository_path(&info);
     if path.exists() {
         return Err(format!("Target directory {} already exists", path.as_path().display()));
     }
-    if let Err(e) = std::fs::create_dir(path.as_path()) {
+    if let Err(e) = std::fs::create_dir_all(path.as_path()) {
         return Err(format!("Failed creating directory: {}", path.as_path().display()));
     }
     if let Err(e) = Repository::clone(&info.remote_url, path.as_path()) {
@@ -31,12 +36,25 @@ pub async fn new_repository(info: GitRepositoryInfo) -> Result<(), String> {
         item: String::from(SETTING_ITEM_NAME),
         content: r.unwrap(),
     };
-    match management::update_setting(setting).await {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            Err(format!("Failed updating settings: {:?}", e.0))
-        },
+    update_setting(setting).await
+}
+
+pub async fn reset_repository(info: GitRepositoryInfo) -> Result<(), String> {
+    let path = get_repository_path(&info);
+    if path.exists() {
+         if let Err(e) = tokio::fs::remove_dir_all(path.as_path()).await {
+             return Err(format!("Failed to remove git folder: {}", e));
+         }
     }
+    let setting = Setting {
+        item: String::from(SETTING_ITEM_NAME),
+        content: String::new(),
+    };
+    update_setting(setting).await
+}
+
+async fn update_setting(setting: Setting) -> Result<(), String> {
+    management::update_setting(setting).await.map_err(|e| format!("Failed updating settings: {:?}", e.0))
 }
 
 pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), String> {

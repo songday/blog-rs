@@ -21,7 +21,7 @@ static GIT_PAGES_INIT_HTML: &'static str = include_str!("../resource/page/git-pa
 
 pub async fn show() -> Result<Response<Body>, Rejection> {
     let setting = management::get_setting(git::SETTING_ITEM_NAME).await?;
-    if setting.is_some() {
+    if setting.is_some() && !setting.as_ref().unwrap().content.is_empty() {
         let setting = setting.unwrap();
         let r = serde_json::from_str::<GitRepositoryInfo>(&setting.content);
         let html = match r {
@@ -60,17 +60,24 @@ pub async fn new_repository(mut params: HashMap<String, String>,) -> Result<impl
     if email.len() < 5 || !common::EMAIL_REGEX.is_match(&email) {
         return Ok(wrap_json_err(500, Error::BusinessException("输入的邮箱地址不合法/Illegal email address.".to_string())));
     }
+    let mut url = params.remove("url").unwrap();
+    if url.ends_with("/") {
+        url.pop();
+    }
     let r = url.rfind("/");
     if r.is_none() {
         return Ok(wrap_json_err(500, Error::BusinessException("输入的仓库地址不合法/Illegal repository address.".to_string())));
     }
-    let url = params.remove("url").unwrap();
+    let repository_name = &url[(r.unwrap() + 1)..];
+    if repository_name.is_empty() {
+        return Ok(wrap_json_err(500, Error::BusinessException("输入的仓库地址不合法/Illegal repository address.".to_string())));
+    }
     let user = params.remove("user").unwrap();
     let email = params.remove("email").unwrap();
-    let info = GitRepositoryInfo{
+    let info = GitRepositoryInfo {
         name: user,
         email,
-        repository_name: String::from(&url[(r.unwrap() + 1)..]),
+        repository_name: String::from(repository_name),
         remote_url: url,
         last_export_second: 0,
     };
@@ -97,4 +104,25 @@ pub async fn push() -> Result<Response<Body>, Rejection> {
     }
     let r = Response::builder().body(message.into()).unwrap();
     Ok(r)
+}
+
+pub async fn remove_repository() -> Result<impl Reply, Rejection> {
+    let setting = management::get_setting(git::SETTING_ITEM_NAME).await?;
+    if setting.is_none() || setting.as_ref().unwrap().content.is_empty() {
+        return Ok(super::wrap_json_data("Cannot find proper settings"));
+    }
+    let setting = setting.unwrap();
+    let r = serde_json::from_str::<GitRepositoryInfo>(&setting.content);
+    match r {
+        Ok(info) => {
+            if let Err(e) = git::reset_repository(info).await {
+                Ok(super::wrap_json_data(format!("Failed remove repository: {}", e)))
+            } else {
+                Ok(super::wrap_json_data("Repository removed successfully"))
+            }
+        }
+        Err(e) => {
+            Ok(super::wrap_json_data(format!("Failed remove repository: {}", e)))
+        }
+    }
 }

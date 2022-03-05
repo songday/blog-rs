@@ -24,13 +24,13 @@
                     'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
                 }
             };
-            fetch('/git/new-repository', options).then(response => response.json())
+            fetch('/git/new', options).then(response => response.json())
                 .then(data => {
                     t.className = clazzName;
                     t.disabled = false;
                     console.log(data);
                     if (data.status === 0) {
-                        location.href = '.';
+                        location.href = 'git-pages';
                     } else {
                         document.getElementById('errorMessage').innerHTML = data.error.detail;
                         document.getElementById('notification').style.display = 'block';
@@ -45,7 +45,7 @@
                 const $notification = $delete.parentNode;
 
                 $delete.addEventListener('click', () => {
-                    $notification.parentNode.removeChild($notification);
+                    $notification.style.display = 'none';
                 });
             });
         });
@@ -92,7 +92,7 @@
         <button class="button is-medium" onclick="location.href='/management';">返回/Back</button>
     </div>
     <div id="notification" class="notification is-danger is-light" style="display:none;width:435px">
-        <button class="delete" onclick=""></button>
+        <button class="delete"></button>
         <span id="errorMessage"></span>
     </div>
 </div>

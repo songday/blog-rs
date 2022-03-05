@@ -12,26 +12,30 @@
         function push() {
             //todo
         }
-        function post() {
-            const data = {
-                item: 'admin_password',
-                content:document.getElementById('admin_password1').value,
-            };
-            const options = {
-                method: 'POST',
-                body: JSON.stringify(data),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            };
-            fetch('/management/settings/update', options).then(response => response.json())
+        function hideNotification() {
+            document.getElementById('notification').style.display = 'none';
+        }
+        function showNotification(t) {
+            const h = '<p>Please confirm this deletion</p>' +
+                '<div><button class="button" onclick="remove(this);">删除/Remove</button>' +
+                '<button class="button" onclick="this.parentNode.parentNode.parentNode.style.display=\'none\'">取消/Cancel</button></div>';
+            document.getElementById('errorMessage').innerHTML = h;
+            document.getElementById('notification').style.display = 'block';
+        }
+        function remove(t) {
+            const clazzName = t.className;
+            t.disabled = true;
+            t.className = clazzName + ' is-loading';
+            fetch('/git/remove').then(response => response.json())
                 .then(data => {
+                    t.className = clazzName;
+                    t.disabled = false;
                     console.log(data);
                     if (data.status === 0) {
-                        location.href = '/';
+                        location.href = 'git-pages';
                     } else {
-                        document.getElementById('errorMessage').value = data.error.detail;
-                        document.getElementById('errorMessage').style.display = 'block';
+                        document.getElementById('errorMessage').innerHTML = data.error.detail;
+                        document.getElementById('notification').style.display = 'block';
                     }
                 })
                 .catch(err => {
@@ -43,7 +47,7 @@
                 const $notification = $delete.parentNode;
 
                 $delete.addEventListener('click', () => {
-                    $notification.parentNode.removeChild($notification);
+                    $notification.style.display = 'none';
                 });
             });
         });
@@ -66,13 +70,17 @@
         </tr>
         <tr>
             <td>用户名/UserName</td>
-            <td>{{email}}</td>
+            <td>{{name}}</td>
         </tr>
     </table>
     <div>
-        <button class="button is-medium" onclick="push();">发布/Push</button>
+        <button class="button is-medium" onclick="push();">同步/Push</button>
         <button class="button is-medium" onclick="location.href='/management';">返回/Back</button>
-        <button class="button is-medium" onclick="reset();">重置/Reset</button>
+        <button class="button is-medium" onclick="showNotification(this);">删除/Remove</button>
+    </div>
+    <div id="notification" class="notification is-danger is-light" style="display:none;width:435px">
+        <button class="delete"></button>
+        <span id="errorMessage"></span>
     </div>
 </div>
 </body>
