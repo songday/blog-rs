@@ -2,10 +2,7 @@ use std::path::{Path, PathBuf};
 use std::vec::Vec;
 
 use blog_common::dto::git::GitRepositoryInfo;
-use git2::{
-    Commit, Direction, Error as GitError, ObjectType, Oid, Repository, RepositoryState, Signature, StatusOptions,
-    StatusShow,
-};
+use git2::{BranchType, Commit, Direction, Error as GitError, ObjectType, Oid, Remote, Repository, RepositoryState, Signature, StatusOptions, StatusShow};
 
 use crate::db::management;
 use crate::db::model::Setting;
@@ -39,7 +36,7 @@ pub async fn new_repository(info: GitRepositoryInfo) -> Result<(), String> {
     update_setting(setting).await
 }
 
-pub async fn reset_repository(info: GitRepositoryInfo) -> Result<(), String> {
+pub async fn remove_repository(info: GitRepositoryInfo) -> Result<(), String> {
     let path = get_repository_path(&info);
     if path.exists() {
          if let Err(e) = tokio::fs::remove_dir_all(path.as_path()).await {
@@ -53,27 +50,52 @@ pub async fn reset_repository(info: GitRepositoryInfo) -> Result<(), String> {
     update_setting(setting).await
 }
 
+fn get_repo(info: &GitRepositoryInfo) -> Result<Repository, GitError> {
+    let path = get_repository_path(info);
+    // Repository::open(path.as_path()).map_err(|e| format!("failed to open git repository: {}", e))
+    Repository::open(path.as_path())
+}
+
+pub fn get_branches(info: &GitRepositoryInfo) -> Result<Vec<String>, GitError> {
+    let repo = get_repo(info)?;
+    let remote_branches = repo.branches(Some(BranchType::Remote))?;
+    let mut branches: Vec<String> = Vec::with_capacity(10);
+    for branch in remote_branches {
+        if let Ok((branch, branch_type)) = branch {
+            if let Ok(Some(name)) = branch.name() {
+                branches.push(String::from(name));
+            }
+        }
+    }
+    Ok(branches)
+}
+
 async fn update_setting(setting: Setting) -> Result<(), String> {
     management::update_setting(setting).await.map_err(|e| format!("Failed updating settings: {:?}", e.0))
 }
 
-pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), String> {
+fn pull(info: &GitRepositoryInfo) -> Result<(), GitError> {
+    // fetch
+    let repo = get_repo(info)?;
+    let mut remote = match repo.find_remote("origin") {
+        Ok(r) => r,
+        Err(_) => repo.remote("origin", &info.remote_url)?,
+    };
+    remote.connect(Direction::Fetch)?;
+    remote.fetch(&[""], None, None)?;
+    // git merge FETCH_HEAD
+    Ok(())
+}
+
+pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), GitError> {
     // open git repository
-    let mut path = std::env::current_dir().unwrap();
-    path.join(&info.repository_name);
-    let repo = match Repository::open(path.as_path()) {
-        Ok(repo) => repo,
-        Err(e) => {
-            return Err(format!("failed to open git repository: {}", e));
-        },
-    };
+    let repo = get_repo(info)?;
+    // connect
+    // if !repo.remote();
+    // pull
+    // repo.pull
     // perform committing
-    let changed_files = match get_changed_files(&repo) {
-        Ok(f) => f,
-        Err(e) => {
-            return Err(format!("Failed to get changed files: {}", e));
-        }
-    };
+    let changed_files = get_changed_files(&repo)?;
     // try pushing
     // todo
     Ok(())

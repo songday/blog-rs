@@ -72,6 +72,21 @@
             <td>用户名/UserName</td>
             <td>{{name}}</td>
         </tr>
+        <tr>
+            <td>分支/Branch</td>
+            <td>
+                {% if branches|length > 1 %}
+                <select id="branches">
+                    <option>请选择分支/Please choose a branch</option>
+                    {% for branch in branches %}
+                    <option value="{{ branch }}">{{ branch }}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                {{branch}}
+                {% endif %}
+            </td>
+        </tr>
     </table>
     <div>
         <button class="button is-medium" onclick="push();">同步/Push</button>

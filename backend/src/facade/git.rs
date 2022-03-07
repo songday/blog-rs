@@ -21,7 +21,8 @@ static GIT_PAGES_INIT_HTML: &'static str = include_str!("../resource/page/git-pa
 
 pub async fn show() -> Result<Response<Body>, Rejection> {
     let setting = management::get_setting(git::SETTING_ITEM_NAME).await?;
-    if setting.is_some() && !setting.as_ref().unwrap().content.is_empty() {
+    let response = Response::builder().header("Content-Type", "text/html; charset=utf-8");
+    let r = if setting.is_some() && !setting.as_ref().unwrap().content.is_empty() {
         let setting = setting.unwrap();
         let r = serde_json::from_str::<GitRepositoryInfo>(&setting.content);
         let html = match r {
@@ -30,6 +31,19 @@ pub async fn show() -> Result<Response<Body>, Rejection> {
                 context.insert("remote_url", &info.remote_url);
                 context.insert("name", &info.name);
                 context.insert("email", &info.email);
+                if info.branch_name.is_some() {
+                    context.insert("branch", &info.branch_name.unwrap());
+                    let d: Vec<String> = Vec::new();
+                    context.insert("branches", &d);
+                } else {
+                    context.insert("branch", "");
+                    match git::get_branches(&info) {
+                        Ok(b) =>  context.insert("branches", &b),
+                        Err(e) => {
+                            return Ok(response.body(format!("Failed getting branches: {:?}", e).into()).unwrap());
+                        }
+                    }
+                }
                 match export::TEMPLATES.render("git-pages-detail.html", &context) {
                     Ok(s) => s,
                     Err(e) => {
@@ -40,10 +54,11 @@ pub async fn show() -> Result<Response<Body>, Rejection> {
             },
             Err(e) => format!("Failed deserialize information: {}", e),
         };
-        Ok(Response::builder().header("Content-Type", "text/html; charset=utf-8").body(html.into()).unwrap())
+        response.body(html.into()).unwrap()
     } else {
-        Ok(Response::builder().header("Content-Type", "text/html; charset=utf-8").body(GIT_PAGES_INIT_HTML.into()).unwrap())
-    }
+        response.body(GIT_PAGES_INIT_HTML.into()).unwrap()
+    };
+    Ok(r)
 }
 
 pub async fn new_repository(mut params: HashMap<String, String>,) -> Result<impl Reply, Rejection> {
@@ -79,6 +94,7 @@ pub async fn new_repository(mut params: HashMap<String, String>,) -> Result<impl
         email,
         repository_name: String::from(repository_name),
         remote_url: url,
+        branch_name: None,
         last_export_second: 0,
     };
     match git::new_repository(info).await {
@@ -115,7 +131,7 @@ pub async fn remove_repository() -> Result<impl Reply, Rejection> {
     let r = serde_json::from_str::<GitRepositoryInfo>(&setting.content);
     match r {
         Ok(info) => {
-            if let Err(e) = git::reset_repository(info).await {
+            if let Err(e) = git::remove_repository(info).await {
                 Ok(super::wrap_json_data(format!("Failed remove repository: {}", e)))
             } else {
                 Ok(super::wrap_json_data("Repository removed successfully"))
