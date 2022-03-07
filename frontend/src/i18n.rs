@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use fluent::{FluentBundle, FluentResource};
-use unic_langid::LanguageIdentifier;
+// use unic_langid::LanguageIdentifier;
 use yew_router::navigator::NavigatorKind::Hash;
 
 static EN_US_TEXT: &'static str = include_str!("../resource/i18n/en-US.txt");
