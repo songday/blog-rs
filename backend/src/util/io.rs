@@ -359,17 +359,18 @@ pub fn remove_dir(path: PathBuf) -> Result<()> {
     for result in std::fs::read_dir(path.as_path())? {
         let entry = result?;
         if let Ok(file_type) = entry.file_type() {
-            println!("{:?}: {:?}", entry.path(), file_type);
+            // println!("{:?}: {:?}", entry.path(), file_type);
             if file_type.is_dir() {
                 remove_dir(entry.path())?;
             } else if file_type.is_file() {
+                // println!("std::fs::remove_file: {:?}", entry.path().as_path());
                 std::fs::remove_file(entry.path().as_path())?;
             }
         } else {
             println!("Couldn't get file type for {:?}", entry.path());
         }
     }
-    println!("remove_dir: {:?}", path.as_path());
+    // println!("std::fs::remove_dir: {:?}", path.as_path());
     std::fs::remove_dir(path.as_path())?;
     Ok(())
 }
