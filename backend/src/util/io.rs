@@ -364,6 +364,11 @@ pub fn remove_dir(path: PathBuf) -> Result<()> {
                 remove_dir(entry.path())?;
             } else if file_type.is_file() {
                 // println!("std::fs::remove_file: {:?}", entry.path().as_path());
+                let mut perms = std::fs::metadata(entry.path().as_path())?.permissions();
+                if perms.readonly() {
+                    perms.set_readonly(false);
+                    std::fs::set_permissions(entry.path().as_path(), perms)?;
+                }
                 std::fs::remove_file(entry.path().as_path())?;
             }
         } else {

@@ -148,10 +148,6 @@ fn pull(info: &GitRepositoryInfo) -> Result<(), GitError> {
 pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), GitError> {
     // open git repository
     let repo = get_repo(info)?;
-    // connect
-    // if !repo.remote();
-    // pull
-    // repo.pull
     // perform committing
     let changed_files = get_changed_files(&repo)?;
     // try pushing
@@ -210,6 +206,8 @@ fn add_and_commit(
         &[&parent_commit],
     ) // parents
 }
+
+// pub(crate) fn pull() -> Result<(), GitError> {}
 
 fn push(repo: &Repository, info: &GitRepositoryInfo) -> Result<(), GitError> {
     let mut remote = match repo.find_remote("origin") {

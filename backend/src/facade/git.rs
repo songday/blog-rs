@@ -117,17 +117,21 @@ pub async fn new_repository(mut params: HashMap<String, String>) -> Result<impl 
 
 pub async fn remove_repository() -> Result<impl Reply, Rejection> {
     let result = git::must_get_repository_info().await;
-    let response = match result {
+    let message = match result {
         Ok(info) => {
             if let Err(e) = git::remove_repository(info).await {
-                super::wrap_json_data(format!("Failed remove repository: {}", e))
+                format!("Failed remove repository: {}", e)
             } else {
-                super::wrap_json_data("Repository removed successfully")
+                String::new()
             }
         },
-        Err(e) => super::wrap_json_data(e),
+        Err(e) => e,
     };
-    Ok(response)
+    if message.is_empty() {
+        Ok(super::wrap_json_data(message))
+    } else {
+        Ok(super::wrap_json_err(500, Error::BusinessException(message)))
+    }
 }
 
 pub async fn set_branch(tail: Tail) -> Result<impl Reply, Rejection> {
@@ -148,19 +152,32 @@ pub async fn set_branch(tail: Tail) -> Result<impl Reply, Rejection> {
         },
         Err(e) => e,
     };
-    Ok(super::wrap_json_data(message))
+    if message.is_empty() {
+        Ok(super::wrap_json_data(message))
+    } else {
+        Ok(super::wrap_json_err(500, Error::BusinessException(message)))
+    }
 }
 
-pub async fn push() -> Result<Response<Body>, Rejection> {
+pub async fn push() -> Result<impl Reply, Rejection> {
     let result = git::must_get_repository_info().await;
-    let response = Response::builder();
-    let response = match result {
+    let message = match result {
         Ok(info) => {
-            let r = export::git(&info).await;
-            let r = git::sync_to_remote(&info);
-            response.body("".into())
+            match export::git(&info).await {
+                Ok(_) => {
+                    match git::sync_to_remote(&info) {
+                        Ok(_) => String::new(),
+                        Err(e) => format!("Failed to push posts to git: {}", e),
+                    }
+                },
+                Err(e) => format!("Failed to export posts: {:?}", e.0),
+            }
         },
-        Err(e) => response.body(e.into()),
+        Err(e) => e,
     };
-    Ok(response.unwrap())
+    if message.is_empty() {
+        Ok(super::wrap_json_data(message))
+    } else {
+        Ok(super::wrap_json_err(500, Error::BusinessException(message)))
+    }
 }

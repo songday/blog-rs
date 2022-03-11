@@ -9,44 +9,11 @@
     <link rel="stylesheet" href="/asset/regular.min-a0c258fb7c5f655d.css">
     <link rel="stylesheet" href="/asset/solid.min-70c2e5caa950974d.css">
     <script type="application/javascript">
-        function setBranch(t) {
-            const branch = document.getElementById('branches').value;
-            if (branch) {
-                const clazzName = t.className;
-                t.disabled = true;
-                t.className = clazzName + ' is-loading';
-                fetch('/git/branch/set/' + encodeURIComponent(branch)).then(response => response.json())
-                    .then(data => {
-                        t.className = clazzName;
-                        t.disabled = false;
-                        console.log(data);
-                        if (data.status === 0) {
-                            location.href = 'git-pages';
-                        } else {
-                            document.getElementById('errorMessage').innerHTML = data.error.detail;
-                            document.getElementById('notification').style.display = 'block';
-                        }
-                    })
-                    .catch(err => {
-                        console.log(err);
-                    });
-            }
-        }
-        function push() {
-            //todo
-        }
-        function showNotification(t) {
-            const h = '<p>Please confirm this deletion</p>' +
-                '<div><button class="button" onclick="remove(this);">删除/Remove</button>' +
-                '<button class="button" onclick="this.parentNode.parentNode.parentNode.style.display=\'none\'">取消/Cancel</button></div>';
-            document.getElementById('errorMessage').innerHTML = h;
-            document.getElementById('notification').style.display = 'block';
-        }
-        function remove(t) {
+        function perform_get(t, url) {
             const clazzName = t.className;
             t.disabled = true;
             t.className = clazzName + ' is-loading';
-            fetch('/git/remove').then(response => response.json())
+            fetch(url).then(response => response.json())
                 .then(data => {
                     t.className = clazzName;
                     t.disabled = false;
@@ -61,6 +28,25 @@
                 .catch(err => {
                     console.log(err);
                 });
+        }
+        function setBranch(t) {
+            const branch = document.getElementById('branches').value;
+            if (branch) {
+                perform_get(t, '/git/branch/set/' + encodeURIComponent(branch));
+            }
+        }
+        function push(t) {
+            perform_get(t, '/git/push');
+        }
+        function showNotification() {
+            const h = '<p>Please confirm this deletion</p>' +
+                '<div><button class="button" onclick="remove(this);">删除/Remove</button>' +
+                '<button class="button" onclick="this.parentNode.parentNode.parentNode.style.display=\'none\'">取消/Cancel</button></div>';
+            document.getElementById('errorMessage').innerHTML = h;
+            document.getElementById('notification').style.display = 'block';
+        }
+        function remove(t) {
+            perform_get(t, '/git/remove');
         }
         document.addEventListener('DOMContentLoaded', () => {
             (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
@@ -112,9 +98,9 @@
         {% if branches|length > 1 %}
         <button class="button is-medium" onclick="setBranch(this);">确认分支/Confirm branch</button>
         {% else %}
-        <button class="button is-medium" onclick="push();">同步/Push</button>
+        <button class="button is-medium" onclick="push(this);">同步/Push</button>
         <button class="button is-medium" onclick="location.href='/management';">返回/Back</button>
-        <button class="button is-medium" onclick="showNotification(this);">删除/Remove</button>
+        <button class="button is-medium" onclick="showNotification();">删除/Remove</button>
         {% endif %}
     </div>
     <div id="notification" class="notification is-danger is-light" style="display:none;width:435px">
