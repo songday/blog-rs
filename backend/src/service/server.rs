@@ -344,6 +344,13 @@ pub fn blog_filter(
         .and(warp::path("remove"))
         .and(warp::path::end())
         .and_then(git::remove_repository);
+    let git_set_branch = warp::get()
+        .and(warp::path("git"))
+        .and(warp::path("branch"))
+        .and(warp::path("set"))
+        .and(warp::path::tail())
+        .and(warp::path::end())
+        .and_then(git::set_branch);
     let git_push = warp::get()
         .and(warp::path("git"))
         .and(warp::path("push"))
@@ -408,6 +415,7 @@ pub fn blog_filter(
         .or(management_git)
         .or(git_new)
         .or(git_remove)
+        .or(git_set_branch)
         .or(git_push)
         .with(logger)
         .with(cors);

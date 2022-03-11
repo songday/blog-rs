@@ -166,7 +166,7 @@ impl Component for PostDetail {
             &user_language(),
             vec!["back", "edit", "delete", "deletion_confirm", "cancel"],
         )
-            .unwrap();
+        .unwrap();
 
         web_sys::window().unwrap().scroll_to_with_x_and_y(0.0, 0.0);
         html! {
@@ -206,4 +206,3 @@ impl Component for PostDetail {
         }
     }
 }
-

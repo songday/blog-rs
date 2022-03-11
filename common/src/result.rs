@@ -89,6 +89,12 @@ pub struct ErrorResponse {
 //     }
 // }
 
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+        Error::UnsupportedFileType(format!("{:?}", e))
+    }
+}
+
 // impl std::fmt::Display for ErrResponse {
 //     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 //         unimplemented!()

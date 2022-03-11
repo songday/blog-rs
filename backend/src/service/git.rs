@@ -2,17 +2,38 @@ use std::path::{Path, PathBuf};
 use std::vec::Vec;
 
 use blog_common::dto::git::GitRepositoryInfo;
-use git2::{BranchType, Commit, Direction, Error as GitError, ObjectType, Oid, Remote, Repository, RepositoryState, Signature, StatusOptions, StatusShow};
+use git2::{
+    BranchType, Commit, Direction, Error as GitError, ObjectType, Oid, Remote, Repository, RepositoryState, Signature,
+    StatusOptions, StatusShow,
+};
 
 use crate::db::management;
 use crate::db::model::Setting;
 
-pub const SETTING_ITEM_NAME: &'static str = "git-pages";
+const SETTING_ITEM_NAME: &'static str = "git-pages";
 
 pub fn get_repository_path(info: &GitRepositoryInfo) -> PathBuf {
     let path = std::env::current_dir().unwrap();
     let path = path.join("git-pages");
     path.join(&info.repository_name)
+}
+
+pub(crate) async fn must_get_repository_info() -> Result<GitRepositoryInfo, String> {
+    let setting = management::get_setting(SETTING_ITEM_NAME)
+        .await
+        .map_err(|e| format!("Failed get git repository info: {:?}", e.0))?;
+    if setting.is_none() || setting.as_ref().unwrap().content.is_empty() {
+        Err(String::from("Cannot find git repository setting"))
+    } else {
+        let setting = setting.unwrap();
+        serde_json::from_str::<GitRepositoryInfo>(&setting.content)
+            .map_err(|e| format!("Failed deserialize git repository info: {}", e))
+    }
+}
+
+pub(crate) async fn update_git_repository_info(info: &GitRepositoryInfo) -> Result<(), String> {
+    let r = serde_json::to_string(info).map_err(|e| format!("Failed to serialize git repository info: {}", e))?;
+    update_setting(r).await
 }
 
 pub async fn new_repository(info: GitRepositoryInfo) -> Result<(), String> {
@@ -28,26 +49,17 @@ pub async fn new_repository(info: GitRepositoryInfo) -> Result<(), String> {
         return Err(format!("Failed clone git repository: {}", e));
     };
     // save to db
-    let r = serde_json::to_string(&info);
-    let setting = Setting {
-        item: String::from(SETTING_ITEM_NAME),
-        content: r.unwrap(),
-    };
-    update_setting(setting).await
+    update_git_repository_info(&info).await
 }
 
 pub async fn remove_repository(info: GitRepositoryInfo) -> Result<(), String> {
     let path = get_repository_path(&info);
     if path.exists() {
-         if let Err(e) = tokio::fs::remove_dir_all(path.as_path()).await {
-             return Err(format!("Failed to remove git folder: {}", e));
-         }
+        if let Err(e) = crate::util::io::remove_dir(path) {
+            return Err(format!("Failed to remove git folder: {:?}", e));
+        }
     }
-    let setting = Setting {
-        item: String::from(SETTING_ITEM_NAME),
-        content: String::new(),
-    };
-    update_setting(setting).await
+    update_setting(String::new()).await
 }
 
 fn get_repo(info: &GitRepositoryInfo) -> Result<Repository, GitError> {
@@ -61,17 +73,63 @@ pub fn get_branches(info: &GitRepositoryInfo) -> Result<Vec<String>, GitError> {
     let remote_branches = repo.branches(Some(BranchType::Remote))?;
     let mut branches: Vec<String> = Vec::with_capacity(10);
     for branch in remote_branches {
-        if let Ok((branch, branch_type)) = branch {
+        if let Ok((branch, _branch_type)) = branch {
             if let Ok(Some(name)) = branch.name() {
-                branches.push(String::from(name));
+                // if matches!(branch.name(), Ok(Some(name)) if !name.contains("HEAD")) {
+                if !name.contains("HEAD") {
+                    let b = name.replace("origin/", "");
+                    branches.push(b);
+                }
             }
         }
     }
     Ok(branches)
 }
 
-async fn update_setting(setting: Setting) -> Result<(), String> {
-    management::update_setting(setting).await.map_err(|e| format!("Failed updating settings: {:?}", e.0))
+// https://newbedev.com/how-to-get-the-behaviour-of-git-checkout-in-rust-git2
+pub fn set_branch(info: &GitRepositoryInfo, branch_name: &str) -> Result<(), GitError> {
+    let repo = get_repo(info)?;
+    let head = repo.head()?;
+    let oid = head.target().unwrap();
+    let commit = repo.find_commit(oid)?;
+    let _branch = repo.branch(branch_name, &commit, false)?;
+    let refs = format!("refs/heads/{}", branch_name);
+    let obj = repo.revparse_single(&refs)?;
+    repo.checkout_tree(&obj, None)?;
+    repo.set_head(&refs)
+    /*
+    let ref_name = format!("refs/heads/{}", branch);
+    let reference = repo.find_reference(&ref_name)?;
+    let name = match reference.name() {
+        Some(s) => s.to_string(),
+        None => String::from_utf8_lossy(reference.name_bytes()).to_string(),
+    };
+    repo.set_head(&name)?;
+    repo.checkout_head(Some(
+        git2::build::CheckoutBuilder::default().safe(),
+    ))?;
+    */
+    /*
+    let (object, reference) = repo.revparse_ext(branch)?;
+    repo.checkout_tree(&object, None)?;
+    match reference {
+        // gref is an actual reference like branches or tags
+        Some(gref) => repo.set_head(gref.name().unwrap()),
+        // this is a commit, not a reference
+        None => repo.set_head_detached(object.id()),
+    }?;
+    */
+    // Ok(())
+}
+
+async fn update_setting(content: String) -> Result<(), String> {
+    let setting = Setting {
+        item: String::from(SETTING_ITEM_NAME),
+        content,
+    };
+    management::update_setting(setting)
+        .await
+        .map_err(|e| format!("Failed updating settings: {:?}", e.0))
 }
 
 fn pull(info: &GitRepositoryInfo) -> Result<(), GitError> {
@@ -153,11 +211,11 @@ fn add_and_commit(
     ) // parents
 }
 
-fn push(repo: &Repository, url: &str) -> Result<(), GitError> {
+fn push(repo: &Repository, info: &GitRepositoryInfo) -> Result<(), GitError> {
     let mut remote = match repo.find_remote("origin") {
         Ok(r) => r,
-        Err(_) => repo.remote("origin", url)?,
+        Err(_) => repo.remote("origin", &info.remote_url)?,
     };
     remote.connect(Direction::Push)?;
-    remote.push(&["refs/heads/master:refs/heads/master"], None)
+    remote.push(&[format!("refs/heads/{}", &info.branch_name.as_ref().unwrap())], None)
 }

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::fs::FileType;
 use std::io::Read;
 use std::{
     cmp::PartialEq,
@@ -352,4 +353,23 @@ pub async fn save_upload_stream(
     }
 
     Ok(upload_info)
+}
+
+pub fn remove_dir(path: PathBuf) -> Result<()> {
+    for result in std::fs::read_dir(path.as_path())? {
+        let entry = result?;
+        if let Ok(file_type) = entry.file_type() {
+            println!("{:?}: {:?}", entry.path(), file_type);
+            if file_type.is_dir() {
+                remove_dir(entry.path())?;
+            } else if file_type.is_file() {
+                std::fs::remove_file(entry.path().as_path())?;
+            }
+        } else {
+            println!("Couldn't get file type for {:?}", entry.path());
+        }
+    }
+    println!("remove_dir: {:?}", path.as_path());
+    std::fs::remove_dir(path.as_path())?;
+    Ok(())
 }

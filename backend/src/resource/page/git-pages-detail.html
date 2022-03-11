@@ -9,11 +9,31 @@
     <link rel="stylesheet" href="/asset/regular.min-a0c258fb7c5f655d.css">
     <link rel="stylesheet" href="/asset/solid.min-70c2e5caa950974d.css">
     <script type="application/javascript">
+        function setBranch(t) {
+            const branch = document.getElementById('branches').value;
+            if (branch) {
+                const clazzName = t.className;
+                t.disabled = true;
+                t.className = clazzName + ' is-loading';
+                fetch('/git/branch/set/' + encodeURIComponent(branch)).then(response => response.json())
+                    .then(data => {
+                        t.className = clazzName;
+                        t.disabled = false;
+                        console.log(data);
+                        if (data.status === 0) {
+                            location.href = 'git-pages';
+                        } else {
+                            document.getElementById('errorMessage').innerHTML = data.error.detail;
+                            document.getElementById('notification').style.display = 'block';
+                        }
+                    })
+                    .catch(err => {
+                        console.log(err);
+                    });
+            }
+        }
         function push() {
             //todo
-        }
-        function hideNotification() {
-            document.getElementById('notification').style.display = 'none';
         }
         function showNotification(t) {
             const h = '<p>Please confirm this deletion</p>' +
@@ -89,9 +109,13 @@
         </tr>
     </table>
     <div>
+        {% if branches|length > 1 %}
+        <button class="button is-medium" onclick="setBranch(this);">确认分支/Confirm branch</button>
+        {% else %}
         <button class="button is-medium" onclick="push();">同步/Push</button>
         <button class="button is-medium" onclick="location.href='/management';">返回/Back</button>
         <button class="button is-medium" onclick="showNotification(this);">删除/Remove</button>
+        {% endif %}
     </div>
     <div id="notification" class="notification is-danger is-light" style="display:none;width:435px">
         <button class="delete"></button>
