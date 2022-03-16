@@ -108,15 +108,19 @@ pub async fn hugo() -> Result<String> {
 }
 
 pub async fn git(git: &GitRepositoryInfo) -> Result<()> {
-    let mut path = super::git::get_repository_path(git);
-    path.join("file.txt");
+    let path = super::git::git::get_repository_path(git);
+    let mut path = path.join("file.txt");
     println!("export path {}", path.as_path().display());
 
     let posts = post::all_by_since(git.last_export_second).await?;
     let write_file = |filename: &String, post: &Post| -> Result<()> {
         path.set_file_name(filename);
         println!("export to file {}", path.as_path().display());
-        let mut file = OpenOptions::new().create(true).write(true).truncate(true).open(path.as_path())?;
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(path.as_path())?;
         let content = render(post, "hugo.md");
         file.write_all(content.as_bytes())?;
         Ok(())

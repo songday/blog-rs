@@ -13,7 +13,7 @@ use crate::{
     db::management,
     db::post,
     facade::{session_id_cookie, wrap_json_data, wrap_json_err},
-    service::{export, git, status},
+    service::{export, git::git, status},
     util::common,
 };
 
@@ -162,16 +162,15 @@ pub async fn set_branch(tail: Tail) -> Result<impl Reply, Rejection> {
 pub async fn push() -> Result<impl Reply, Rejection> {
     let result = git::must_get_repository_info().await;
     let message = match result {
-        Ok(info) => {
-            match export::git(&info).await {
-                Ok(_) => {
-                    match git::sync_to_remote(&info) {
-                        Ok(_) => String::new(),
-                        Err(e) => format!("Failed to push posts to git: {}", e),
-                    }
+        Ok(info) => match crate::service::git::pull::pull(&info) {
+            Ok(_) => match export::git(&info).await {
+                Ok(_) => match git::sync_to_remote(&info) {
+                    Ok(_) => String::new(),
+                    Err(e) => format!("Failed to push posts to git: {}", e),
                 },
                 Err(e) => format!("Failed to export posts: {:?}", e.0),
-            }
+            },
+            Err(e) => format!("Failed pull: {:?}", e),
         },
         Err(e) => e,
     };

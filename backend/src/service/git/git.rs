@@ -3,8 +3,8 @@ use std::vec::Vec;
 
 use blog_common::dto::git::GitRepositoryInfo;
 use git2::{
-    BranchType, Commit, Direction, Error as GitError, ObjectType, Oid, Remote, Repository, RepositoryState, Signature,
-    StatusOptions, StatusShow,
+    BranchType, Commit, Cred, Direction, Error as GitError, ObjectType, Oid, PushOptions, Remote, RemoteCallbacks,
+    Repository, RepositoryState, Signature, StatusOptions, StatusShow,
 };
 
 use crate::db::management;
@@ -62,7 +62,7 @@ pub async fn remove_repository(info: GitRepositoryInfo) -> Result<(), String> {
     update_setting(String::new()).await
 }
 
-fn get_repo(info: &GitRepositoryInfo) -> Result<Repository, GitError> {
+pub(crate) fn get_repo(info: &GitRepositoryInfo) -> Result<Repository, GitError> {
     let path = get_repository_path(info);
     // Repository::open(path.as_path()).map_err(|e| format!("failed to open git repository: {}", e))
     Repository::open(path.as_path())
@@ -132,45 +132,46 @@ async fn update_setting(content: String) -> Result<(), String> {
         .map_err(|e| format!("Failed updating settings: {:?}", e.0))
 }
 
-fn pull(info: &GitRepositoryInfo) -> Result<(), GitError> {
-    // fetch
-    let repo = get_repo(info)?;
-    let mut remote = match repo.find_remote("origin") {
-        Ok(r) => r,
-        Err(_) => repo.remote("origin", &info.remote_url)?,
-    };
-    remote.connect(Direction::Fetch)?;
-    remote.fetch(&[""], None, None)?;
-    // git merge FETCH_HEAD
-    Ok(())
-}
-
 pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), GitError> {
     // open git repository
     let repo = get_repo(info)?;
-    // perform committing
+    // find changed files
     let changed_files = get_changed_files(&repo)?;
-    // try pushing
-    // todo
+    if changed_files.len() > 0 {
+        // perform committing
+        add_and_commit(info, &repo, changed_files, "Update posts")?;
+        // try pushing
+        push(&repo, info)?;
+    }
     Ok(())
 }
 
-fn get_signature(repo: &Repository) -> Result<Signature, GitError> {
-    let config = repo.config()?;
-    let name = config.get_str("user.name")?;
-    let email = config.get_str("user.email")?;
-    Ok(Signature::now(name, email)?)
+fn get_signature<'a>(repo: &'a Repository, info: &'a GitRepositoryInfo) -> Result<Signature<'a>, GitError> {
+    let sig = match repo.signature() {
+        Ok(sig) => sig,
+        Err(e) => {
+            println!("{:?}", e);
+            let mut config = repo.config()?;
+            config.set_str("user.name", &info.name)?;
+            config.set_str("user.email", &info.email)?;
+            Signature::now(&info.name, &info.email)?
+        },
+    };
+    Ok(sig)
 }
 
 fn get_changed_files(repo: &Repository) -> Result<Vec<String>, GitError> {
-    let state = repo.state();
-    if state.eq(&RepositoryState::Clean) {
+    let state = dbg!(repo.state());
+    if !state.eq(&RepositoryState::Clean) {
+        println!("Git repository is not clean");
         return Ok(vec![]);
     }
-    let mut status_options = StatusOptions::new();
-    let status = repo.statuses(Some(status_options.show(StatusShow::Index)))?;
+    let mut opts = StatusOptions::new();
+    opts.include_untracked(true);
+    // let status = repo.statuses(Some(status_options.show(StatusShow::Index)))?;
+    let status = repo.statuses(Some(&mut opts))?;
     let mut files: Vec<String> = Vec::with_capacity(25);
-    for f in status.iter() {
+    for f in status.iter().filter(|e| e.status() != git2::Status::IGNORED) {
         let path = dbg!(f.path().unwrap());
         files.push(String::from(path));
     }
@@ -186,13 +187,14 @@ fn find_last_commit(repo: &Repository) -> Result<Commit, GitError> {
 fn add_and_commit(
     info: &GitRepositoryInfo,
     repo: &Repository,
-    files: Vec<&Path>,
+    files: Vec<String>,
     message: &str,
 ) -> Result<Oid, GitError> {
-    let signature = get_signature(repo)?;
+    let signature = get_signature(repo, info)?;
+    // let signature = repo.signature()?;
     let mut index = repo.index()?;
     for file in files.iter() {
-        index.add_path(file)?;
+        index.add_path(Path::new(&file))?;
     }
     let oid = index.write_tree()?;
     let parent_commit = find_last_commit(&repo)?;
@@ -204,16 +206,26 @@ fn add_and_commit(
         message,      // commit message
         &tree,        // tree
         &[&parent_commit],
-    ) // parents
+    )
 }
 
-// pub(crate) fn pull() -> Result<(), GitError> {}
+fn create_callbacks(info: &GitRepositoryInfo) -> Result<RemoteCallbacks, GitError> {
+    let mut callbacks = RemoteCallbacks::new();
+    let _ = callbacks.credentials(|str, str_opt, cred_type| Cred::userpass_plaintext(&info.name, ""));
+    Ok(callbacks)
+}
 
 fn push(repo: &Repository, info: &GitRepositoryInfo) -> Result<(), GitError> {
     let mut remote = match repo.find_remote("origin") {
         Ok(r) => r,
         Err(_) => repo.remote("origin", &info.remote_url)?,
     };
-    remote.connect(Direction::Push)?;
-    remote.push(&[format!("refs/heads/{}", &info.branch_name.as_ref().unwrap())], None)
+    remote.connect_auth(Direction::Push, Some(create_callbacks(info)?), None)?;
+    let branch_name = info.branch_name.as_ref().unwrap();
+    let refs = format!("refs/heads/{}:refs/heads/{}", branch_name, branch_name);
+    repo.remote_add_push("origin", &refs)?;
+    let mut push_options = PushOptions::default();
+    push_options.remote_callbacks(create_callbacks(info)?);
+
+    remote.push(&[&refs], Some(&mut push_options))
 }
