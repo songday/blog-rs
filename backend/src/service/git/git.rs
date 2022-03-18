@@ -132,7 +132,7 @@ async fn update_setting(content: String) -> Result<(), String> {
         .map_err(|e| format!("Failed updating settings: {:?}", e.0))
 }
 
-pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), GitError> {
+pub fn sync_to_remote(info: &GitRepositoryInfo, password: &str) -> Result<(), GitError> {
     // open git repository
     let repo = get_repo(info)?;
     // find changed files
@@ -141,7 +141,7 @@ pub fn sync_to_remote(info: &GitRepositoryInfo) -> Result<(), GitError> {
         // perform committing
         add_and_commit(info, &repo, changed_files, "Update posts")?;
         // try pushing
-        push(&repo, info)?;
+        push(&repo, info, password)?;
     }
     Ok(())
 }
@@ -209,23 +209,26 @@ fn add_and_commit(
     )
 }
 
-fn create_callbacks(info: &GitRepositoryInfo) -> Result<RemoteCallbacks, GitError> {
+fn create_callbacks<'a, 'b: 'a>(
+    info: &'a GitRepositoryInfo,
+    password: &'b str,
+) -> Result<RemoteCallbacks<'a>, GitError> {
     let mut callbacks = RemoteCallbacks::new();
-    let _ = callbacks.credentials(|str, str_opt, cred_type| Cred::userpass_plaintext(&info.name, ""));
+    let _ = callbacks.credentials(|str, str_opt, cred_type| Cred::userpass_plaintext(&info.name, password));
     Ok(callbacks)
 }
 
-fn push(repo: &Repository, info: &GitRepositoryInfo) -> Result<(), GitError> {
+fn push(repo: &Repository, info: &GitRepositoryInfo, password: &str) -> Result<(), GitError> {
     let mut remote = match repo.find_remote("origin") {
         Ok(r) => r,
         Err(_) => repo.remote("origin", &info.remote_url)?,
     };
-    remote.connect_auth(Direction::Push, Some(create_callbacks(info)?), None)?;
+    remote.connect_auth(Direction::Push, Some(create_callbacks(info, password)?), None)?;
     let branch_name = info.branch_name.as_ref().unwrap();
     let refs = format!("refs/heads/{}:refs/heads/{}", branch_name, branch_name);
     repo.remote_add_push("origin", &refs)?;
     let mut push_options = PushOptions::default();
-    push_options.remote_callbacks(create_callbacks(info)?);
+    push_options.remote_callbacks(create_callbacks(info, password)?);
 
     remote.push(&[&refs], Some(&mut push_options))
 }

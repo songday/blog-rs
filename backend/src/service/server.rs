@@ -354,6 +354,7 @@ pub fn blog_filter(
     let git_push = warp::get()
         .and(warp::path("git"))
         .and(warp::path("push"))
+        .and(warp::path::tail())
         .and(warp::path::end())
         .and_then(git::push);
 
