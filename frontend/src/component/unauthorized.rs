@@ -23,9 +23,9 @@ impl Component for Unauthorized {
         let loc = ctx.link().location().unwrap();
         let redirect_url = loc.path();
         let redirect_url = urlencoding::encode(loc.path());
-        let redirect_url = redirect_url.into_owned();
+        // let redirect_url = redirect_url.into_owned();
         let mut url = String::from("/management?.redirect_url=");
-        url.push_str(&redirect_url);
+        url.push_str(redirect_url.as_ref());
         html! {
             <section class="hero is-danger is-bold is-medium">
                 <div class="hero-body">

@@ -332,6 +332,7 @@ pub fn blog_filter(
         .and(warp::path("management"))
         .and(warp::path("git-pages"))
         .and(warp::path::end())
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(git::show);
     let git_new = warp::post()
         .and(warp::path("git"))

@@ -43,7 +43,7 @@ pub async fn new_repository(info: GitRepositoryInfo) -> Result<(), String> {
         return Err(format!("Target directory {} already exists", path.as_path().display()));
     }
     if let Err(e) = std::fs::create_dir_all(path.as_path()) {
-        return Err(format!("Failed creating directory: {}", path.as_path().display()));
+        return Err(format!("Failed creating directory: {}, {}", path.as_path().display(), e));
     }
     if let Err(e) = Repository::clone(&info.remote_url, path.as_path()) {
         return Err(format!("Failed clone git repository: {}", e));
@@ -196,6 +196,7 @@ fn add_and_commit(
     for file in files.iter() {
         index.add_path(Path::new(&file))?;
     }
+    index.write()?;
     let oid = index.write_tree()?;
     let parent_commit = find_last_commit(&repo)?;
     let tree = repo.find_tree(oid)?;

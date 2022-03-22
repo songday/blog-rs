@@ -19,7 +19,17 @@ use crate::{
 
 static GIT_PAGES_INIT_HTML: &'static str = include_str!("../resource/page/git-pages-init.html");
 
-pub async fn show() -> Result<Response<Body>, Rejection> {
+pub async fn show(token: Option<String>) -> Result<Response<Body>, Rejection> {
+    if status::check_auth(token).is_err() {
+        let url_encode = urlencoding::encode("/management/git-pages");
+        let mut redirect = String::with_capacity(64);
+        redirect.push_str("/management?.redirect_url=");
+        redirect.push_str(url_encode.as_ref());
+        let response = Response::builder().header("Location", &redirect);
+        return Ok(response.body("".into()).unwrap())
+        // Ok(warp::reply::html(&r))
+    }
+
     let result = git::must_get_repository_info().await;
 
     let response = Response::builder().header("Content-Type", "text/html; charset=utf-8");
