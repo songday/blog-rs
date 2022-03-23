@@ -25,7 +25,7 @@ pub async fn show(token: Option<String>) -> Result<Response<Body>, Rejection> {
         let mut redirect = String::with_capacity(64);
         redirect.push_str("/management?.redirect_url=");
         redirect.push_str(url_encode.as_ref());
-        let response = Response::builder().header("Location", &redirect);
+        let response = Response::builder().header("Location", &redirect).status(302);
         return Ok(response.body("".into()).unwrap())
         // Ok(warp::reply::html(&r))
     }
