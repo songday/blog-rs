@@ -106,6 +106,28 @@
                 {% endif %}
             </td>
         </tr>
+        {% if branch %}
+        <tr>
+            <td>导出的子目录/Subdirectory for exporting</td>
+            <td>
+                <input class="input" id="subdirectory" type="text" placeholder="public/site">
+                <p class="help">This can be empty.</p>
+            </td>
+        </tr>
+        <tr>
+            <td>是否渲染成HTML/Render to HTML</td>
+            <td>
+                <input class="input" type="password" placeholder="Git password">
+            </td>
+        </tr>
+        <tr>
+            <td>同步密码/Git password <span style="color:red">*</span> </td>
+            <td>
+                <input class="input" id="git-password" type="password" placeholder="Git password">
+                <p class="help">Git password for {{name}}. This tool <b>don't record any credentials</b>.</p>
+            </td>
+        </tr>
+        {% endif %}
     </table>
     <div>
         {% if branches|length > 1 %}
@@ -113,7 +135,7 @@
         {% else %}
         <div class="field has-addons">
             <div class="control">
-                <input class="input is-medium" id="git-password" type="password" placeholder="Git password">
+                <input class="input is-medium" id="git-password2" type="password" placeholder="Git password">
             </div>
             <div class="control">
                 <button class="button is-medium" onclick="push(this);">同步/Push</button>

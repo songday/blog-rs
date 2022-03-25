@@ -38,13 +38,11 @@ pub async fn show(token: Option<String>) -> Result<Response<Body>, Rejection> {
         context.insert("remote_url", &info.remote_url);
         context.insert("name", &info.name);
         context.insert("email", &info.email);
-        println!("info.branch_name.is_some(): {}", info.branch_name.is_some());
         if info.branch_name.is_some() {
             context.insert("branch", &info.branch_name.unwrap());
             let d: Vec<String> = Vec::new();
             context.insert("branches", &d);
         } else {
-            context.insert("branch", "");
             match git::get_branches(&info) {
                 Ok(b) => context.insert("branches", &b),
                 Err(e) => {
