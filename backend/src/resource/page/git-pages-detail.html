@@ -135,9 +135,6 @@
         {% else %}
         <div class="field has-addons">
             <div class="control">
-                <input class="input is-medium" id="git-password2" type="password" placeholder="Git password">
-            </div>
-            <div class="control">
                 <button class="button is-medium" onclick="push(this);">同步/Push</button>
             </div>
             <div class="control">
@@ -147,7 +144,6 @@
                 <button class="button is-medium" onclick="showNotification();">删除/Remove</button>
             </div>
         </div>
-        <p class="help">Git password for {{name}}. This tool <b>don't record any credentials</b>.</p>
         {% endif %}
     </div>
     <div id="notification" class="notification is-danger is-light" style="display:none;width:435px">
