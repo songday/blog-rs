@@ -1,4 +1,5 @@
 use std::vec::Vec;
+use rand::Rng;
 
 use blog_common::dto::post::PostDetail;
 use blog_common::dto::{PaginationData, Response};
@@ -41,13 +42,16 @@ fn tags_list() -> Html {
         return html! {};
     }
     let mut classes = String::with_capacity(32);
+    let mut rng = rand::thread_rng();
     let tags = tags
         .iter()
         .map(|t| {
-            let mut roll: usize = fastrand::usize(..val::TAG_SIZES.len());
+            // let mut roll: usize = fastrand::usize(..val::TAG_SIZES.len());
+            let mut roll: usize = rng.gen_range(0..val::TAG_SIZES.len());
             classes.push_str("tag is-light");
             classes.push_str(val::TAG_SIZES[roll]);
-            roll = fastrand::usize(..val::TAG_COLORS.len());
+            // roll = fastrand::usize(..val::TAG_COLORS.len());
+            roll = rng.gen_range(0..val::TAG_COLORS.len());
             classes.push_str(val::TAG_COLORS[roll]);
             let html = html! {
                 <span class={classes!(&classes)}>

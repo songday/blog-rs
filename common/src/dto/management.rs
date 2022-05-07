@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::user::UserInfo;
+// use super::user::UserInfo;
 
 #[derive(Clone, Default, Debug, Deserialize, Serialize)]
 pub struct AdminUser {
@@ -14,8 +14,8 @@ pub struct Setting {
     pub content: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
-pub struct SiteData {
-    pub settings: Setting,
-    pub user_info: Option<UserInfo>,
-}
+// #[derive(Debug, Deserialize, Serialize)]
+// pub struct SiteData {
+//     pub settings: Setting,
+//     pub user_info: Option<UserInfo>,
+// }

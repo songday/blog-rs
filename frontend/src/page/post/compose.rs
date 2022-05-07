@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+    use std::collections::HashMap;
 
 use blog_common::dto::post::{PostData, PostDetail};
 use blog_common::dto::Response;
@@ -243,7 +243,7 @@ impl Component for PostCompose {
                         .json()
                         .await
                         .unwrap();
-                    navigator.push(crate::router::Route::ShowPost { id: post_id });
+                    navigator.push(&crate::router::Route::ShowPost { id: post_id });
                 });
 
                 // self.blog_params.tags = Some(get_selected_tags().iter().map(|e| e.as_string().unwrap()).collect());
@@ -309,14 +309,14 @@ impl Component for PostCompose {
             },
             Msg::GoBack => {
                 let navigator = ctx.link().navigator().unwrap();
-                navigator.push(crate::router::Route::ShowPost { id: self.post_id });
+                navigator.push(&crate::router::Route::ShowPost { id: self.post_id });
             },
             Msg::GoSignIn => {
                 let any_route = AnyRoute::new(String::from("/401"));
                 let continue_url = crate::router::Route::ComposePost { id: self.post_id }.to_path();
                 let query = HashMap::from([(".continue", continue_url.as_str())]);
                 let navigator = ctx.link().navigator().unwrap();
-                navigator.push_with_query(any_route, query);
+                navigator.push_with_query(&any_route, &query);
             },
         }
         false

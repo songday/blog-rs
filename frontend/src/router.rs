@@ -97,10 +97,10 @@ fn not_found() -> Html {
     }
 }
 
-pub fn switch(routes: &Route) -> Html {
+pub fn switch(routes: Route) -> Html {
     match routes {
         Route::ShowPost { id } => {
-            html! { <PostDetail post_id={*id} /> }
+            html! { <PostDetail post_id={id} /> }
         },
         Route::ListPostsByTag { tag_name } => {
             html! { <PostsListByTag tag_name={String::from(tag_name)} /> }
@@ -109,7 +109,7 @@ pub fn switch(routes: &Route) -> Html {
             html! { <PostsList /> }
         },
         Route::ComposePost { id } => {
-            html! { <PostCompose post_id={*id} /> }
+            html! { <PostCompose post_id={id} /> }
         },
         Route::Tags => {
             html! { <TagsList /> }

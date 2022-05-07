@@ -5,7 +5,7 @@ pub struct UserInfo {
     pub id: i64,
 }
 
-impl yew::html::ImplicitClone for UserInfo {}
+// impl yew::html::ImplicitClone for UserInfo {}
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct UserInfoWrapper {
