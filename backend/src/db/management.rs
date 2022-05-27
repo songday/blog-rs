@@ -67,7 +67,7 @@ pub async fn update_setting(setting: Setting) -> Result<()> {
 }
 
 pub async fn get_setting(item: &str) -> Result<Option<Setting>> {
-    let r = sqlx::query_as::<Sqlite, crate::db::model::Setting>("SELECT * FROM settings WHERE item=?")
+    let r = sqlx::query_as::<Sqlite, Setting>("SELECT * FROM settings WHERE item=?")
         .bind(item)
         .fetch_optional(super::get_sqlite())
         .await?;

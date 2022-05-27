@@ -21,12 +21,15 @@ static GIT_PAGES_INIT_HTML: &'static str = include_str!("../resource/page/git-pa
 
 pub async fn show(token: Option<String>) -> Result<Response<Body>, Rejection> {
     if status::check_auth(token).is_err() {
+        return Ok(super::management_sign_in("/management/git-pages").into_response());
+        /*
         let url_encode = urlencoding::encode("/management/git-pages");
         let mut redirect = String::with_capacity(64);
         redirect.push_str("/management?.redirect_url=");
         redirect.push_str(url_encode.as_ref());
         let response = Response::builder().header("Location", &redirect).status(302);
-        return Ok(response.body("".into()).unwrap())
+        return Ok(response.body("".into()).unwrap());
+        */
         // Ok(warp::reply::html(&r))
     }
 

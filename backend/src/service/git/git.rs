@@ -43,7 +43,11 @@ pub async fn new_repository(info: GitRepositoryInfo) -> Result<(), String> {
         return Err(format!("Target directory {} already exists", path.as_path().display()));
     }
     if let Err(e) = std::fs::create_dir_all(path.as_path()) {
-        return Err(format!("Failed creating directory: {}, {}", path.as_path().display(), e));
+        return Err(format!(
+            "Failed creating directory: {}, {}",
+            path.as_path().display(),
+            e
+        ));
     }
     if let Err(e) = Repository::clone(&info.remote_url, path.as_path()) {
         return Err(format!("Failed clone git repository: {}", e));

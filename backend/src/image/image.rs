@@ -7,7 +7,8 @@ use image::{
         jpeg::JpegEncoder,
         png::{CompressionType, FilterType, PngEncoder},
     },
-    ColorType, DynamicImage, GenericImage, GenericImageView, ImageBuffer, ImageFormat, Luma, Rgb, Rgba, RgbaImage,
+    ColorType, DynamicImage, GenericImage, GenericImageView, ImageBuffer, ImageEncoder, ImageFormat, Luma, Rgb, Rgba,
+    RgbaImage,
 };
 use rand::{thread_rng, Rng};
 use tokio::fs::copy;
@@ -97,7 +98,7 @@ pub fn gen_verify_image(numbers: &[u8]) -> Bytes {
     // let mut encoder = JpegEncoder::new_with_quality(&mut out, 70);
     // let r = encoder.encode_image(&img);
     let encoder = PngEncoder::new_with_quality(&mut b, CompressionType::Default, FilterType::NoFilter);
-    encoder.encode(&img.into_raw(), width, HEIGHT, ColorType::Rgba8);
+    encoder.write_image(&img.into_raw(), width, HEIGHT, ColorType::Rgba8);
     // dbg!(out.len());
     b.into_inner().freeze()
 }

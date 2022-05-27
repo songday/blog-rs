@@ -109,3 +109,12 @@ fn session_id_cookie(token: &str) -> String {
         token,
     )
 }
+
+fn management_sign_in(back_uri: &str) -> impl Reply {
+    let url_encode = urlencoding::encode(back_uri);
+    let mut redirect = String::with_capacity(64);
+    redirect.push_str("/management?.redirect_url=");
+    redirect.push_str(url_encode.as_ref());
+    let uri: warp::http::Uri = redirect.parse().unwrap();
+    warp::redirect(uri)
+}
