@@ -21,6 +21,7 @@ use crate::{
 
 pub const SETTINGS_HTML: &'static str = include_str!("../resource/page/settings.html");
 const LOGIN_HTML: &'static str = include_str!("../resource/page/login.html");
+const POST_DETAIL_DEFAULT_TEMPLATE: &'static str = include_str!("../resource/static-site/template/post_detail.html");
 
 pub fn show_settings_with_fake_auth() -> Response {
     let token = common::simple_uuid();
@@ -74,7 +75,8 @@ pub async fn forgot_password(authority: Option<warp::host::Authority>) -> Result
 
 pub async fn show_render_templates_page(token: Option<String>) -> Result<warp::http::Response<Body>, Rejection> {
     if status::check_auth(token).is_err() {
-        return Ok(super::management_sign_in("/management/templates").into_response());
+        println!("show_render_templates_page auth failed");
+        return Ok(super::management_sign_in("/management/export-templates").into_response());
     }
     let response = warp::http::Response::builder().header("Content-Type", "text/html; charset=utf-8");
     let setting = match management::get_setting("post_detail_render_template").await {
@@ -85,7 +87,8 @@ pub async fn show_render_templates_page(token: Option<String>) -> Result<warp::h
     if let Some(setting) = setting {
         context.insert("post_detail_template", &setting.content);
     }
-    let html = match crate::service::export::TEMPLATES.render("render-template.html", &context) {
+    context.insert("post_detail_template_default", POST_DETAIL_DEFAULT_TEMPLATE);
+    let html = match crate::service::export::TEMPLATES.render("export-template.html", &context) {
         Ok(s) => s,
         Err(e) => {
             eprintln!("{:?}", e);

@@ -215,10 +215,17 @@ pub fn blog_filter(
         .and_then(management::update_settings);
     let management_templates = warp::get()
         .and(warp::path("management"))
-        .and(warp::path("templates"))
+        .and(warp::path("export-templates"))
         .and(warp::path::end())
         .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
         .and_then(management::show_render_templates_page);
+    let management_update_templates = warp::post()
+        .and(warp::path("management"))
+        .and(warp::path("export-templates"))
+        .and(warp::path::end())
+        .and(warp::cookie::optional(val::SESSION_ID_HEADER_NAME))
+        .and(warp::body::form::<HashMap<String, String>>())
+        .and_then(management::update_render_templates);
     let user_logout = warp::get()
         .and(warp::path("user"))
         .and(warp::path("logout"))
@@ -404,6 +411,7 @@ pub fn blog_filter(
         .or(management_login)
         .or(management_update_settings)
         .or(management_templates)
+        .or(management_update_templates)
         .or(user_logout)
         .or(user_info)
         .or(verify_image)

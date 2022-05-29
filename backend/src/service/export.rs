@@ -13,7 +13,7 @@ use crate::util::{self, result::Result};
 
 static HUGO_TEMPLATE: &'static str = include_str!("../resource/static-site/template/hugo.txt");
 static GIT_PAGES_DETAIL_HTML: &'static str = include_str!("../resource/page/git-pages-detail.html");
-static RENDER_TEMPLATE_HTML: &'static str = include_str!("../resource/page/render-template.html");
+static RENDER_TEMPLATE_HTML: &'static str = include_str!("../resource/page/export-template.html");
 
 lazy_static! {
     pub static ref TEMPLATES: Tera = {
@@ -24,7 +24,7 @@ lazy_static! {
         if let Err(e) = tera.add_raw_template("git-pages-detail.html", GIT_PAGES_DETAIL_HTML) {
             eprintln!("{:?}", e);
         }
-        if let Err(e) = tera.add_raw_template("render-template.html", RENDER_TEMPLATE_HTML) {
+        if let Err(e) = tera.add_raw_template("export-template.html", RENDER_TEMPLATE_HTML) {
             eprintln!("{:?}", e);
         }
         tera
