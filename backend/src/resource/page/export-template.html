@@ -8,45 +8,13 @@
     <link rel="stylesheet" href="/asset/fontawesome.min-5e9e696c59c57e83.css">
     <link rel="stylesheet" href="/asset/regular.min-a0c258fb7c5f655d.css">
     <link rel="stylesheet" href="/asset/solid.min-70c2e5caa950974d.css">
+    <script src="/asset/common.js"></script>
     <script type="application/javascript">
         function update(t) {
-            const clazzName = t.className;
-            t.disabled = true;
-            t.className = clazzName + ' is-loading';
-            let formBody = [];
-            formBody.push("post_detail_render_template=" + encodeURIComponent(document.getElementById('post_detail_template').value));
-            const options = {
-                method: 'POST',
-                body: formBody.join("&"),
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-                }
-            };
-            fetch('/management/export-templates', options).then(response => response.json())
-                .then(data => {
-                    t.className = clazzName;
-                    t.disabled = false;
-                    console.log(data);
-                    if (data.status === 0) {
-                        location.href = 'git-pages';
-                    } else {
-                        document.getElementById('errorMessage').innerHTML = data.error.detail;
-                        document.getElementById('notification').style.display = 'block';
-                    }
-                })
-                .catch(err => {
-                    console.log(err);
-                });
+            const postData = new Map();
+            postData.set('post_detail_render_template', document.getElementById('post_detail_template').value);
+            fetch_post(t, '/management/export-templates', postData, 'git-pages');
         }
-        document.addEventListener('DOMContentLoaded', () => {
-            (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
-                const $notification = $delete.parentNode;
-
-                $delete.addEventListener('click', () => {
-                    $notification.style.display = 'none';
-                });
-            });
-        });
     </script>
 </head>
 <body>

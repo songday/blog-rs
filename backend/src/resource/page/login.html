@@ -6,46 +6,31 @@
     <link rel="stylesheet" href="/asset/bulma.min-82aac43507618108.css">
     <link rel="stylesheet" href="/asset/fontawesome.min-5e9e696c59c57e83.css">
     <link rel="stylesheet" href="/asset/solid.min-70c2e5caa950974d.css">
+    <script src="/asset/common.js"></script>
     <script type="text/javascript">
-        function login() {
+        function login(t) {
             const user = {
                 password: document.getElementById('admin_password').value,
                 captcha: document.getElementById('captcha').value,
             };
-            const options = {
-                method: 'POST',
-                body: JSON.stringify(user),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            };
-            fetch('/management/login', options)
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    if (data.status === 0 && data.data === true) {
-                        document.cookie = 'X-SONGDAY-USER-AUTHED=true; SameSite=Lax; Path=/;';
-                        let gotoUrl = '/management';
-                        if (location.search) {
-                            const s = '.redirect_url=';
-                            let p = location.search.indexOf(s);
-                            if (p > -1) {
-                                gotoUrl = location.search.substring(p + s.length);
-                                p = gotoUrl.indexOf('&');
-                                if (p > -1)
-                                    gotoUrl = gotoUrl.substring(0, p);
-                                gotoUrl = decodeURIComponent(gotoUrl);
-                            }
+            fetch_post(t, '/management/login', user, function(data) {
+                if (data.data === true) {
+                    document.cookie = 'X-SONGDAY-USER-AUTHED=true; SameSite=Lax; Path=/;';
+                    let gotoUrl = '/management';
+                    if (location.search) {
+                        const s = '.redirect_url=';
+                        let p = location.search.indexOf(s);
+                        if (p > -1) {
+                            gotoUrl = location.search.substring(p + s.length);
+                            p = gotoUrl.indexOf('&');
+                            if (p > -1)
+                                gotoUrl = gotoUrl.substring(0, p);
+                            gotoUrl = decodeURIComponent(gotoUrl);
                         }
-                        location.href = gotoUrl;
-                    } else {
-                        document.getElementById('errorMessage').value = data.error.detail;
-                        document.getElementById('errorMessage').style.display = 'block';
                     }
-                })
-                .catch(err => {
-                    console.log(err);
-                });
+                    location.href = gotoUrl;
+                }
+            });
         }
     </script>
 </head>
@@ -77,7 +62,7 @@
     </div>
     <div class="field is-grouped">
         <div class="control">
-            <button class="button is-link" onclick="login();">登录/Sign in</button>
+            <button class="button is-link" onclick="login(this);">登录/Sign in</button>
         </div>
         <div class="control">
             <button class="button is-link is-light" onclick="location.href='/';">返回/Back</button>

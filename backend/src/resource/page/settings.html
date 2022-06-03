@@ -8,33 +8,14 @@
     <link rel="stylesheet" href="/asset/fontawesome.min-5e9e696c59c57e83.css">
     <link rel="stylesheet" href="/asset/regular.min-a0c258fb7c5f655d.css">
     <link rel="stylesheet" href="/asset/solid.min-70c2e5caa950974d.css">
+    <script src="/asset/common.js"></script>
     <script type="application/javascript">
-        function showNotification() {}
-        function post() {
+        function post(t) {
             const data = {
                 item: 'admin_password',
                 content:document.getElementById('admin_password1').value,
             };
-            const options = {
-                method: 'POST',
-                body: JSON.stringify(data),
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            };
-            fetch('/management/settings/update', options).then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    if (data.status === 0) {
-                        location.href = '/';
-                    } else {
-                        document.getElementById('errorMessage').value = data.error.detail;
-                        document.getElementById('errorMessage').style.display = 'block';
-                    }
-                })
-                .catch(err => {
-                    console.log(err);
-                });
+            fetch_post(t, '/management/settings/update', data, '/');
         }
         function export_hugo(t) {
             const clazzName = t.className;
@@ -48,23 +29,13 @@
                     if (data !== '') {
                         location.href = data;
                     } else {
-                        document.getElementById('errorMessage').value = data.error.detail;
-                        document.getElementById('errorMessage').style.display = 'block';
+                        showErr(data.error.detail);
                     }
                 })
                 .catch(err => {
                     console.log(err);
                 });
         }
-        document.addEventListener('DOMContentLoaded', () => {
-            (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
-                const $notification = $delete.parentNode;
-
-                $delete.addEventListener('click', () => {
-                    $notification.parentNode.removeChild($notification);
-                });
-            });
-        });
     </script>
 </head>
 <body>
@@ -84,7 +55,7 @@
         <p class="help">请最少输入1位/Minimum length is 1 character.</p>
     </div>
     <div>
-        <button class="button is-medium" onclick="post();">更新/Update</button>
+        <button class="button is-medium" onclick="post(this);">更新/Update</button>
         <button class="button is-medium" onclick="location.href='/';">返回/Back</button>
     </div>
     <p>&nbsp;</p>

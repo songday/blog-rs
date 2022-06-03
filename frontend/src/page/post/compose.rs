@@ -14,7 +14,7 @@ use yew_router::{self, AnyRoute};
 use crate::component::Unauthorized;
 use crate::i18n;
 
-#[wasm_bindgen(module = "/asset/common.js")]
+#[wasm_bindgen(module = "/asset/show.js")]
 extern "C" {
     #[wasm_bindgen(js_name = userLanguage)]
     fn user_language() -> String;

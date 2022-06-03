@@ -11,7 +11,7 @@ use yew_router::prelude::*;
 use crate::i18n;
 use crate::router::Route;
 
-#[wasm_bindgen(module = "/asset/common.js")]
+#[wasm_bindgen(module = "/asset/show.js")]
 extern "C" {
     #[wasm_bindgen(js_name = userLanguage)]
     fn user_language() -> String;

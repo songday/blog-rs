@@ -1,3 +1,6 @@
+export function userLanguage() {
+    return navigator.language;
+}
 export function showNotificationBox() {
     document.getElementById('notification').style.display = 'block';
 }

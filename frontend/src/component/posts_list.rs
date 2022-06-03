@@ -15,7 +15,7 @@ use crate::router::Route;
 
 const POSTS_PAGE_SIZE: usize = val::POSTS_PAGE_SIZE as usize;
 
-#[wasm_bindgen(module = "/asset/common.js")]
+#[wasm_bindgen(module = "/asset/show.js")]
 extern "C" {
     #[wasm_bindgen(js_name = userLanguage)]
     fn user_language() -> String;
