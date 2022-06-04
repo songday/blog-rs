@@ -14,7 +14,7 @@ pub async fn index() -> Result<impl Reply, Rejection> {
         Ok(warp::reply::html(INDEX_HTML).into_response())
         // Ok(warp::reply::Response::new(INDEX_HTML.into()))
     } else {
-        // Ok(warp::redirect::redirect(hyper::Uri::from_static("/management/index")))
+        // Ok(warp::redirect::temporary(hyper::Uri::from_static("/management/index")))
         let response = management::show_settings_with_fake_auth();
         Ok(response)
     }

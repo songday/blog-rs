@@ -16,7 +16,7 @@ function fetch_get(t, url, callback) {
                     if (typeof(callback) === 'function')
                         callback(data);
                     else
-                        location.href = backUrl;
+                        location.href = callback;
                 }
             } else {
                 showErr(data.error.detail);
@@ -28,7 +28,7 @@ function fetch_get(t, url, callback) {
         });
 }
 
-function fetch_post(t, url, data, backUrl) {
+function fetch_post(t, url, data, callback) {
     const clazzName = t.className;
     t.disabled = true;
     t.className = clazzName + ' is-loading';
@@ -57,7 +57,10 @@ function fetch_post(t, url, data, backUrl) {
             t.disabled = false;
             console.log(data);
             if (data.status === 0) {
-                location.href = backUrl;
+                if (typeof(callback) === 'function')
+                    callback(data);
+                else
+                    location.href = callback;
             } else {
                 showErr(data.error.detail);
             }

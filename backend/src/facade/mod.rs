@@ -116,5 +116,5 @@ fn management_sign_in(back_uri: &str) -> impl Reply {
     redirect.push_str("/management?.redirect_url=");
     redirect.push_str(url_encode.as_ref());
     let uri: warp::http::Uri = redirect.parse().unwrap();
-    warp::redirect(uri)
+    warp::redirect::temporary(uri)
 }

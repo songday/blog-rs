@@ -9,6 +9,7 @@ use warp::{self, reject, Filter, Rejection, Reply, Server, TlsServer};
 
 use blog_common::{
     dto::{
+        git::GitPushInfo,
         management::{AdminUser, Setting},
         post::PostData,
         user::UserInfo,
@@ -32,7 +33,7 @@ impl reject::Reject for FilterError {}
 fn session_id_wrapper<F, T>(filter: F) -> impl Filter<Extract = (&'static str,)> + Clone + Send + Sync + 'static
 where
     F: Filter<Extract = (T,), Error = Infallible> + Clone + Send + Sync + 'static,
-    F::Extract: warp::Reply,
+    F::Extract: Reply,
 {
     warp::any()
         .map(|| {
@@ -368,7 +369,7 @@ pub fn blog_filter(
     let git_push = warp::get()
         .and(warp::path("git"))
         .and(warp::path("push"))
-        .and(warp::path::tail())
+        .and(warp::body::json::<GitPushInfo>())
         .and(warp::path::end())
         .and_then(git::push);
 

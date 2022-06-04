@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/asset/solid.min-70c2e5caa950974d.css">
     <script src="/asset/common.js"></script>
     <script type="application/javascript">
+        let render_html = 'n';
         function setBranch(t) {
             const branch = document.getElementById('branches').value;
             if (branch) {
@@ -17,12 +18,16 @@
             }
         }
         function push(t) {
-            const pwd = document.getElementById('git-password').value;
-            if (!pwd) {
-                showErr('Git password is needed.');
+            const credential = document.getElementById('repo-credential').value;
+            if (!credential) {
+                showErr('Repository credential is needed.');
                 return;
             }
-            fetch_get(t, '/git/push/' + encodeURIComponent(pwd), 'git-pages');
+            const data = new Map();
+            data.set('subdirectory', document.getElementById('subdirectory').value);
+            data.set('render_html', render_html);
+            data.set('repo_credential', credential);
+            fetch_post(t, '/git/push/', data, 'git-pages');
         }
         function showNotification() {
             const h = '<p>Please confirm this deletion</p>' +
@@ -82,11 +87,11 @@
             <td>
                 <div class="control">
                     <label class="radio">
-                        <input type="radio" name="exportTemplate">
+                        <input type="radio" name="render-html" value="y" onclick="render_html='y';">
                         Yes
                     </label>
                     <label class="radio">
-                        <input type="radio" name="exportTemplate" checked>
+                        <input type="radio" name="render-html" value="n" checked onclick="render_html='n';">
                         No
                     </label>
                 </div>
@@ -94,10 +99,10 @@
             </td>
         </tr>
         <tr>
-            <td>同步密码/Git password <span style="color:red">*</span> </td>
+            <td>同步密码/Repository credential <span style="color:red">*</span> </td>
             <td>
-                <input class="input" id="git-password" type="password" placeholder="Git password">
-                <p class="help">Git password for {{name}}. This tool <b>don't record any credentials</b>.</p>
+                <input class="input" id="repo-credential" type="password" placeholder="Repository credential">
+                <p class="help">Repository credential for {{name}}. This tool <b>don't record any credentials</b>.</p>
             </td>
         </tr>
         {% endif %}

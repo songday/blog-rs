@@ -46,6 +46,14 @@ impl From<zip::result::ZipError> for ErrorWrapper {
     }
 }
 
+impl From<tera::Error> for ErrorWrapper {
+    fn from(e: tera::Error) -> Self {
+        eprintln!("{}", e);
+        // todo
+        Error::ReadPostIdDataByTagFailed.into()
+    }
+}
+
 impl From<std::io::Error> for ErrorWrapper {
     fn from(e: std::io::Error) -> Self {
         eprintln!("{}", e);

@@ -1,14 +1,12 @@
-use std::fs::{File, OpenOptions};
+use std::fs::OpenOptions;
 use std::io::Write;
-use std::path::PathBuf;
 
-use blog_common::dto::git::GitRepositoryInfo;
+use blog_common::dto::git::{GitPushInfo, GitRepositoryInfo};
 use lazy_static::lazy_static;
 use tera::Tera;
 use zip::write::FileOptions;
 
-use crate::db::model::Post;
-use crate::db::post;
+use crate::db::{management, model::Post, post};
 use crate::util::{self, result::Result};
 
 static HUGO_TEMPLATE: &'static str = include_str!("../resource/static-site/template/hugo.txt");
@@ -31,31 +29,44 @@ lazy_static! {
     };
 }
 
-fn render(post: &Post, template: &str) -> String {
+fn render(post: &Post, template_name: &str, template: Option<&String>) -> Result<String> {
     let mut context = tera::Context::new();
     context.insert("title", &post.title);
     context.insert("content", &post.markdown_content);
-    match TEMPLATES.render(template, &context) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("{:?}", e);
-            String::new()
-        },
-    }
+    let r = if template.is_some() {
+        tera::Tera::one_off(template.unwrap(), &context, true)
+    } else {
+        TEMPLATES.render(template_name, &context)
+    };
+    r.map_err(|e| e.into())
 }
+
+// fn render(post: &Post, template_name: &str) -> String {
+//     let mut context = tera::Context::new();
+//     context.insert("title", &post.title);
+//     context.insert("content", &post.markdown_content);
+//     match TEMPLATES.render(template_name, &context) {
+//         Ok(s) => s,
+//         Err(e) => {
+//             eprintln!("{:?}", e);
+//             String::new()
+//         },
+//     }
+// }
 
 // fn write_posts(posts: &Vec<Post>, mut writer: impl std::io::Write) -> Result<()> {
 // fn write_posts(posts: &Vec<Post>, callback: impl Fn(dyn std::io::Write, &str, &String) -> Result<()>) -> Result<()> {
-fn write_posts<C>(posts: &Vec<Post>, mut callback: C) -> Result<()>
+fn write_posts<C>(posts: &Vec<Post>, mut callback: C, file_ext: &str) -> Result<()>
 where
     C: FnMut(&String, &Post) -> Result<()>,
 {
     let mut file_name = String::with_capacity(32);
     for post in posts {
         file_name.push_str(post.id.to_string().as_str());
-        file_name.push_str(".md");
+        file_name.push_str(".");
+        file_name.push_str(file_ext);
 
-        callback(&file_name, &post);
+        callback(&file_name, &post)?;
 
         file_name.clear();
     }
@@ -83,12 +94,12 @@ pub async fn hugo() -> Result<String> {
 
     let zip_file = |file_name: &String, post: &Post| -> Result<()> {
         zip.start_file(file_name, FileOptions::default())?;
-        let content = render(post, "hugo.md");
+        let content = render(post, "hugo.md", None)?;
         zip.write_all(content.as_bytes())?;
         Ok(())
     };
 
-    write_posts(&posts, zip_file);
+    write_posts(&posts, zip_file, "md")?;
 
     /*
     let mut file_name = String::with_capacity(32);
@@ -111,12 +122,23 @@ pub async fn hugo() -> Result<String> {
     Ok(filename)
 }
 
-pub async fn git(git: &GitRepositoryInfo) -> Result<()> {
+pub async fn git(git: &GitRepositoryInfo, push_info: &GitPushInfo) -> Result<()> {
     let path = super::git::git::get_repository_path(git);
     let mut path = path.join("file.txt");
     println!("export path {}", path.as_path().display());
 
     let posts = post::all_by_since(git.last_export_second).await?;
+    let one_off_template = if push_info.render_html {
+        let setting = management::get_setting("").await?;
+        setting.map(|s| s.content)
+    } else {
+        None
+    };
+    let (template_name, file_ext) = if one_off_template.is_some() {
+        ("one_off_template", "html")
+    } else {
+        ("hugo.md", "md")
+    };
     let write_file = |filename: &String, post: &Post| -> Result<()> {
         path.set_file_name(filename);
         println!("export to file {}", path.as_path().display());
@@ -125,11 +147,11 @@ pub async fn git(git: &GitRepositoryInfo) -> Result<()> {
             .write(true)
             .truncate(true)
             .open(path.as_path())?;
-        let content = render(post, "hugo.md");
+        let content = render(post, template_name, one_off_template.as_ref())?;
         file.write_all(content.as_bytes())?;
         Ok(())
     };
-    write_posts(&posts, write_file);
+    write_posts(&posts, write_file, file_ext)?;
 
     Ok(())
 }

@@ -53,7 +53,7 @@ async fn hugo() -> Result<Response<Body>, Rejection> {
     let mut uri = String::with_capacity(64);
     uri.push_str("/export/");
     uri.push_str(&filename);
-    // Ok(warp::redirect::redirect(warp::http::Uri::from_static(&uri)))
+    // Ok(warp::redirect::temporary(warp::http::Uri::from_static(&uri)))
     let r = Response::builder()
         .header(header::CONTENT_TYPE, "text/plain")
         .header(header::CONTENT_LENGTH, uri.len())

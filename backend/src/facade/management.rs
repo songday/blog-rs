@@ -26,7 +26,7 @@ const POST_DETAIL_DEFAULT_TEMPLATE: &'static str = include_str!("../resource/sta
 pub fn show_settings_with_fake_auth() -> Response {
     let token = common::simple_uuid();
     status::user_online(&token, UserInfo { id: 1 });
-    // Ok(warp::redirect::redirect(hyper::Uri::from_static("/management/index")))
+    // Ok(warp::redirect::temporary(hyper::Uri::from_static("/management/index")))
     let mut response = warp::reply::Response::new(SETTINGS_HTML.into());
     response.headers_mut().append(
         header::SET_COOKIE.as_str(),

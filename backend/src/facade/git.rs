@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 
 use blog_common::{
-    dto::{git::GitRepositoryInfo, user::UserInfo, Response as ApiResponse},
+    dto::{
+        git::{GitPushInfo, GitRepositoryInfo},
+        user::UserInfo,
+        Response as ApiResponse,
+    },
     result::{Error, ErrorResponse},
     val,
 };
@@ -89,7 +93,7 @@ pub async fn new_repository(mut params: HashMap<String, String>) -> Result<impl 
     if email.len() < 5 || !common::EMAIL_REGEX.is_match(&email) {
         return Ok(wrap_json_err(
             500,
-            Error::BusinessException("输入的邮箱地址不合法/Illegal email address.".to_string()),
+            Error::BusinessException("输入的邮箱地址不合法/Invalid email address.".to_string()),
         ));
     }
     let mut url = params.remove("url").unwrap();
@@ -139,9 +143,9 @@ pub async fn remove_repository() -> Result<impl Reply, Rejection> {
         Err(e) => e,
     };
     if message.is_empty() {
-        Ok(super::wrap_json_data(message))
+        Ok(wrap_json_data(message))
     } else {
-        Ok(super::wrap_json_err(500, Error::BusinessException(message)))
+        Ok(wrap_json_err(500, Error::BusinessException(message)))
     }
 }
 
@@ -164,18 +168,18 @@ pub async fn set_branch(tail: Tail) -> Result<impl Reply, Rejection> {
         Err(e) => e,
     };
     if message.is_empty() {
-        Ok(super::wrap_json_data(message))
+        Ok(wrap_json_data(message))
     } else {
-        Ok(super::wrap_json_err(500, Error::BusinessException(message)))
+        Ok(wrap_json_err(500, Error::BusinessException(message)))
     }
 }
 
-pub async fn push(tail: warp::filters::path::Tail) -> Result<impl Reply, Rejection> {
+pub async fn push(push_info: GitPushInfo) -> Result<impl Reply, Rejection> {
     let result = git::must_get_repository_info().await;
     let message = match result {
         Ok(info) => match crate::service::git::pull::pull(&info) {
-            Ok(_) => match export::git(&info).await {
-                Ok(_) => match git::sync_to_remote(&info, tail.as_str()) {
+            Ok(_) => match export::git(&info, &push_info).await {
+                Ok(_) => match git::sync_to_remote(&info, push_info.repo_credential.as_str()) {
                     Ok(_) => String::new(),
                     Err(e) => format!("Failed to push posts to git: {}", e),
                 },
@@ -186,8 +190,8 @@ pub async fn push(tail: warp::filters::path::Tail) -> Result<impl Reply, Rejecti
         Err(e) => e,
     };
     if message.is_empty() {
-        Ok(super::wrap_json_data(message))
+        Ok(wrap_json_data(message))
     } else {
-        Ok(super::wrap_json_err(500, Error::BusinessException(message)))
+        Ok(wrap_json_err(500, Error::BusinessException(message)))
     }
 }
