@@ -79,7 +79,7 @@ pub async fn show_render_templates_page(token: Option<String>) -> Result<warp::h
         return Ok(super::management_sign_in("/management/export-templates").into_response());
     }
     let response = warp::http::Response::builder().header("Content-Type", "text/html; charset=utf-8");
-    let setting = match management::get_setting("post_detail_render_template").await {
+    let setting = match management::get_setting(crate::util::val::POST_DETAIL_RENDER_TEMPLATE).await {
         Ok(s) => s,
         Err(e) => return Ok(response.body(format!("{:?}", e.0).into()).unwrap()),
     };
@@ -105,10 +105,9 @@ pub async fn update_render_templates(
     if let Err(e) = status::check_auth(token) {
         return facade::response(Err(e));
     }
-    let item = "post_detail_render_template";
     let setting = crate::db::model::Setting {
-        item: item.to_string(),
-        content: data.get(item).map_or(String::new(), |s| String::from(s)),
+        item: crate::util::val::POST_DETAIL_RENDER_TEMPLATE.to_string(),
+        content: data.get(crate::util::val::POST_DETAIL_RENDER_TEMPLATE).map_or(String::new(), |s| String::from(s)),
     };
     match management::update_setting(setting).await {
         Ok(_) => facade::response(Ok("")),

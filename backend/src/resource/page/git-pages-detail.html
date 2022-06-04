@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="/asset/solid.min-70c2e5caa950974d.css">
     <script src="/asset/common.js"></script>
     <script type="application/javascript">
-        let render_html = 'n';
+        let render_html = false;
         function setBranch(t) {
             const branch = document.getElementById('branches').value;
             if (branch) {
@@ -23,11 +23,12 @@
                 showErr('Repository credential is needed.');
                 return;
             }
-            const data = new Map();
-            data.set('subdirectory', document.getElementById('subdirectory').value);
-            data.set('render_html', render_html);
-            data.set('repo_credential', credential);
-            fetch_post(t, '/git/push/', data, 'git-pages');
+            const data = {
+                'subdirectory': document.getElementById('subdirectory').value,
+                'render_html': render_html,
+                'repo_credential': credential
+            };
+            fetch_post(t, '/git/push', data, 'git-pages');
         }
         function showNotification() {
             const h = '<p>Please confirm this deletion</p>' +
@@ -87,11 +88,11 @@
             <td>
                 <div class="control">
                     <label class="radio">
-                        <input type="radio" name="render-html" value="y" onclick="render_html='y';">
+                        <input type="radio" name="render-html" value="y" onclick="render_html=true;">
                         Yes
                     </label>
                     <label class="radio">
-                        <input type="radio" name="render-html" value="n" checked onclick="render_html='n';">
+                        <input type="radio" name="render-html" value="n" checked onclick="render_html=false;">
                         No
                     </label>
                 </div>

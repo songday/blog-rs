@@ -366,7 +366,7 @@ pub fn blog_filter(
         .and(warp::path::tail())
         .and(warp::path::end())
         .and_then(git::set_branch);
-    let git_push = warp::get()
+    let git_push = warp::post()
         .and(warp::path("git"))
         .and(warp::path("push"))
         .and(warp::body::json::<GitPushInfo>())

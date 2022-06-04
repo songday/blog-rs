@@ -129,7 +129,7 @@ pub async fn git(git: &GitRepositoryInfo, push_info: &GitPushInfo) -> Result<()>
 
     let posts = post::all_by_since(git.last_export_second).await?;
     let one_off_template = if push_info.render_html {
-        let setting = management::get_setting("").await?;
+        let setting = management::get_setting(crate::util::val::POST_DETAIL_RENDER_TEMPLATE).await?;
         setting.map(|s| s.content)
     } else {
         None
