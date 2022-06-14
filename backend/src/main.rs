@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use blog_backend::{db, service, util::result};
 use clap::Parser;
 use futures::{
@@ -15,40 +17,40 @@ use tokio::{
 #[clap(name = "Songday blog backend", author, version, about, long_about = None)]
 struct Args {
     /// Specify run mode: 'static' is for static file serve, 'blog' is blog warp server mode
-    #[clap(long)]
+    #[clap(long, value_parser)]
     mode: Option<String>,
 
     /// HTTP Server Settings
     /// Specify http listening address, e.g.: 0.0.0.0 or [::] or 127.0.0.1 or other particular ip, default is '127.0.0.1'
-    #[clap(long, default_value = "127.0.0.1")]
+    #[clap(long, default_value = "127.0.0.1", value_parser)]
     ip: String,
 
     /// Specify listening port, default value is '80'
-    #[clap(long, default_value_t = 80)]
+    #[clap(long, default_value_t = 80, value_parser)]
     port: u16,
 
     /// Enable HTTPS Server
-    #[clap(long)]
+    #[clap(long, value_parser)]
     https_enabled: bool,
 
     /// Cert file path, needed by https
-    #[clap(long)]
+    #[clap(long, value_parser)]
     cert_path: Option<String>,
 
     /// Key file path, needed by https
-    #[clap(long)]
+    #[clap(long, value_parser)]
     key_path: Option<String>,
 
     /// Specify HTTPS listening port, default value is '443'
-    #[clap(long, default_value_t = 443)]
+    #[clap(long, value_parser, default_value_t = 443)]
     https_port: u16,
 
     /// Enable HSTS Redirect Server
-    #[clap(long)]
+    #[clap(long, value_parser)]
     hsts_enabled: bool,
 
     /// Hostname for CORS
-    #[clap(long)]
+    #[clap(long, value_parser)]
     cors_host: Option<String>,
 }
 
