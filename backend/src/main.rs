@@ -80,16 +80,6 @@ fn main() -> result::Result<()> {
                     Ok(()) => {},
                     Err(_) => println!("the receiver dropped"),
                 }
-            },
-            Err(e) => {
-                eprintln!("{}", e);
-            },
-        }
-    });
-    runtime.spawn(async {
-        match tokio::signal::ctrl_c().await {
-            Ok(()) => {
-                println!("Shutting down web server...");
                 match tx2.send(()) {
                     Ok(()) => {},
                     Err(_) => println!("the receiver dropped"),
@@ -100,6 +90,20 @@ fn main() -> result::Result<()> {
             },
         }
     });
+    // runtime.spawn(async {
+    //     match tokio::signal::ctrl_c().await {
+    //         Ok(()) => {
+    //             println!("Shutting down web server...");
+    //             match tx2.send(()) {
+    //                 Ok(()) => {},
+    //                 Err(_) => println!("the receiver dropped"),
+    //             }
+    //         },
+    //         Err(e) => {
+    //             eprintln!("{}", e);
+    //         },
+    //     }
+    // });
 
     let mut addr = String::from(&args.ip);
     addr.push_str(":");
