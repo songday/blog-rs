@@ -8,4 +8,4 @@ pub const IMAGE_ROOT_PATH: &str = "/home/songday/website/blog/upload/image";
 // pub const IMAGE_ROOT_PATH_LENGTH: usize = IMAGE_ROOT_PATH.len();
 // pub const BLOG_PAGE_SIZE: u8 = 20u8;
 // pub const I64SIZE: usize = std::mem::size_of::<i64>();
-pub(crate) const POST_DETAIL_RENDER_TEMPLATE:&'static str = "post_detail_render_template";
+pub(crate) const POST_DETAIL_RENDER_TEMPLATE: &'static str = "post_detail_render_template";

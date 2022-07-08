@@ -107,7 +107,9 @@ pub async fn update_render_templates(
     }
     let setting = crate::db::model::Setting {
         item: crate::util::val::POST_DETAIL_RENDER_TEMPLATE.to_string(),
-        content: data.get(crate::util::val::POST_DETAIL_RENDER_TEMPLATE).map_or(String::new(), |s| String::from(s)),
+        content: data
+            .get(crate::util::val::POST_DETAIL_RENDER_TEMPLATE)
+            .map_or(String::new(), |s| String::from(s)),
     };
     match management::update_setting(setting).await {
         Ok(_) => facade::response(Ok("")),

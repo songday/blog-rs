@@ -2,10 +2,8 @@ use std::vec::Vec;
 use std::{collections::HashMap, convert::Infallible, net::SocketAddr};
 
 use futures::future::Future;
-use hyper::{header::HeaderValue, HeaderMap, Uri};
-use password_hash::Output;
-use tokio::sync::oneshot::Receiver;
-use warp::{self, reject, Filter, Rejection, Reply, Server, TlsServer};
+use tokio::sync::broadcast::Receiver;
+use warp::{self, reject, Filter, Reply};
 
 use blog_common::{
     dto::{
@@ -97,7 +95,7 @@ where
 
 pub async fn create_static_file_server(
     address: SocketAddr,
-    receiver: Receiver<()>,
+    mut receiver: Receiver<()>,
 ) -> Result<impl Future<Output = ()> + 'static> {
     let dir = std::env::current_dir().unwrap();
 
@@ -106,8 +104,8 @@ pub async fn create_static_file_server(
 
     //let addr = address.parse::<SocketAddr>()?;
 
-    let (_addr, server) = warp::serve(routes).bind_with_graceful_shutdown(address, async {
-        receiver.await.ok();
+    let (_addr, server) = warp::serve(routes).bind_with_graceful_shutdown(address, async move {
+        receiver.recv().await.ok();
     });
 
     Ok(server)
@@ -115,15 +113,15 @@ pub async fn create_static_file_server(
 
 pub async fn create_blog_server(
     http_addr: SocketAddr,
-    receiver: Receiver<()>,
+    mut receiver: Receiver<()>,
     cors_host: &Option<String>,
 ) -> Result<impl Future<Output = ()> + 'static> {
     let routes = blog_filter("http", http_addr.port(), cors_host);
     // let routes = routes.recover(facade::handle_rejection);
     let server = warp::serve(routes);
     let server = server
-        .bind_with_graceful_shutdown(http_addr, async {
-            receiver.await.ok();
+        .bind_with_graceful_shutdown(http_addr, async move {
+            receiver.recv().await.ok();
         })
         .1;
     return Ok(server);
@@ -140,7 +138,7 @@ pub async fn create_blog_server(
 
 pub async fn create_tls_blog_server(
     https_addr: SocketAddr,
-    receiver: Receiver<()>,
+    mut receiver: Receiver<()>,
     cert_path: &str,
     key_path: &str,
     cors_host: &Option<String>,
@@ -150,8 +148,8 @@ pub async fn create_tls_blog_server(
     let server = warp::serve(routes);
     let server = server.tls().cert_path(cert_path).key_path(key_path);
     let server = server
-        .bind_with_graceful_shutdown(https_addr, async {
-            receiver.await.ok();
+        .bind_with_graceful_shutdown(https_addr, async move {
+            receiver.recv().await.ok();
         })
         .1;
     return Ok(server);
@@ -159,7 +157,7 @@ pub async fn create_tls_blog_server(
 
 pub async fn create_tls_blog_server_with_hsts(
     https_addr: SocketAddr,
-    receiver: Receiver<()>,
+    mut receiver: Receiver<()>,
     cert_path: &str,
     key_path: &str,
     cors_host: &Option<String>,
@@ -170,8 +168,8 @@ pub async fn create_tls_blog_server_with_hsts(
     let server = warp::serve(routes);
     let server = server.tls().cert_path(cert_path).key_path(key_path);
     let server = server
-        .bind_with_graceful_shutdown(https_addr, async {
-            receiver.await.ok();
+        .bind_with_graceful_shutdown(https_addr, async move {
+            receiver.recv().await.ok();
         })
         .1;
     return Ok(server);

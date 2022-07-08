@@ -1,15 +1,13 @@
 #![recursion_limit = "256"]
 
+use std::net::SocketAddr;
+
 use blog_backend::{db, service, util::result};
 use clap::Parser;
-use futures::{
-    future::{join_all, BoxFuture},
-    Future,
-};
-use std::net::SocketAddr;
+use futures::future::{join_all, BoxFuture};
 use tokio::{
     runtime::{Builder, Runtime},
-    sync::oneshot,
+    sync::broadcast,
 };
 
 /// Simple blog backend
@@ -69,29 +67,14 @@ fn main() -> result::Result<()> {
         .thread_stack_size(1024 * 1024)
         .build()?;
 
-    let (tx1, rx1) = oneshot::channel::<()>();
-    let (tx2, rx2) = oneshot::channel::<()>();
-
-    runtime.spawn(async {
+    let (tx, rx1) = broadcast::channel(2);
+    let rx2 = tx.subscribe();
+    runtime.spawn(async move {
         match tokio::signal::ctrl_c().await {
             Ok(()) => {
                 println!("Shutting down web server...");
-                match tx1.send(()) {
-                    Ok(()) => {},
-                    Err(_) => println!("the receiver dropped"),
-                }
-            },
-            Err(e) => {
-                eprintln!("{}", e);
-            },
-        }
-    });
-    runtime.spawn(async {
-        match tokio::signal::ctrl_c().await {
-            Ok(()) => {
-                println!("Shutting down web server...");
-                match tx2.send(()) {
-                    Ok(()) => {},
+                match tx.send(()) {
+                    Ok(_) => {},
                     Err(_) => println!("the receiver dropped"),
                 }
             },

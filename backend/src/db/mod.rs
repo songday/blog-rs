@@ -76,7 +76,7 @@ pub async fn init_datasource() {
     let pool_ops = PoolOptions::<Sqlite>::new()
         .min_connections(8)
         .max_connections(64)
-        .connect_timeout(Duration::from_secs(5))
+        .acquire_timeout(Duration::from_secs(5))
         .test_before_acquire(true);
     let conn_str = format!("sqlite://{}", path.display());
     let pool = pool_ops

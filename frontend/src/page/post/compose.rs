@@ -1,4 +1,5 @@
-    use std::collections::HashMap;
+
+use std::collections::HashMap;
 
 use blog_common::dto::post::{PostData, PostDetail};
 use blog_common::dto::Response;

@@ -24,7 +24,7 @@ blog-common = { path = "../common" }
 #fastrand = "1.7"
 fluent = "0.16"
 getrandom = { version = "0.2", features = ["js"] }
-gloo = "0.7"
+gloo = "0.8"
 gloo-file = "0.2"
 gloo-utils = "0.1"
 js-sys = "0.3"

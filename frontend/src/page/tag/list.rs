@@ -1,5 +1,5 @@
-use std::vec::Vec;
 use rand::Rng;
+use std::vec::Vec;
 
 use blog_common::dto::post::PostDetail;
 use blog_common::dto::{PaginationData, Response};
