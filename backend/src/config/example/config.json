@@ -1,0 +1,11 @@
+{
+    "mode":"blog",
+    "ip":"0.0.0.0",
+    "port":80,
+    "https_enabled":false,
+    "https_port":443,
+    "cert_path":"./cert.crt",
+    "key_path":"./key.key",
+    "hsts_enabled":false,
+    "cors_host":"https://localhost"
+}

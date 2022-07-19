@@ -2,7 +2,7 @@
 
 use std::net::SocketAddr;
 
-use blog_backend::{db, service, util::result};
+use blog_backend::{db, service, util::result,config::{config_loader, self}};
 use clap::Parser;
 use futures::future::{join_all, BoxFuture};
 use tokio::{
@@ -10,56 +10,27 @@ use tokio::{
     sync::broadcast,
 };
 
-/// Simple blog backend
-#[derive(Parser)]
-#[clap(name = "Songday blog backend", author, version, about, long_about = None)]
-struct Args {
-    /// Specify run mode: 'static' is for static file serve, 'blog' is blog warp server mode
-    #[clap(long, value_parser)]
-    mode: Option<String>,
 
-    /// HTTP Server Settings
-    /// Specify http listening address, e.g.: 0.0.0.0 or [::] or 127.0.0.1 or other particular ip, default is '127.0.0.1'
-    #[clap(long, default_value = "127.0.0.1", value_parser)]
-    ip: String,
-
-    /// Specify listening port, default value is '80'
-    #[clap(long, default_value_t = 80, value_parser)]
-    port: u16,
-
-    /// Enable HTTPS Server
-    #[clap(long, value_parser)]
-    https_enabled: bool,
-
-    /// Cert file path, needed by https
-    #[clap(long, value_parser)]
-    cert_path: Option<String>,
-
-    /// Key file path, needed by https
-    #[clap(long, value_parser)]
-    key_path: Option<String>,
-
-    /// Specify HTTPS listening port, default value is '443'
-    #[clap(long, value_parser, default_value_t = 443)]
-    https_port: u16,
-
-    /// Enable HSTS Redirect Server
-    #[clap(long, value_parser)]
-    hsts_enabled: bool,
-
-    /// Hostname for CORS
-    #[clap(long, value_parser)]
-    cors_host: Option<String>,
-}
 
 fn main() -> result::Result<()> {
     if std::env::var_os("RUST_LOG").is_none() {
         std::env::set_var("RUST_LOG", "access-log=info");
     }
     pretty_env_logger::init();
-
-    let args = Args::parse();
-
+    
+    let mut args = crate::config_loader::Args::parse();
+    if args.config.is_some(){
+        let config_result = config_loader::load_config(&mut args);
+        match config_result{
+            Ok(_)=>{
+                println!("Config Loaded")
+            },
+            Err(_)=>{
+                panic!("Config Invalid!");
+            },
+            _=>()
+        }
+    }
     let runtime = Builder::new_multi_thread()
         .worker_threads(4)
         .enable_all()
