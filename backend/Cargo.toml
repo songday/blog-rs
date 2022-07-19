@@ -1,6 +1,6 @@
 [package]
 name = "blog-backend"
-version = "0.5.5"
+version = "0.5.6"
 authors = ["Songday <songday@yeah.net>"]
 edition = "2021"
 
@@ -35,7 +35,7 @@ password-hash = { version = "0.4", features = ["rand_core"] }
 pretty_env_logger = "0.4"
 # pulldown-cmark = "0.9"
 rand = "0.8"
-regex = "1.5"
+regex = "1.6"
 reqwest = "0.11"
 # subtle = "2"
 serde = { version = "1", features = ["derive"] }
