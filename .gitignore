@@ -18,3 +18,5 @@ backend/data
 backend/upload
 blog.dat*
 export/
+**/asset/
+**/dist/

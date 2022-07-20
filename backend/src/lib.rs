@@ -12,3 +12,4 @@ mod facade;
 mod image;
 pub mod service;
 pub mod util;
+pub mod config;
