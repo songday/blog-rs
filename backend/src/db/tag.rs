@@ -11,7 +11,6 @@ use std::{
 use ahash::AHasher;
 use blog_common::{dto::tag::TagUsageAmount, result::Error, util::time};
 use bytes::{Buf, Bytes, BytesMut};
-use lazy_static::lazy_static;
 use parking_lot::RwLock;
 use sqlx::{Row, Sqlite};
 use tokio::{

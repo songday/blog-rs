@@ -1,11 +1,8 @@
-use lazy_static::lazy_static;
 use parking_lot::Mutex;
 
 use blog_common::util::time;
 
-lazy_static! {
-    static ref LAST_TIMESTAMP: Mutex<u64> = Mutex::new(0);
-}
+static LAST_TIMESTAMP: Mutex<u64> = Mutex::new(0);
 
 const START_TIME_MILLIS: u64 = 1643212800;
 

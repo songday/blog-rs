@@ -12,17 +12,17 @@ name = "blog_backend"
 [dependencies]
 blog-common = { path = "../common" }
 
-ahash = "0.7"
+ahash = "0.8"
 argon2 = "0.4"
 base64 = "0.13"
 bytes = "1"
 # chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "3", features = ["derive"] }
-comrak = "0.13"
+comrak = "0.14"
 # ctrlc = { version = "3.0", features = ["termination"] }
 # crc = "^1.0.0"
 futures = "0.3"
-git2 = "0.14"
+git2 = "0.15"
 hyper = "0.14"
 image = { version = "0.24", features = ["jpeg", "png", "gif"] }
 lazy_static = "1.4"
@@ -48,7 +48,7 @@ tera = "1.16"
 tokio = { version = "1", features = ["fs", "io-util", "macros", "rt", "rt-multi-thread", "signal", "time"] }
 uuid = { version = "1", features = ["v5"] }
 urlencoding = "2"
-v_htmlescape = "0.14"
+v_htmlescape = "0.15"
 warp = {version="0.3",features=["tls"]}
 zip = { version = "0.6", default-features = false }
 
