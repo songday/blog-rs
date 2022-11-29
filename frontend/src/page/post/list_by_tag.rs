@@ -30,7 +30,7 @@ impl Component for PostsListByTag {
         }
     }
 
-    fn changed(&mut self, ctx: &Context<Self>) -> bool {
+    fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
         let changed = self.tag_name.ne(&ctx.props().tag_name);
         if changed {
             weblog::console_log!("changed to load");

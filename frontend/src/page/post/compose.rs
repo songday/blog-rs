@@ -323,7 +323,7 @@ impl Component for PostCompose {
         false
     }
 
-    fn changed(&mut self, ctx: &Context<Self>) -> bool {
+    fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
         let changed = self.post_id != ctx.props().post_id;
         if changed {
             self.post_id = ctx.props().post_id;

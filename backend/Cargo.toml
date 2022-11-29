@@ -17,8 +17,8 @@ argon2 = "0.4"
 base64 = "0.13"
 bytes = "1"
 # chrono = { version = "0.4", features = ["serde"] }
-clap = { version = "3", features = ["derive"] }
-comrak = "0.14"
+clap = { version = "4", features = ["derive"] }
+comrak = "0.15"
 # ctrlc = { version = "3.0", features = ["termination"] }
 # crc = "^1.0.0"
 futures = "0.3"
@@ -28,14 +28,14 @@ image = { version = "0.24", features = ["jpeg", "png", "gif"] }
 lazy_static = "1.4"
 lazy-static-include = "3"
 log = "0.4"
-once_cell = "1.13"
+once_cell = "1.16"
 parking_lot = "0.12"
 password-hash = { version = "0.4", features = ["rand_core"] }
 # percent-encoding = "2.1"
 pretty_env_logger = "0.4"
 # pulldown-cmark = "0.9"
 rand = "0.8"
-regex = "1.6"
+regex = "1.7"
 reqwest = "0.11"
 # subtle = "2"
 serde = { version = "1", features = ["derive"] }
@@ -43,7 +43,7 @@ serde_json = "1"
 sled = "0.34"
 sqlx = { version = "0.6", default-features = false, features = [ "runtime-tokio-rustls", "macros", "sqlite"], optional = false }
 #scrypt = { version = "0.6", default-features = false }
-tera = "1.16"
+tera = "1.17"
 # time = { version = "0.3", features = ["serde"] }
 tokio = { version = "1", features = ["fs", "io-util", "macros", "rt", "rt-multi-thread", "signal", "time"] }
 uuid = { version = "1", features = ["v5"] }

@@ -140,7 +140,7 @@ impl Component for PostDetail {
         }
     }
 
-    fn changed(&mut self, ctx: &Context<Self>) -> bool {
+    fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
         let changed = self.post_id != ctx.props().post_id;
         if changed {
             weblog::console_log!("changed to load");

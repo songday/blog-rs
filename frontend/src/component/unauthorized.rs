@@ -15,7 +15,7 @@ impl Component for Unauthorized {
         Self {}
     }
 
-    fn changed(&mut self, ctx: &Context<Self>) -> bool {
+    fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
         true
     }
 
